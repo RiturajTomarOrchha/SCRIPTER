@@ -1,0 +1,8 @@
+{
+  "name": "Scripter — Complete Content Creation",
+  "description": "Scripter is an AI-powered content creation platform that helps creators, journalists, businesses, educators, and professionals turn ideas into ready-to-produce content. From research and scriptwriting to visual planning, teleprompter support, and video production preparation, Scripter brings the complete content creation workflow together in one place.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
