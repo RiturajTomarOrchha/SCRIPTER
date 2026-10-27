@@ -6,6 +6,10 @@ import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminSidebar } from './components/AdminSidebar';
 import { UserHome } from './pages/user/UserHome';
+import { IdeasPage } from './pages/user/IdeasPage';
+import { ScriptStudioPage } from './pages/user/ScriptStudioPage';
+import { ProjectsPage } from './pages/user/ProjectsPage';
+import { BusinessProfilesPage } from './pages/user/BusinessProfilesPage';
 import { AdminHome } from './pages/admin/AdminHome';
 import { MasterAdminHome } from './pages/master-admin/MasterAdminHome';
 import { ComingSoonPage } from './pages/shared/ComingSoonPage';
@@ -59,20 +63,20 @@ export default function App() {
               {/* Default redirect to User Home on root */}
               <Route path="/" element={<Navigate to="/user/home" replace />} />
 
-              {/* User Experience Routes */}
+              {/* User Experience Routes (Phase 2 Connected) */}
               <Route path="/user/home" element={<UserHome />} />
-              <Route path="/user/ideas" element={<ComingSoonPage featureName="Ideas & Trending Topics" category="Content Discovery" />} />
-              <Route path="/user/create" element={<ComingSoonPage featureName="Create New Content" category="Content Creation" />} />
-              <Route path="/user/projects" element={<ComingSoonPage featureName="My Projects & Content Library" category="Project Management" />} />
+              <Route path="/user/ideas" element={<IdeasPage />} />
+              <Route path="/user/research" element={<IdeasPage />} />
+              <Route path="/user/create" element={<ScriptStudioPage />} />
+              <Route path="/user/script-studio" element={<ScriptStudioPage />} />
+              <Route path="/user/projects" element={<ProjectsPage />} />
+              <Route path="/user/business-profiles" element={<BusinessProfilesPage />} />
               <Route path="/user/profile" element={<ComingSoonPage featureName="User Profile & Settings" category="Account Management" />} />
-              <Route path="/user/research" element={<ComingSoonPage featureName="Research & Outlines" category="Topic Analysis" />} />
-              <Route path="/user/script-studio" element={<ComingSoonPage featureName="Script Studio" category="Scriptwriting Engine" />} />
-              <Route path="/user/teleprompter" element={<ComingSoonPage featureName="Teleprompter & Recording" category="Production" />} />
+              <Route path="/user/teleprompter" element={<ScriptStudioPage />} />
               <Route path="/user/video-recording" element={<ComingSoonPage featureName="Video Recording" category="Production" />} />
               <Route path="/user/video-studio" element={<ComingSoonPage featureName="Video Studio & Editor" category="Post-Production" />} />
               <Route path="/user/library" element={<ComingSoonPage featureName="Saved Content & Library" category="Asset Management" />} />
               <Route path="/user/templates" element={<ComingSoonPage featureName="Templates & Visual Packs" category="Creative Assets" />} />
-              <Route path="/user/business-profiles" element={<ComingSoonPage featureName="Business Profiles Management" category="Brand Setup" />} />
               <Route path="/user/notifications" element={<ComingSoonPage featureName="Notifications & Alerts" category="Activity" />} />
               <Route path="/user/credits" element={<ComingSoonPage featureName="AI Credits & Usage" category="Billing & Usage" />} />
               <Route path="/user/subscription" element={<ComingSoonPage featureName="Subscription & Plans" category="Billing" />} />

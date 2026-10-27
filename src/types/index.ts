@@ -18,6 +18,23 @@ export interface BusinessProfile {
 
 export type ProjectStatus = 'draft' | 'in_progress' | 'completed' | 'archived';
 
+export interface ScriptScene {
+  sceneNumber: number;
+  timeRange: string;
+  description: string;
+  descriptionHi?: string;
+  imageUrl: string;
+  selected?: boolean;
+}
+
+export interface ScriptVersion {
+  version: number;
+  updatedAt: string;
+  hook: string;
+  mainContent: string[];
+  closing: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -31,6 +48,45 @@ export interface Project {
   duration?: string;
   scriptSnippet?: string;
   isDemo?: boolean;
+  businessProfileId?: string;
+  scriptVersions?: ScriptVersion[];
+  scenes?: ScriptScene[];
+  notes?: string;
+}
+
+export interface ContentIdea {
+  id: string;
+  title: string;
+  titleHi: string;
+  industry: string;
+  category: string;
+  format: 'Short (15-30s)' | 'Medium (30-60s)' | 'Long (60-180s)';
+  targetAudience: string;
+  engagementPotential: 'High' | 'Viral' | 'Trending';
+  summary: string;
+  summaryHi: string;
+  outline: string[];
+  outlineHi: string[];
+  sources: Array<{ name: string; url?: string; date: string; verified: boolean }>;
+  isTrending?: boolean;
+  businessProfileId?: string;
+}
+
+export interface ScriptDraft {
+  id?: string;
+  topic: string;
+  videoType: 'short' | 'medium' | 'long' | 'custom';
+  durationSeconds: number;
+  language: 'hi' | 'en' | 'hinglish';
+  tone: string;
+  additionalInstructions?: string;
+  hook: string;
+  mainContent: string[];
+  closing: string;
+  visualScenes: ScriptScene[];
+  voiceTips: string[];
+  teleprompterSpeed: number;
+  teleprompterFontSize: number;
 }
 
 export interface UserProfile {

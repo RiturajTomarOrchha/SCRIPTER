@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { DEMO_PROJECTS } from '../../data/mockData';
-import { Project } from '../../types';
+import { getProjects, getAllIdeas } from '../../services/storage';
+import { Project, ContentIdea, ProjectStatus } from '../../types';
 import {
   Sparkles,
   ChevronRight,
@@ -18,7 +18,8 @@ import {
   ArrowRight,
   Briefcase,
   ExternalLink,
-  SlidersHorizontal,
+  TrendingUp,
+  FolderKanban,
 } from 'lucide-react';
 
 export const UserHome: React.FC = () => {
@@ -26,16 +27,27 @@ export const UserHome: React.FC = () => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [projects] = useState<Project[]>(DEMO_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>(() => getProjects().slice(0, 4));
+
+  useEffect(() => {
+    setProjects(getProjects().slice(0, 4));
+  }, []);
 
   const creditsPercent = Math.min(100, Math.round((creditsUsed / creditsTotal) * 100));
+
+  // Get suggested topics filtered by active business profile
+  const allIdeas = getAllIdeas();
+  const suggestedIdeas = allIdeas.filter(
+    (i) => i.businessProfileId === activeBusinessProfile.id || i.industry === activeBusinessProfile.industry
+  );
+  const displayedIdeas = suggestedIdeas.length > 0 ? suggestedIdeas : allIdeas.slice(0, 3);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-12 space-y-6">
       {/* 1. Welcome & Business Profile Switcher Bar */}
-      <section className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-xs">
+      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3">
+          <div className="flex items-start sm:items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-blue-500/20 shrink-0">
               RT
             </div>
@@ -48,8 +60,8 @@ export const UserHome: React.FC = () => {
               </div>
               <p className="text-xs sm:text-sm text-slate-500">
                 {language === 'en'
-                  ? "Let's turn your ideas into high-impact scripts & videos."
-                  : 'आइए आपके विचारों को प्रभावी स्क्रिप्ट और वीडियो में बदलें।'}
+                  ? `Transforming your ideas into high-impact scripts & viral content for ${activeBusinessProfile.name}.`
+                  : `आइए ${activeBusinessProfile.name} के लिए आपके विचारों को प्रभावी स्क्रिप्ट और वीडियो में बदलें।`}
               </p>
             </div>
           </div>
@@ -60,7 +72,7 @@ export const UserHome: React.FC = () => {
               onClick={() => setShowProfileModal(true)}
               className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-left transition-all"
             >
-              <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
                 <Briefcase className="w-4 h-4" />
               </div>
               <div>
@@ -105,7 +117,9 @@ export const UserHome: React.FC = () => {
             />
           </div>
           <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
-            <span>{creditsTotal - creditsUsed} {t('creditsLeft')} in current cycle</span>
+            <span>
+              {creditsTotal - creditsUsed} {t('creditsLeft')} in current cycle
+            </span>
             <span className="font-mono">{creditsPercent}%</span>
           </div>
         </div>
@@ -114,90 +128,164 @@ export const UserHome: React.FC = () => {
       {/* 2. Primary Actions / Create Hub */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Prominent Action: Discover Ideas */}
-        <div className="md:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0B132B] via-[#1C2541] to-[#2563EB] p-6 text-white shadow-md">
+        <div className="md:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0B132B] via-[#1C2541] to-[#2563EB] p-6 text-white shadow-md">
           <div className="relative z-10 max-w-md space-y-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-xs text-[11px] font-medium text-amber-300 border border-white/15">
               <Sparkles className="w-3 h-3" />
-              <span>{language === 'en' ? 'Start Your Next Creation' : 'नई शुरुआत करें'}</span>
+              <span>{language === 'en' ? 'Phase 2 Operational Engine' : 'फेज़ 2 संपूर्ण समाधान'}</span>
             </span>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-              {language === 'en' ? 'Discover High-Converting Content Topics' : 'उच्च प्रभाव वाले ट्रेंडिंग विषय खोजें'}
+              {language === 'en'
+                ? `Create High-Impact Content for ${activeBusinessProfile.name}`
+                : `${activeBusinessProfile.name} के लिए उच्च प्रभाव वाला कंटेंट बनाएं`}
             </h2>
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
               {language === 'en'
-                ? `Get industry-tailored video ideas, researched outlines, and viral hooks for ${activeBusinessProfile.name}.`
-                : `${activeBusinessProfile.name} के लिए शोधित रूपरेखा और वीडियो आइडिया प्राप्त करें।`}
+                ? `Explore researched outlines, write structured scripts in 30 seconds, and manage drafts in your library.`
+                : 'शोधित विषय खोजें, AI से 30 सेकंड में संरचित स्क्रिप्ट बनाएं, और अपने प्रोजेक्ट्स में सुरक्षित करें।'}
             </p>
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <button
-                onClick={() => navigate('/user/ideas')}
+                onClick={() => navigate('/user/script-studio')}
                 className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
               >
-                <Lightbulb className="w-4 h-4 fill-slate-950" />
-                <span>{language === 'en' ? 'Discover Ideas' : 'आइडिया खोजें'}</span>
+                <FileText className="w-4 h-4 fill-slate-950" />
+                <span>{language === 'en' ? 'Start Script Studio' : 'स्क्रिप्ट स्टूडियो शुरू करें'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => navigate('/user/script-studio')}
+                onClick={() => navigate('/user/ideas')}
                 className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold backdrop-blur-xs border border-white/20 flex items-center gap-2 transition-colors"
               >
-                <FileText className="w-4 h-4" />
-                <span>{language === 'en' ? 'Write a Script' : 'स्क्रिप्ट लिखें'}</span>
+                <Lightbulb className="w-4 h-4" />
+                <span>{language === 'en' ? 'Discover Ideas' : 'आइडिया खोजें'}</span>
               </button>
             </div>
           </div>
-          {/* Subtle background decoration */}
           <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 w-60 h-60 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
         </div>
 
         {/* Quick Launch Card */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 {language === 'en' ? 'Quick Tools' : 'त्वरित टूल्स'}
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold">
-                Milestone 1
+                Connected Flow
               </span>
             </div>
             <h3 className="text-base font-bold text-slate-900 mt-2">
-              {language === 'en' ? 'Production Suite' : 'प्रोडक्शन सुइट'}
+              {language === 'en' ? 'Content Workflow' : 'कंटेंट वर्कफ़्लो'}
             </h3>
             <p className="text-xs text-slate-500 mt-1">
               {language === 'en'
-                ? 'Teleprompter, visual library, and script studio.'
-                : 'टेलीप्रॉम्प्टर, विज़ुअल लाइब्रेरी और स्टूडियो।'}
+                ? 'Jump straight into your projects or personalize business settings.'
+                : 'अपने प्रोजेक्ट्स देखें या नई प्रोफाइल सेटिंग्स कॉन्फ़िगर करें।'}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-2">
             <button
-              onClick={() => navigate('/user/teleprompter')}
-              className="p-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1.5"
+              onClick={() => navigate('/user/projects')}
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1.5"
             >
-              <Video className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-semibold">Teleprompter</span>
+              <FolderKanban className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-semibold">My Projects</span>
             </button>
             <button
-              onClick={() => navigate('/user/templates')}
-              className="p-3 rounded-xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1.5"
+              onClick={() => navigate('/user/business-profiles')}
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1.5"
             >
-              <Layers className="w-4 h-4 text-indigo-600" />
-              <span className="text-xs font-semibold">Templates</span>
+              <Briefcase className="w-4 h-4 text-indigo-600" />
+              <span className="text-xs font-semibold">Profiles</span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* 3. Content Journey Visual Roadmap */}
-      <section className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+      {/* 3. Tailored Recommendations for Active Profile (Poster 3 Screen 5) */}
+      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                <Sparkles className="w-4 h-4 fill-amber-500" />
+              </span>
+              <h3 className="text-base font-bold text-slate-900">
+                {language === 'en'
+                  ? `Recommended Topics for ${activeBusinessProfile.name}`
+                  : `${activeBusinessProfile.name} के लिए सुझाए गए विषय`}
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {language === 'en'
+                ? `Curated based on ${activeBusinessProfile.industry} audience trends`
+                : `आपके उद्योग (${activeBusinessProfile.industry}) के आधार पर तैयार`}
+            </p>
+          </div>
+          <Link
+            to="/user/ideas"
+            className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            <span>{language === 'en' ? 'See All Ideas' : 'सभी देखें'}</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {displayedIdeas.map((idea) => (
+            <div
+              key={idea.id}
+              onClick={() =>
+                navigate('/user/script-studio', {
+                  state: {
+                    prefilledTopic: language === 'hi' ? idea.titleHi : idea.title,
+                    industry: idea.industry,
+                    category: idea.category,
+                  },
+                })
+              }
+              className="p-4 rounded-2xl bg-slate-50/70 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between group space-y-3"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-2">
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-md">
+                    {idea.format}
+                  </span>
+                  {idea.isTrending && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700">
+                      <TrendingUp className="w-3 h-3 text-amber-500" />
+                      <span>Trending</span>
+                    </span>
+                  )}
+                </div>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                  {language === 'hi' ? idea.titleHi : idea.title}
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                  {language === 'hi' ? idea.summaryHi : idea.summary}
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-blue-600">
+                <span>{language === 'en' ? 'Start Script' : 'स्क्रिप्ट बनाएं'}</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Content Journey Visual Roadmap */}
+      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-bold text-slate-900">{t('contentJourneyTitle')}</h3>
             <p className="text-xs text-slate-500">{t('contentJourneySubtitle')}</p>
           </div>
-          <span className="hidden sm:inline-block text-[11px] font-mono text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+          <span className="hidden sm:inline-block text-[11px] font-mono text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
             5-Stage Pipeline
           </span>
         </div>
@@ -211,7 +299,7 @@ export const UserHome: React.FC = () => {
               color: 'text-amber-500',
               bg: 'bg-amber-50',
               border: 'border-amber-200',
-              status: 'Ready in M1',
+              status: 'Live & Connected',
               path: '/user/ideas',
             },
             {
@@ -221,8 +309,8 @@ export const UserHome: React.FC = () => {
               color: 'text-blue-500',
               bg: 'bg-blue-50',
               border: 'border-blue-200',
-              status: 'Upcoming',
-              path: '/user/research',
+              status: 'Live & Connected',
+              path: '/user/ideas',
             },
             {
               step: '03',
@@ -231,7 +319,7 @@ export const UserHome: React.FC = () => {
               color: 'text-indigo-500',
               bg: 'bg-indigo-50',
               border: 'border-indigo-200',
-              status: 'Upcoming',
+              status: 'Script Studio Active',
               path: '/user/script-studio',
             },
             {
@@ -241,18 +329,18 @@ export const UserHome: React.FC = () => {
               color: 'text-emerald-500',
               bg: 'bg-emerald-50',
               border: 'border-emerald-200',
-              status: 'Upcoming',
-              path: '/user/teleprompter',
+              status: 'Teleprompter Mode',
+              path: '/user/script-studio',
             },
             {
               step: '05',
               name: t('stepProduce'),
-              icon: Layers,
+              icon: FolderKanban,
               color: 'text-purple-500',
               bg: 'bg-purple-50',
               border: 'border-purple-200',
-              status: 'Upcoming',
-              path: '/user/video-studio',
+              status: 'My Projects Ready',
+              path: '/user/projects',
             },
           ].map((stage) => {
             const Icon = stage.icon;
@@ -260,7 +348,7 @@ export const UserHome: React.FC = () => {
               <button
                 key={stage.step}
                 onClick={() => navigate(stage.path)}
-                className={`p-3.5 rounded-xl border text-left transition-all hover:shadow-xs group ${stage.border} ${stage.bg}`}
+                className={`p-3.5 rounded-2xl border text-left transition-all hover:shadow-xs group ${stage.border} ${stage.bg}`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-[10px] font-bold text-slate-400">{stage.step}</span>
@@ -269,83 +357,25 @@ export const UserHome: React.FC = () => {
                 <p className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                   {stage.name}
                 </p>
-                <span className="text-[10px] text-slate-500 mt-1 block font-medium">
-                  {stage.status}
-                </span>
+                <span className="text-[10px] text-slate-500 mt-1 block font-medium">{stage.status}</span>
               </button>
             );
           })}
         </div>
       </section>
 
-      {/* 4. Quick Actions Grid */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-slate-900">{t('createContentHeading')}</h3>
-          <span className="text-xs text-slate-400 font-medium">
-            {language === 'en' ? 'Tailored to' : 'आधारित'} {activeBusinessProfile.name}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button
-            onClick={() => navigate('/user/script-studio')}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-blue-400 text-left transition-all shadow-2xs hover:shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <FileText className="w-5 h-5" />
-            </div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('createNewScript')}</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">{t('createNewScriptDesc')}</p>
-          </button>
-
-          <button
-            onClick={() => navigate('/user/ideas')}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-amber-400 text-left transition-all shadow-2xs hover:shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Lightbulb className="w-5 h-5" />
-            </div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('exploreIdeas')}</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">{t('exploreIdeasDesc')}</p>
-          </button>
-
-          <button
-            onClick={() => navigate('/user/templates')}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-pink-400 text-left transition-all shadow-2xs hover:shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Layers className="w-5 h-5" />
-            </div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('visualPack')}</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">{t('visualPackDesc')}</p>
-          </button>
-
-          <button
-            onClick={() => navigate('/user/teleprompter')}
-            className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-emerald-400 text-left transition-all shadow-2xs hover:shadow-xs group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-              <Video className="w-5 h-5" />
-            </div>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-900">{t('production')}</h4>
-            <p className="text-[11px] text-slate-500 mt-0.5">{t('productionDesc')}</p>
-          </button>
-        </div>
-      </section>
-
       {/* 5. Recent Projects */}
-      <section className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-bold text-slate-900">{t('recentProjects')}</h3>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-              Demo Data
+              {projects.some((p) => !p.isDemo) ? 'Synced' : 'Demo Data'}
             </span>
           </div>
           <Link
             to="/user/projects"
-            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
           >
             <span>{t('viewAllProjects')}</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -353,11 +383,11 @@ export const UserHome: React.FC = () => {
         </div>
 
         {projects.length === 0 ? (
-          <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
+          <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl">
             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-medium text-slate-600">{t('noProjectsYet')}</p>
             <button
-              onClick={() => navigate('/user/create')}
+              onClick={() => navigate('/user/script-studio')}
               className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
             >
               Start First Project
@@ -366,21 +396,22 @@ export const UserHome: React.FC = () => {
         ) : (
           <div className="divide-y divide-slate-100">
             {projects.map((proj) => {
-              const statusStyles = {
-                draft: 'bg-slate-100 text-slate-600',
-                in_progress: 'bg-blue-50 text-blue-700 border border-blue-200/60',
-                completed: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
-                archived: 'bg-amber-50 text-amber-700',
-              }[proj.status];
+              const statusStyles =
+                ({
+                  draft: 'bg-slate-100 text-slate-600',
+                  in_progress: 'bg-blue-50 text-blue-700 border border-blue-200/60',
+                  completed: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+                  archived: 'bg-amber-50 text-amber-700',
+                } as Record<ProjectStatus, string>)[proj.status] || 'bg-slate-100 text-slate-600';
 
               return (
                 <div
                   key={proj.id}
                   onClick={() => navigate('/user/projects')}
-                  className="py-3 sm:py-4 flex items-center justify-between gap-3 hover:bg-slate-50/80 -mx-2 px-2 rounded-xl transition-colors cursor-pointer"
+                  className="py-3 sm:py-4 flex items-center justify-between gap-3 hover:bg-slate-50/80 -mx-2 px-2 rounded-2xl transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200/60">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
                       <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="min-w-0">
@@ -411,7 +442,7 @@ export const UserHome: React.FC = () => {
         )}
       </section>
 
-      {/* Profile Switcher Modal */}
+      {/* Profile Switcher Quick Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
@@ -468,9 +499,15 @@ export const UserHome: React.FC = () => {
             </div>
 
             <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[11px] text-slate-400">
-                {businessProfiles.length} Profiles Available
-              </span>
+              <button
+                onClick={() => {
+                  setShowProfileModal(false);
+                  navigate('/user/business-profiles');
+                }}
+                className="text-xs font-bold text-blue-600 hover:underline"
+              >
+                Manage All Profiles →
+              </button>
               <button
                 onClick={() => setShowProfileModal(false)}
                 className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors"
