@@ -453,3 +453,180 @@ export interface NavItem {
   descriptionEn?: string;
   descriptionHi?: string;
 }
+
+/**
+ * ============================================================================
+ * Master Development Prompt 5: Admin & Master Admin Control Room Types
+ * ============================================================================
+ */
+export interface AdminUserRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatarUrl?: string;
+  role: UserRole;
+  plan: PlanTier;
+  status: 'Active' | 'Suspended' | 'Banned';
+  joinedDate: string;
+  lastActive: string;
+  creditsTotal: number;
+  creditsUsed: number;
+  businessProfilesCount: number;
+  projectsCount: number;
+  industry?: string;
+  notes?: string;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  timestamp: string;
+  adminName: string;
+  adminRole: UserRole;
+  actionType: string;
+  targetEntity: string;
+  details: string;
+  ipAddress: string;
+  status: 'SUCCESS' | 'FAILED' | 'WARNING';
+  actorName?: string;
+  actorRole?: UserRole;
+  action?: string;
+  target?: string;
+  severity?: 'info' | 'warning' | 'critical';
+}
+
+export interface IndustryTaxonomy {
+  id: string;
+  nameEn: string;
+  nameHi: string;
+  icon: string;
+  categories: string[];
+  templatesCount: number;
+  projectsCount: number;
+  isActive: boolean;
+  description: string;
+}
+
+export interface AdminVisualAsset {
+  id: string;
+  title: string;
+  type: 'video' | 'image' | 'audio' | 'font' | 'graphic';
+  category: string;
+  industry: string;
+  thumbnailUrl: string;
+  url?: string;
+  fileSize: string;
+  dimensions?: string;
+  duration?: string;
+  downloadsCount: number;
+  license: 'Free' | 'Pro' | 'Commercial' | 'free' | 'pro';
+  createdAt: string;
+  tags?: string[];
+  status?: 'active' | 'archived';
+}
+
+export interface AIProviderModel {
+  id: string;
+  name: string;
+  contextWindow: string;
+  costPer1kTokens: number;
+  status: 'Active' | 'Degraded' | 'Offline';
+  latencyMs: number;
+}
+
+export interface AIProviderConfig {
+  id: string;
+  name: string;
+  provider: 'Google Gemini' | 'Google Imagen' | 'ElevenLabs' | 'Cloud Vision' | string;
+  models: AIProviderModel[];
+  activeModel: string;
+  temperature: number;
+  maxOutputTokens: number;
+  status: 'Connected' | 'Configured' | 'Offline' | 'active' | 'degraded' | 'standby' | 'not_configured';
+  lastHealthCheck: string;
+  isPrimary: boolean;
+  defaultModel?: string;
+  maxTokens?: number;
+  rateLimitRpm?: number;
+  latencyMs?: number;
+  features?: string[];
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketNumber?: string;
+  userId?: string;
+  userName: string;
+  userEmail: string;
+  subject: string;
+  description?: string;
+  category: 'Billing' | 'AI Script' | 'Video Export' | 'Account' | 'Bug' | string;
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'low' | 'medium' | 'high' | 'urgent';
+  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'open' | 'in_progress' | 'resolved' | 'closed';
+  createdAt: string;
+  updatedAt: string;
+  assignedTo?: string;
+  messages?: { id: string; senderName: string; senderRole: string; message: string; timestamp: string }[];
+  responses?: { id: string; sender: string; role: string; message: string; timestamp: string }[];
+}
+
+export interface ContentModerationItem {
+  id: string;
+  contentType: 'Script' | 'Thumbnail' | 'Video' | 'Comment' | string;
+  contentTitle: string;
+  userId?: string;
+  userName?: string;
+  creatorName?: string;
+  creatorEmail?: string;
+  reportedReason?: 'Spam' | 'Inappropriate Language' | 'Misinformation' | 'Copyright Concern' | string;
+  flagReason?: string;
+  riskScore?: number;
+  severity?: 'low' | 'medium' | 'critical';
+  status: 'Pending Review' | 'Approved' | 'Flagged' | 'Removed' | 'pending' | 'flagged' | 'resolved' | 'dismissed';
+  timestamp?: string;
+  flaggedAt?: string;
+  snippet?: string;
+  contentPreview?: string;
+}
+
+export interface FeedbackSubmission {
+  id: string;
+  userName: string;
+  userEmail: string;
+  category: 'Feature Request' | 'Bug Report' | 'UI/UX' | 'Performance' | 'feature_request' | 'bug_report' | 'compliment' | 'general' | string;
+  rating: number;
+  comment?: string;
+  feedbackText?: string;
+  status: 'New' | 'Under Review' | 'Planned' | 'Implemented' | 'new' | 'reviewed' | 'planned';
+  date?: string;
+  submittedAt?: string;
+}
+
+export interface PlatformSystemSettings {
+  maintenanceMode: boolean;
+  allowNewRegistrations: boolean;
+  userRegistrationOpen?: boolean;
+  enforce2faForAdmins: boolean;
+  defaultUserTier: PlanTier;
+  defaultFreeCredits: number;
+  geminiApiKeySet: boolean;
+  cashfreeMode: 'sandbox' | 'production';
+  rateLimitRequestsPerMin: number;
+  maxAiRequestsPerMinute?: number;
+  defaultVideoQuality?: '720p' | '1080p' | '4k';
+  watermarkEnabledGlobal?: boolean;
+  sessionTimeoutHours: number;
+  auditRetentionDays: number;
+}
+
+export interface AdminAccount {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'master-admin';
+  adminTitle: string;
+  permissions: string[];
+  lastLogin: string;
+  status: 'Active' | 'Inactive' | 'active' | 'suspended';
+}
+

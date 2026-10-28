@@ -6,6 +6,8 @@ import {
   DEMO_RECENT_ADMIN_USERS,
   DEMO_TOP_TEMPLATES,
 } from '../../data/mockData';
+import { adminStorage } from '../../services/adminStorage';
+import { AdminUserRecord } from '../../types';
 import { getFirebaseStatus } from '../../services/firebase/config';
 import {
   Users,
@@ -351,22 +353,32 @@ export const MasterAdminHome: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
-                {DEMO_RECENT_ADMIN_USERS.map((usr, i) => (
-                  <tr key={i} className="hover:bg-slate-50/70 transition-colors">
+                {adminStorage.getAdminUsers().slice(0, 5).map((usr: AdminUserRecord) => (
+                  <tr key={usr.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3 font-semibold text-slate-900">
                       <div>{usr.name}</div>
                       <div className="text-[11px] text-slate-400 font-normal">{usr.email}</div>
                     </td>
-                    <td className="py-3 text-slate-600">{usr.industry}</td>
+                    <td className="py-3 text-slate-600">{usr.industry || 'Content Creation'}</td>
                     <td className="py-3">
-                      <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-[10px]">
+                      <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-[10px] uppercase">
                         {usr.plan}
                       </span>
                     </td>
                     <td className="py-3 font-mono text-slate-500 text-[11px]">{usr.joinedDate}</td>
                     <td className="py-3 text-right">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          usr.status === 'Active'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-rose-50 text-rose-700'
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            usr.status === 'Active' ? 'bg-emerald-500' : 'bg-rose-500'
+                          }`}
+                        />
                         <span>{usr.status}</span>
                       </span>
                     </td>

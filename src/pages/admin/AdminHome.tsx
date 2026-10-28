@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { adminStorage } from '../../services/adminStorage';
 import {
   Users,
   Briefcase,
@@ -14,11 +15,19 @@ import {
   Shield,
   Layers,
   Building2,
+  Activity,
+  FileText,
 } from 'lucide-react';
 
 export const AdminHome: React.FC = () => {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+
+  const usersCount = adminStorage.getAdminUsers().length;
+  const pendingReports = adminStorage.getModerationQueue().filter((q) => q.status === 'pending').length;
+  const openTickets = adminStorage.getSupportTickets().filter((t) => t.status === 'open').length;
+  const feedbackCount = adminStorage.getFeedbackSubmissions().length;
+  const recentLogs = adminStorage.getAuditLogs().slice(0, 4);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-20 space-y-6">
@@ -44,39 +53,51 @@ export const AdminHome: React.FC = () => {
 
       {/* 2. Operational Queue Cards */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs">
+        <div
+          onClick={() => navigate('/admin/users')}
+          className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs cursor-pointer hover:border-blue-400 transition-colors"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Active Creators</span>
             <Users className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900 font-mono mt-2">1,248</p>
+          <p className="text-2xl font-black text-slate-900 font-mono mt-2">{usersCount}</p>
           <span className="text-[11px] text-emerald-600 font-medium">98.2% healthy</span>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs">
+        <div
+          onClick={() => navigate('/admin/moderation')}
+          className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs cursor-pointer hover:border-rose-400 transition-colors"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Pending Reports</span>
             <ShieldAlert className="w-4 h-4 text-rose-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900 font-mono mt-2">6</p>
+          <p className="text-2xl font-black text-slate-900 font-mono mt-2">{pendingReports}</p>
           <span className="text-[11px] text-rose-600 font-medium">Requires review</span>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs">
+        <div
+          onClick={() => navigate('/admin/tickets')}
+          className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs cursor-pointer hover:border-amber-400 transition-colors"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Open Tickets</span>
             <LifeBuoy className="w-4 h-4 text-amber-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900 font-mono mt-2">14</p>
+          <p className="text-2xl font-black text-slate-900 font-mono mt-2">{openTickets}</p>
           <span className="text-[11px] text-amber-600 font-medium">Avg response 22m</span>
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs">
+        <div
+          onClick={() => navigate('/admin/feedback')}
+          className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs cursor-pointer hover:border-purple-400 transition-colors"
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">New Feedback</span>
             <MessageSquare className="w-4 h-4 text-purple-600" />
           </div>
-          <p className="text-2xl font-black text-slate-900 font-mono mt-2">28</p>
+          <p className="text-2xl font-black text-slate-900 font-mono mt-2">{feedbackCount}</p>
           <span className="text-[11px] text-purple-600 font-medium">This week</span>
         </div>
       </section>
@@ -183,6 +204,39 @@ export const AdminHome: React.FC = () => {
               View Reports <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </div>
+        </div>
+      </section>
+
+      {/* 4. Recent Live Operational Activity */}
+      <section className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-blue-600" />
+            <h3 className="font-bold text-slate-900 text-sm">Recent Operational Interventions</h3>
+          </div>
+          <span className="text-[11px] text-slate-400 font-mono">Live Audit Trail</span>
+        </div>
+
+        <div className="space-y-2 text-xs">
+          {recentLogs.map((log) => (
+            <div
+              key={log.id}
+              className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-800">{log.action}</span>
+                  <span className="text-slate-400 font-mono">➔ {log.target}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">{log.details}</p>
+              </div>
+
+              <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono shrink-0">
+                <span>by {log.actorName}</span>
+                <span>{log.timestamp}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
     </div>

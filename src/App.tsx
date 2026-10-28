@@ -23,6 +23,28 @@ import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
 import { HelpSupportPage } from './pages/user/HelpSupportPage';
 import { AdminHome } from './pages/admin/AdminHome';
 import { MasterAdminHome } from './pages/master-admin/MasterAdminHome';
+import { RoleGuard } from './components/RoleGuard';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminBusinessProfilesPage } from './pages/admin/AdminBusinessProfilesPage';
+import { AdminIndustriesPage } from './pages/admin/AdminIndustriesPage';
+import { AdminTemplatesPage } from './pages/admin/AdminTemplatesPage';
+import { AdminVisualAssetsPage } from './pages/admin/AdminVisualAssetsPage';
+import { AdminModerationPage } from './pages/admin/AdminModerationPage';
+import { AdminTicketsPage } from './pages/admin/AdminTicketsPage';
+import { AdminFeedbackPage } from './pages/admin/AdminFeedbackPage';
+import { AdminNotificationsPage } from './pages/admin/AdminNotificationsPage';
+import { AdminReportsPage } from './pages/admin/AdminReportsPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import { AdminHelpPage } from './pages/admin/AdminHelpPage';
+
+import { MasterAdminAiProvidersPage } from './pages/master-admin/MasterAdminAiProvidersPage';
+import { MasterAdminPlansPage } from './pages/master-admin/MasterAdminPlansPage';
+import { MasterAdminBillingPage } from './pages/master-admin/MasterAdminBillingPage';
+import { MasterAdminAdminsPage } from './pages/master-admin/MasterAdminAdminsPage';
+import { MasterAdminSystemPage } from './pages/master-admin/MasterAdminSystemPage';
+import { MasterAdminLogsPage } from './pages/master-admin/MasterAdminLogsPage';
+import { MasterAdminContentSettingsPage } from './pages/master-admin/MasterAdminContentSettingsPage';
+
 import { ComingSoonPage } from './pages/shared/ComingSoonPage';
 import { NotFoundPage } from './pages/shared/NotFoundPage';
 
@@ -100,41 +122,41 @@ export default function App() {
               <Route path="/user/payments" element={<BillingPaymentsPage />} />
               <Route path="/user/help" element={<HelpSupportPage />} />
 
-              {/* Admin Routes */}
-              <Route path="/admin/dashboard" element={<AdminHome />} />
-              <Route path="/admin/users" element={<ComingSoonPage featureName="User Management" category="Operations" />} />
-              <Route path="/admin/business-profiles" element={<ComingSoonPage featureName="Business Profile Management" category="Operations" />} />
-              <Route path="/admin/industries" element={<ComingSoonPage featureName="Industry & Category Management" category="Taxonomy" />} />
-              <Route path="/admin/templates" element={<ComingSoonPage featureName="Template Library" category="Content Operations" />} />
-              <Route path="/admin/assets" element={<ComingSoonPage featureName="Visual Assets" category="Media Operations" />} />
-              <Route path="/admin/moderation" element={<ComingSoonPage featureName="Content Moderation" category="Trust & Safety" />} />
-              <Route path="/admin/feedback" element={<ComingSoonPage featureName="Feedback Management" category="User Voice" />} />
-              <Route path="/admin/tickets" element={<ComingSoonPage featureName="Support Tickets" category="Support" />} />
-              <Route path="/admin/notifications" element={<ComingSoonPage featureName="Notifications & Alerts" category="Communications" />} />
-              <Route path="/admin/reports" element={<ComingSoonPage featureName="Usage Reports" category="Analytics" />} />
-              <Route path="/admin/settings" element={<ComingSoonPage featureName="Admin Settings" category="Configuration" />} />
-              <Route path="/admin/help" element={<ComingSoonPage featureName="Help & Documentation" category="Support" />} />
+              {/* Admin Routes (RBAC Protected: Admin or Master Admin) */}
+              <Route path="/admin/dashboard" element={<RoleGuard requiredRole="admin"><AdminHome /></RoleGuard>} />
+              <Route path="/admin/users" element={<RoleGuard requiredRole="admin"><AdminUsersPage /></RoleGuard>} />
+              <Route path="/admin/business-profiles" element={<RoleGuard requiredRole="admin"><AdminBusinessProfilesPage /></RoleGuard>} />
+              <Route path="/admin/industries" element={<RoleGuard requiredRole="admin"><AdminIndustriesPage /></RoleGuard>} />
+              <Route path="/admin/templates" element={<RoleGuard requiredRole="admin"><AdminTemplatesPage /></RoleGuard>} />
+              <Route path="/admin/assets" element={<RoleGuard requiredRole="admin"><AdminVisualAssetsPage /></RoleGuard>} />
+              <Route path="/admin/moderation" element={<RoleGuard requiredRole="admin"><AdminModerationPage /></RoleGuard>} />
+              <Route path="/admin/feedback" element={<RoleGuard requiredRole="admin"><AdminFeedbackPage /></RoleGuard>} />
+              <Route path="/admin/tickets" element={<RoleGuard requiredRole="admin"><AdminTicketsPage /></RoleGuard>} />
+              <Route path="/admin/notifications" element={<RoleGuard requiredRole="admin"><AdminNotificationsPage /></RoleGuard>} />
+              <Route path="/admin/reports" element={<RoleGuard requiredRole="admin"><AdminReportsPage /></RoleGuard>} />
+              <Route path="/admin/settings" element={<RoleGuard requiredRole="admin"><AdminSettingsPage /></RoleGuard>} />
+              <Route path="/admin/help" element={<RoleGuard requiredRole="admin"><AdminHelpPage /></RoleGuard>} />
 
-              {/* Master Admin Routes */}
-              <Route path="/master-admin/dashboard" element={<MasterAdminHome />} />
-              <Route path="/master-admin/users" element={<ComingSoonPage featureName="User Management" category="Executive Governance" />} />
-              <Route path="/master-admin/business-profiles" element={<ComingSoonPage featureName="Business Profiles" category="Executive Governance" />} />
-              <Route path="/master-admin/industries" element={<ComingSoonPage featureName="Industry & Categories" category="Platform Taxonomy" />} />
-              <Route path="/master-admin/templates" element={<ComingSoonPage featureName="Template Library" category="Platform Assets" />} />
-              <Route path="/master-admin/assets" element={<ComingSoonPage featureName="Visual Assets" category="Media Architecture" />} />
-              <Route path="/master-admin/ai-providers" element={<ComingSoonPage featureName="AI Provider Hub" category="Infrastructure" />} />
-              <Route path="/master-admin/plans" element={<ComingSoonPage featureName="Plans & Credits" category="Monetization" />} />
-              <Route path="/master-admin/billing" element={<ComingSoonPage featureName="Payments & Billing" category="Financial Operations" />} />
-              <Route path="/master-admin/content-settings" element={<ComingSoonPage featureName="Content & Research Settings" category="AI Engine" />} />
-              <Route path="/master-admin/notifications" element={<ComingSoonPage featureName="Notifications & Alerts" category="Communications" />} />
-              <Route path="/master-admin/analytics" element={<ComingSoonPage featureName="Usage Analytics & Reports" category="Executive Analytics" />} />
-              <Route path="/master-admin/moderation" element={<ComingSoonPage featureName="Content Moderation" category="Trust & Safety" />} />
-              <Route path="/master-admin/feedback" element={<ComingSoonPage featureName="Feedback Management" category="Platform Insights" />} />
-              <Route path="/master-admin/tickets" element={<ComingSoonPage featureName="Support Tickets" category="Executive Escalations" />} />
-              <Route path="/master-admin/admins" element={<ComingSoonPage featureName="Admin Management & Permissions" category="Security & RBAC" />} />
-              <Route path="/master-admin/system" element={<ComingSoonPage featureName="System Settings" category="System Configuration" />} />
-              <Route path="/master-admin/logs" element={<ComingSoonPage featureName="Security & Audit Logs" category="Compliance" />} />
-              <Route path="/master-admin/help" element={<ComingSoonPage featureName="Help & Documentation" category="Support" />} />
+              {/* Master Admin Routes (RBAC Protected: Master Admin Only) */}
+              <Route path="/master-admin/dashboard" element={<RoleGuard requiredRole="master-admin"><MasterAdminHome /></RoleGuard>} />
+              <Route path="/master-admin/users" element={<RoleGuard requiredRole="master-admin"><AdminUsersPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/business-profiles" element={<RoleGuard requiredRole="master-admin"><AdminBusinessProfilesPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/industries" element={<RoleGuard requiredRole="master-admin"><AdminIndustriesPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/templates" element={<RoleGuard requiredRole="master-admin"><AdminTemplatesPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/assets" element={<RoleGuard requiredRole="master-admin"><AdminVisualAssetsPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/ai-providers" element={<RoleGuard requiredRole="master-admin"><MasterAdminAiProvidersPage /></RoleGuard>} />
+              <Route path="/master-admin/plans" element={<RoleGuard requiredRole="master-admin"><MasterAdminPlansPage /></RoleGuard>} />
+              <Route path="/master-admin/billing" element={<RoleGuard requiredRole="master-admin"><MasterAdminBillingPage /></RoleGuard>} />
+              <Route path="/master-admin/content-settings" element={<RoleGuard requiredRole="master-admin"><MasterAdminContentSettingsPage /></RoleGuard>} />
+              <Route path="/master-admin/notifications" element={<RoleGuard requiredRole="master-admin"><AdminNotificationsPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/analytics" element={<RoleGuard requiredRole="master-admin"><AdminReportsPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/moderation" element={<RoleGuard requiredRole="master-admin"><AdminModerationPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/feedback" element={<RoleGuard requiredRole="master-admin"><AdminFeedbackPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/tickets" element={<RoleGuard requiredRole="master-admin"><AdminTicketsPage isMasterAdmin /></RoleGuard>} />
+              <Route path="/master-admin/admins" element={<RoleGuard requiredRole="master-admin"><MasterAdminAdminsPage /></RoleGuard>} />
+              <Route path="/master-admin/system" element={<RoleGuard requiredRole="master-admin"><MasterAdminSystemPage /></RoleGuard>} />
+              <Route path="/master-admin/logs" element={<RoleGuard requiredRole="master-admin"><MasterAdminLogsPage /></RoleGuard>} />
+              <Route path="/master-admin/help" element={<RoleGuard requiredRole="master-admin"><AdminHelpPage isMasterAdmin /></RoleGuard>} />
 
               {/* Universal 404 Fallback */}
               <Route path="*" element={<NotFoundPage />} />
