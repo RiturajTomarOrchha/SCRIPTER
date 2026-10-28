@@ -216,6 +216,32 @@ export interface ContentIdea {
   imageUrl?: string;
   usageCount?: string;
   isIndustryRecommendation?: boolean;
+  relevance?: 'High' | 'Medium' | 'Trending';
+  relevanceLabel?: string;
+  duration?: string;
+  tags?: string[];
+  keyPoints?: string[];
+  keyPointsHi?: string[];
+  suggestedHooks?: Array<{ type: string; hook: string; hookHi: string }>;
+  suggestedAngles?: Array<{ angle: string; angleHi: string; targetAudience: string }>;
+  viewCount?: string;
+  isTimelyNews?: boolean;
+  sourceAttributionType?: 'verified_news' | 'ai_recommendation' | 'public_research';
+}
+
+export interface TopicResearchContext {
+  summary: string;
+  summaryHi?: string;
+  keyPoints: string[];
+  keyPointsHi?: string[];
+  sources: Array<{ name: string; url?: string; date: string; verified: boolean }>;
+  suggestedHooks?: Array<{ type: string; hook: string; hookHi: string }>;
+  suggestedAngles?: Array<{ angle: string; angleHi: string; targetAudience: string }>;
+  selectedAngle?: string;
+  selectedHook?: string;
+  relevance?: string;
+  tags?: string[];
+  viewCount?: string;
 }
 
 export interface ScriptDraft {

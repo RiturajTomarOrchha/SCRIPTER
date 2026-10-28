@@ -164,6 +164,75 @@ Respond ONLY with valid JSON matching:
   }
 });
 
+// Server-side Gemini Topic Intelligence & In-depth Research
+app.post('/api/generate-research', async (req, res) => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
+    return res.json({
+      isLiveAi: false,
+      message: 'Gemini API key not configured on server. Using client domain templates.',
+    });
+  }
+
+  const {
+    topic,
+    industry = 'General',
+    language = 'hi',
+    businessProfile,
+  } = req.body;
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = `You are Scripter AI Research Intelligence, an expert fact-checker, researcher, and trend analyst for short-form video creators.
+Topic: ${topic}
+Industry: ${industry} (${businessProfile?.name || 'Creator'})
+Language: ${language === 'hi' ? 'Hindi (Devanagari script)' : 'English'}
+
+Provide an objective, structured research brief in valid JSON:
+{
+  "summary": "Concise 2-3 sentence overview explaining why this topic is relevant right now",
+  "summaryHi": "संक्षिप्त 2-3 वाक्यों का शोध सारांश (हिंदी)",
+  "keyPoints": ["5 verified factual bullet points with actionable data, verified numbers, and insights"],
+  "keyPointsHi": ["5 मुख्य शोध बिंदु (हिंदी)"],
+  "sources": [
+    {"name": "Reputable source name (e.g. Government portal, Industry Report, News)", "url": "https://...", "date": "Current Date", "verified": true}
+  ],
+  "suggestedHooks": [
+    {"type": "Question", "hook": "Attention-grabbing question", "hookHi": "आकर्षक प्रश्न हुक"},
+    {"type": "Shocking Fact", "hook": "Surprising fact hook", "hookHi": "चौंकाने वाला तथ्य हुक"},
+    {"type": "Direct Value", "hook": "Actionable takeaway hook", "hookHi": "सीधा मूल्य हुक"}
+  ],
+  "suggestedAngles": [
+    {"angle": "Angle 1 title", "angleHi": "दृष्टिकोण 1", "targetAudience": "Target audience description"}
+  ]
+}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      },
+    });
+
+    const text = response.text?.trim() || '{}';
+    const parsed = JSON.parse(text);
+
+    return res.json({
+      ...parsed,
+      isLiveAi: true,
+      providerNote: 'Generated live with Gemini 2.5 Flash on server',
+    });
+  } catch (error: any) {
+    console.warn('Server Gemini generate-research error:', error?.message);
+    return res.status(200).json({
+      isLiveAi: false,
+      error: error?.message || 'Server research generation error',
+    });
+  }
+});
+
 // Vite dev server middleware or static serving
 async function bootstrap() {
   if (process.env.NODE_ENV === 'production') {

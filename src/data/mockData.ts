@@ -370,45 +370,434 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
     title: 'How to Reduce Electricity Bill with Solar Panels',
     titleHi: 'सोलर पैनल से बिजली बिल कैसे कम करें?',
     industry: 'Real Estate',
-    category: 'बिज़नेस',
+    category: 'कृषि / सौर',
     format: 'Short (15-30s)',
+    duration: 'Reels (60 सेकंड)',
+    relevance: 'High',
+    relevanceLabel: 'उच्च',
+    viewCount: '2.4M views',
     targetAudience: 'Homeowners, Business Owners & Small Factory Owners',
     engagementPotential: 'Viral',
     usageCount: '1.2K उपयोग',
+    tags: ['#SolarEnergy', '#SaveElectricity', '#GreenEnergy', '#GovernmentSubsidy'],
     imageUrl: '/assets/aistudio/Master_Admin_UI___________9_Payments___Billing_Management_7414dccf.png',
     summary: 'Explains how rooftop solar panels can reduce residential and commercial electricity bills by up to 90%, including government subsidies under PM Surya Ghar Yojana.',
-    summaryHi: 'सोलर पैनल लगाकर कैसे आप अपने बिजली बिल को 80-90% तक कम कर सकते हैं और पीएम सूर्य घर योजना की सब्सिडी पा सकते हैं।',
+    summaryHi: 'सोलर पैनल लगाने से घर और व्यवसाय दोनों में बिजली बिल को काफी हद तक कम किया जा सकता है। सरकार की कई योजनाओं से इसकी लागत भी घटती है।',
+    keyPoints: [
+      'How does a solar panel system work? (Photovoltaic cells convert sunlight to electricity)',
+      'What system capacity is optimal for standard households? (2-3 kW system covers typical needs)',
+      'Costs, subsidies, and government schemes (PM Surya Ghar provides up to ₹78,000 direct subsidy)',
+      'Estimated savings on monthly electricity bills (reduce bills by 80% to 90%)',
+      'Crucial maintenance and installation factors (roof angle, certified inverter, 25-year warranty)'
+    ],
+    keyPointsHi: [
+      'सोलर पैनल कैसे काम करता है? (फोटोवोल्टिक सेल सूरज की धूप से सीधी बिजली बनाते हैं)',
+      'घर के लिए सही सिस्टम कितना होना चाहिए? (2 से 3 किलोवाट का सिस्टम सामान्य घर के लिए उपयुक्त है)',
+      'लागत, सब्सिडी और सरकारी योजनाएं (पीएम सूर्य घर योजना से सीधे खाते में ₹78,000 तक की सब्सिडी)',
+      'बिजली बिल में संभावित बचत (हर महीने बिल में 80% से 90% तक की भारी बचत)',
+      'किन बातों का ध्यान रखना ज़रूरी है? (छत की दिशा, इन्वर्टर की गुणवत्ता और 25 साल की वारंटी)'
+    ],
+    suggestedHooks: [
+      {
+        type: 'Question',
+        hook: 'Are you frustrated with surging electricity bills every single month?',
+        hookHi: 'क्या आपका भी बिजली का बिल हर महीने बढ़ता जा रहा है?'
+      },
+      {
+        type: 'Shocking Fact',
+        hook: 'One-time investment, and your electricity is virtually free for 25 years!',
+        hookHi: 'सिर्फ एक बार का निवेश, और 25 साल तक बिजली के बिल से पूरी तरह आजादी!'
+      },
+      {
+        type: 'Government Subsidy',
+        hook: 'The government is depositing up to ₹78,000 subsidy directly into bank accounts for rooftop solar.',
+        hookHi: 'सरकार दे रही है सोलर पैनल लगाने पर ₹78,000 की सीधी सब्सिडी, जानिए कैसे!'
+      }
+    ],
+    suggestedAngles: [
+      {
+        angle: 'Budget Savings Focus',
+        angleHi: 'बजट और मासिक बचत दृष्टिकोण',
+        targetAudience: 'Middle-class families and small shops'
+      },
+      {
+        angle: 'Govt Subsidy Step-by-Step',
+        angleHi: 'सरकारी योजना व सब्सिडी की आसान प्रक्रिया',
+        targetAudience: 'Homeowners looking for quick financial clarity'
+      },
+      {
+        angle: 'Technical Reliability & Lifespan',
+        angleHi: 'तकनीकी मजबूती और 25 साल की वारंटी',
+        targetAudience: 'Informed buyers comparing solar brands'
+      }
+    ],
     outline: [
       'Hook (0-5s): Are you frustrated with surging electricity bills every single month?',
       'Core Points (5-45s): Solar panels provide an immediate, eco-friendly solution that cuts electricity expenses by 80-90% while earning government subsidies.',
       'Call to Action (45-60s): If you are considering rooftop solar, check the link below to calculate your estimated savings today!'
     ],
     outlineHi: [
-      'हुक (0-5 सेकंड): क्या आप हर महीने बढ़ते बिजली बिल से परेशान हैं?',
-      'मुख्य बात (5-45 सेकंड): तो सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है, अधिक यह पर्यावरण के लिए भी सुरक्षित है, यह सौर ऊर्जा से न सिर्फ आपके बिजली बिल में बड़ी कमी लाएगा बल्कि यह एक सुरक्षित निवेश भी साबित हो सकता है।',
-      'निष्कर्ष और CTA (45-60 सेकंड): अगर आप भी अपने घर या कारोबार में सोलर पैनल लगवाने की सोच रहे हैं, तो तुरंत नीचे दिए गए लिंक से डिटेल्स प्राप्त करें और आज ही अपनी छत को पावर प्लांट बनाएं!'
+      'हुक (0-5 सेकंड): क्या आपका भी बिजली का बिल हर महीने बढ़ता जा रहा है?',
+      'मुख्य भाग (5-50 सेकंड): तो इसके लिए एक बढ़िया समाधान है - सोलर पैनल। सोलर पैनल सूरज की रोशनी से बिजली बनाता है, जिससे आप अपने घर या ऑफिस की ज़रूरत का बड़ा हिस्सा खुद ही पूरा कर सकते हैं। इसकी लागत पहले जैसी नहीं रही, क्योंकि सरकार की सब्सिडी और कई योजनाओं से यह अब अधिक किफायती हो गया है।',
+      'समापन और CTA (50-60 सेकंड): अगर आप भी बिजली बिल में लंबे समय तक बचत करना चाहते हैं, तो आज ही सोलर पैनल के विकल्पों के बारे में जानकारी लें और अपने घर के लिए सही सिस्टम चुनें। ऐसा ही और उपयोगी कंटेंट पाने के लिए हमारे चैनल को फॉलो करें!'
     ],
     sources: [
+      { name: 'नवभारत टाइम्स — घर पर सोलर पैनल लगाने की सरकारी योजना...', url: 'https://navbharattimes.indiatimes.com', date: '27 Oct 2026', verified: true },
+      { name: 'अमर उजाला — सोलर पैनल: लागत, सब्सिडी और फायदे...', url: 'https://www.amarujala.com', date: '26 Oct 2026', verified: true },
+      { name: 'PIB (भारत सरकार) — रूफटॉप सोलर योजना — आधिकारिक जानकारी', url: 'https://pib.gov.in', date: '25 Oct 2026', verified: true },
       { name: 'PM Surya Ghar Muft Bijli Yojana Portal', url: 'https://pmsuryaghar.gov.in', date: 'Oct 2026', verified: true },
-      { name: 'Ministry of New & Renewable Energy Advisory', url: 'https://mnre.gov.in', date: 'Sep 2026', verified: true },
-      { name: 'Central Electricity Regulatory Commission (CERC)', url: 'https://cercind.gov.in', date: '2026', verified: true }
+      { name: 'Ministry of New & Renewable Energy (MNRE)', url: 'https://mnre.gov.in', date: 'Sep 2026', verified: true }
     ],
     isTrending: true,
+    sourceAttributionType: 'public_research',
     businessProfileId: 'bp_realestate'
+  },
+  {
+    id: 'idea_reels_content_01',
+    title: '5 Best Content Ideas for Reels',
+    titleHi: 'Reels के लिए 5 बेहतरीन कंटेंट आइडिया',
+    industry: 'News & Media',
+    category: 'बिज़नेस',
+    format: 'Short (15-30s)',
+    duration: '15-30 sec',
+    relevance: 'High',
+    relevanceLabel: 'उच्च',
+    viewCount: '2.4M views',
+    targetAudience: 'Digital Creators, Social Media Managers & Influencers',
+    engagementPotential: 'Viral',
+    usageCount: '2.4M views',
+    tags: ['#Social Media', '#Reels', '#Content Creation', '#Digital Marketing'],
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________1_-_Notifications___Alerts_Management_e6446e8c.png',
+    summary: 'Short-form vertical video is currently the most impactful medium for creators. Here are 5 battle-tested content formats that consistently drive reach and retention.',
+    summaryHi: 'आज के डिजिटल दौर में शॉर्ट वीडियो यानी रील्स सबसे प्रभावी माध्यम बन चुके हैं। यह विषय उन क्रिएटर्स के लिए खास है जो कम समय में ज्यादा दर्शकों तक पहुंचना चाहते हैं।',
+    keyPoints: [
+      'Average duration of 15–30 seconds yields the highest viewer completion and retention.',
+      'Trending audio tracks and niche-specific hashtags significantly enhance algorithmic distribution.',
+      'Integrating storytelling, emotion, and tangible takeaways turns passive scrollers into followers.',
+      'The first 3 seconds decide whether a viewer stays or swipes away.',
+      'A clear, low-friction Call to Action (CTA) multiplies comment velocity.'
+    ],
+    keyPointsHi: [
+      'रील्स की औसत लंबाई 15–30 सेकंड सबसे ज्यादा प्रभावी होती है।',
+      'ट्रेंडिंग ऑडियो और हैशटैग्स से रीच तेजी से बढ़ती है।',
+      'कंटेंट में कहानी, इमोशन और वैल्यू जरूरी है।',
+      'शुरुआती 3 सेकंड का हुक 80% दर्शकों को रोक कर रखता है।',
+      'स्पष्ट और सरल कॉल टू एक्शन (CTA) से दर्शक कमेंट और फॉलो करते हैं।'
+    ],
+    suggestedHooks: [
+      {
+        type: 'Question',
+        hook: 'Do you want your Instagram reels to reach hundreds of thousands of people organically?',
+        hookHi: 'क्या आप भी चाहते हैं कि आपकी रील्स लाखों लोगों तक पहुंचे?'
+      },
+      {
+        type: 'Mistake Avoidance',
+        hook: '90% of creators make this fatal mistake in their first 3 seconds!',
+        hookHi: '90% क्रिएटर्स अपनी रील के पहले 3 सेकंड में यह गलती करते हैं!'
+      },
+      {
+        type: 'Direct Value',
+        hook: 'Here are 5 content ideas that will make your reels impossible to scroll past.',
+        hookHi: 'तो चलिए जानते हैं 5 ऐसे कंटेंट आइडिया जो आपकी रील्स को बना सकते हैं वायरल!'
+      }
+    ],
+    suggestedAngles: [
+      {
+        angle: 'Behind the Scenes & Work in Progress',
+        angleHi: 'Behind the Scenes — अपने काम की झलक दिखाएं',
+        targetAudience: 'Creators and craftspeople building trust'
+      },
+      {
+        angle: 'Bite-Sized Problem Solving',
+        angleHi: 'Quick Tips — अपने एक्सपर्टीज से छोटे और उपयोगी टिप्स दें',
+        targetAudience: 'Educators, coaches, and professionals'
+      },
+      {
+        angle: 'Relatable Storytelling',
+        angleHi: 'Customer Story & Day in My Life — सच्ची कहानी व अनुभव साझा करें',
+        targetAudience: 'General social audience looking for authentic connection'
+      }
+    ],
+    outline: [
+      'Hook (0-5s): Do you want your reels to reach hundreds of thousands of people? Here are 5 content ideas to make your videos viral!',
+      'Main Content (5-50s): 1. Behind the scenes. 2. Quick industry tips. 3. Trend challenge twist. 4. Customer case study. 5. Day in my life vlog.',
+      'CTA (50-60s): Which idea will you try in your next reel? Save this video and comment below!'
+    ],
+    outlineHi: [
+      '1. Hook (0-5 सेकंड): क्या आप भी चाहते हैं कि आपकी रील्स लाखों लोगों तक पहुंचे? तो चलिए जानते हैं 5 ऐसे कंटेंट आइडिया जो आपकी रील्स को बना सकते हैं वायरल!',
+      '2. Main Content (5-50 सेकंड): 1. Behind the Scenes - अपने काम की झलक दिखाएं। 2. Quick Tips - अपने एक्सपर्टीज से छोटे टिप्स दें। 3. Trend Challenge - चल रहे ट्रेंड्स में शामिल हों। 4. Customer Story - अपने क्लाइंट्स की सफलता बताएं। 5. Day in My Life - अपनी दिनचर्या या यात्रा दिखाएं।',
+      '3. CTA (50-60 सेकंड): तो देर किस बात की? आज ही इन आइडियाज में से एक चुनें और अपनी अगली रील बनाएं! अगर मदद चाहिए तो मुझे फॉलो करें और कमेंट में बताएं।'
+    ],
+    sources: [
+      { name: 'Social Media Today — Reels Trends 2024', url: 'https://www.socialmediatoday.com', date: '12 Oct 2024', verified: true },
+      { name: 'HubSpot — Short Form Video Guide', url: 'https://blog.hubspot.com', date: '08 Oct 2024', verified: true },
+      { name: 'YouTube Creator Academy', url: 'https://creatoracademy.youtube.com', date: '05 Oct 2024', verified: true }
+    ],
+    isTrending: true,
+    sourceAttributionType: 'public_research',
+    businessProfileId: 'bp_media'
+  },
+  {
+    id: 'idea_smb_marketing_01',
+    title: 'Digital Marketing Tips for Small Businesses',
+    titleHi: 'Small Business के लिए Digital Marketing Tips',
+    industry: 'Business Consulting',
+    category: 'बिजनेस',
+    format: 'Short (15-30s)',
+    duration: 'Reels (60 सेकंड)',
+    relevance: 'High',
+    relevanceLabel: 'उच्च',
+    viewCount: '1.5M views',
+    targetAudience: 'Shop Owners, Local Services, Entrepreneurs',
+    engagementPotential: 'Trending',
+    usageCount: '1.5M views',
+    tags: ['#Business', '#Marketing', '#SMBGrowth', '#LocalBusiness'],
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________2_User_Management_23b83c9a.png',
+    summary: 'Practical zero-budget marketing tactics for small businesses: Google My Business local SEO, WhatsApp broadcast retention, and hyper-local reels.',
+    summaryHi: 'छोटे व्यापारों के लिए बिना ज्यादा खर्च किए डिजिटल मार्केटिंग के 3 असरदार उपाय: गूगल बिजनेस प्रोफाइल, व्हाट्सएप ब्रॉडकास्ट और लोकल रील्स।',
+    keyPoints: [
+      'Optimizing Google My Business profile drives up to 40% more walk-in store visitors.',
+      'Short videos showcasing product making or customer delight outperform static discount banners.',
+      'WhatsApp status and customer groups generate 5x repeat purchases without ad spend.'
+    ],
+    keyPointsHi: [
+      'गूगल माय बिजनेस पर सही फोटो व रिव्यू डालने से स्थानीय ग्राहक 40% तक बढ़ते हैं।',
+      'प्रोडक्ट की मेकिंग या ग्राहकों की खुशी का छोटा वीडियो बैनर विज्ञापनों से ज्यादा बिकता है।',
+      'व्हाट्सएप स्टेटस से बिना किसी अतिरिक्त खर्च के पुराने ग्राहकों से दोबारा ऑर्डर आते हैं।'
+    ],
+    outline: [
+      'Hook (0-5s): Are you spending money on ads with zero results? Here is how small shops get customers for free.',
+      'Core Points (5-45s): 1. Update Google Maps listing. 2. Post daily 30-sec product reels. 3. Build a VIP WhatsApp loyalty list.',
+      'Call to Action (45-60s): Which of these does your business use? Comment your shop city below!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): क्या आप भी विज्ञापन में पैसे बर्बाद कर रहे हैं? जानिए छोटे बिजनेस के लिए 3 मुफ्त और असरदार मार्केटिंग तरीके!',
+      'मुख्य बात (5-45 सेकंड): 1. अपनी गूगल लिस्टिंग को अपडेट रखें। 2. हर दिन अपने काम का छोटा वीडियो शेयर करें। 3. पुराने ग्राहकों के लिए स्पेशल व्हाट्सएप ऑफर बनाएं।',
+      'निष्कर्ष और CTA (45-60 सेकंड): अपने बिजनेस को बड़ा करने के लिए इस वीडियो को सेव करें और हमारे पेज को फॉलो करें!'
+    ],
+    sources: [
+      { name: 'Google Small Business Insights', url: 'https://smallbusiness.withgoogle.com', date: '2026', verified: true },
+      { name: 'Federation of Small Businesses Survey', url: 'https://fsb.org.uk', date: '2026', verified: true }
+    ],
+    isTrending: false,
+    sourceAttributionType: 'public_research',
+    businessProfileId: 'bp_business'
+  },
+  {
+    id: 'idea_mental_health_01',
+    title: 'Mental Health in Daily Life',
+    titleHi: 'मानसिक स्वास्थ्य और रोज़मर्रा की ज़िंदगी',
+    industry: 'Healthcare & Wellness',
+    category: 'स्वास्थ्य',
+    format: 'Short (15-30s)',
+    duration: 'Shorts 45 सेकंड',
+    relevance: 'High',
+    relevanceLabel: 'उच्च',
+    viewCount: '980K views',
+    targetAudience: 'Working Professionals, Students, Stressed Individuals',
+    engagementPotential: 'Trending',
+    usageCount: '980K views',
+    tags: ['#Health', '#Lifestyle', '#MentalHealth', '#Mindfulness'],
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________17_-_Feedback_Analytics_f27c3e1e.png',
+    summary: 'Practical everyday habits to overcome stress, anxiety, and digital burnout through mindful breathing, screen boundaries, and physical movement.',
+    summaryHi: 'दौड़भाग भरी जिंदगी में मानसिक शांति, तनाव से राहत और सुकून भरी नींद के लिए 3 वैज्ञानिक व आसान दैनिक आदतें।',
+    keyPoints: [
+      '10 minutes of morning daylight exposure regulates serotonin and sleep cycles.',
+      'The 4-7-8 breathing method physically downregulates acute stress within 60 seconds.',
+      'Stopping social media scrolling 45 minutes before sleep restores deep REM rest.'
+    ],
+    keyPointsHi: [
+      'सुबह 10 मिनट हल्की धूप लेने से दिमाग में सेरोटोनिन बढ़ता है और मन शांत रहता है।',
+      '4-7-8 सांस लेने का नियम 60 सेकंड में घबराहट और चिंता को कम कर देता है।',
+      'सोने से 45 मिनट पहले फोन बंद रखने से तनावमुक्त गहरी नींद आती है।'
+    ],
+    outline: [
+      'Hook (0-5s): Feeling overwhelmed and constantly exhausted? Your brain needs this 60-second reset.',
+      'Core Points (5-35s): 1. Morning sunlight before screens. 2. 4-7-8 box breathing. 3. Nighttime digital curfew.',
+      'Call to Action (35-45s): Share this with someone who needs mental peace today. Take care of yourself!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): क्या आप भी हर वक्त तनाव और थकान महसूस करते हैं? जानिए दिमाग को तुरंत शांत करने का 60 सेकंड का फॉर्मूला!',
+      'मुख्य बात (5-35 सेकंड): 1. सुबह उठते ही फोन देखने के बजाय 5 मिनट धूप में बैठें। 2. जब भी चिंता हो, 4 सेकंड सांस लें, 7 सेकंड रोकें और 8 सेकंड में छोड़ें। 3. रात को सोने से पहले स्क्रीन से दूरी बनाएं।',
+      'निष्कर्ष और CTA (35-45 सेकंड): इस वीडियो को अपने दोस्तों से शेयर करें ताकि वो भी मानसिक रूप से स्वस्थ रह सकें। स्वस्थ रहें, मुस्कुराते रहें!'
+    ],
+    sources: [
+      { name: 'National Institute of Mental Health (NIMH)', url: 'https://nimh.nih.gov', date: '2026', verified: true },
+      { name: 'World Health Organization (WHO) Mind Wellness Advisory', url: 'https://who.int', date: '2026', verified: true }
+    ],
+    isTrending: false,
+    sourceAttributionType: 'public_research',
+    businessProfileId: 'bp_health'
+  },
+  {
+    id: 'idea_nep_news_01',
+    title: 'What are the Big Changes in the New Education Policy?',
+    titleHi: 'नई शिक्षा नीति में क्या हैं बड़े बदलाव?',
+    industry: 'Education & Training',
+    category: 'शिक्षा',
+    format: 'Short (15-30s)',
+    duration: 'Reels 60 सेकंड',
+    relevance: 'Trending',
+    relevanceLabel: 'ट्रेंडिंग',
+    viewCount: 'आज - 2.4M views',
+    targetAudience: 'Parents, Students, Educators, Policy Enthusiasts',
+    engagementPotential: 'Viral',
+    usageCount: '2.4M views',
+    tags: ['#Education', '#Policy', '#NEP2026', '#Students'],
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________4_Industry_Categories_Management_c2759e0a.png',
+    summary: 'A fast, verified breakdown of recent structural updates in schools and colleges: 5+3+3+4 framework, regional language options, and practical skill learning.',
+    summaryHi: 'स्कूलों और कॉलेजों में हुए ताज़ा बड़े बदलाव: 5+3+3+4 पैटर्न, मातृभाषा में पढ़ाई, वोकेशनल ट्रेनिंग और बोर्ड परीक्षाओं का नया स्वरूप।',
+    keyPoints: [
+      'The 10+2 system is completely transformed into the foundational 5+3+3+4 structure.',
+      'Early education emphasizes experiential and activity-based learning over rote memorization.',
+      'Multiple entry and exit points in undergraduate degrees allow students to resume studies without losing credits.'
+    ],
+    keyPointsHi: [
+      'पुराना 10+2 सिस्टम अब पूरी तरह 5+3+3+4 के नए फॉर्मेट में बदल चुका है।',
+      'कक्षा 6 से ही कोडिंग और वोकेशनल स्किल्स (व्यावहारिक हुनर) की पढ़ाई अनिवार्य की गई है।',
+      'कॉलेज में मल्टीपल एंट्री-एग्जिट सिस्टम लागू होने से साल खराब होने का डर खत्म हो गया है।'
+    ],
+    outline: [
+      'Hook (0-5s): Huge educational transformation in India! Here is what every parent and student must know today.',
+      'Core Points (5-45s): 1. Foundational stage changes. 2. Skill learning from class 6. 3. Flexible college credit bank.',
+      'Call to Action (45-60s): What do you think about these changes? Share your thoughts below and subscribe for verified updates!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): क्या आपको पता है कि देश की शिक्षा प्रणाली में कौन से बड़े बदलाव लागू हो चुके हैं? जानिए 3 सबसे महत्वपूर्ण बातें!',
+      'मुख्य बात (5-45 सेकंड): 1. रटने के बजाय प्रैक्टिकल हुनर सिखाने पर जोर। 2. कक्षा 6 से ही वोकेशनल ट्रेनिंग की शुरुआत। 3. कॉलेज की पढ़ाई में ब्रेक लेने पर भी क्रेडिट सुरक्षित रहने की सुविधा।',
+      'निष्कर्ष और CTA (45-60 सेकंड): यह जानकारी सभी माता-पिता और छात्रों तक पहुंचाएं। वीडियो को शेयर करें!'
+    ],
+    sources: [
+      { name: 'Ministry of Education (शिक्षा मंत्रालय भारत सरकार)', url: 'https://education.gov.in', date: '28 Oct 2026', verified: true },
+      { name: 'University Grants Commission (UGC) Gazette', url: 'https://ugc.gov.in', date: '27 Oct 2026', verified: true }
+    ],
+    isTrending: true,
+    isTimelyNews: true,
+    sourceAttributionType: 'verified_news',
+    businessProfileId: 'bp_education'
+  },
+  {
+    id: 'idea_stock_market_01',
+    title: 'Signs of Bullish Rally in Stock Market Today',
+    titleHi: 'शेयर बाज़ार में आज तेज़ी के संकेत',
+    industry: 'Business & Finance',
+    category: 'बिज़नेस',
+    format: 'Short (15-30s)',
+    duration: 'Reels 45 सेकंड',
+    relevance: 'Trending',
+    relevanceLabel: 'ट्रेंडिंग',
+    viewCount: 'आज - 1.8M views',
+    targetAudience: 'Investors, Traders, Finance Followers',
+    engagementPotential: 'Viral',
+    usageCount: '1.8M views',
+    tags: ['#Finance', '#StockMarket', '#Nifty', '#Sensex'],
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________14_-_Usage___AI_Credits_Management_3ee78b27.png',
+    summary: 'Key market triggers driving today\'s index rally: foreign institutional inflows, manufacturing index highs, and strong festive quarter corporate earnings.',
+    summaryHi: 'शेयर बाजार में आज की तेजी के 3 प्रमुख कारण: विदेशी निवेशकों की मजबूत खरीदारी, ऑटो व बैंकिंग सेक्टर में उछाल और सकारात्मक तिमाही नतीजे।',
+    keyPoints: [
+      'Nifty and Sensex opened higher driven by robust FII institutional buying in early trade.',
+      'Banking and capital goods sectors led sectoral gainers with over 1.8% intraday surges.',
+      'Retail investors are advised to adhere to strict risk management rather than chasing breakout peaks.'
+    ],
+    keyPointsHi: [
+      'निफ्टी और सेंसेक्स में विदेशी संस्थागत निवेशकों (FII) की ताज़ा खरीदारी से उछाल देखा गया।',
+      'बैंकिंग और ऑटो सेक्टर ने बाज़ार की रैली का नेतृत्व किया।',
+      'छोटे निवेशकों को सलाह है कि बिना स्टॉपलॉस और रिसर्च के ट्रेडिंग न करें।'
+    ],
+    outline: [
+      'Hook (0-5s): Green wave across Dalal Street today! Why is the stock market rallying so aggressively?',
+      'Core Points (5-35s): 1. Foreign institutional buying. 2. Banking index performance. 3. Strong quarterly corporate outlook.',
+      'Call to Action (35-45s): Are you invested in this rally? Tell us your favorite sector in the comments!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): बाज़ार में आज चौतरफा हरियाली! जानिए किन 3 कारणों से शेयर बाजार में आई है जबर्दस्त तेजी!',
+      'मुख्य बात (5-35 सेकंड): 1. विदेशी संस्थागत निवेशकों की भारी खरीदारी। 2. बैंकिंग और आईटी शेयरों में तेजी। 3. कंपनियों के बेहतरीन वित्तीय परिणाम।',
+      'निष्कर्ष और CTA (35-45 सेकंड): अपनी निवेश यात्रा को समझदारी से आगे बढ़ाएं। वीडियो को सेव करें और फाइनेंस अपडेट्स के लिए फॉलो करें!'
+    ],
+    sources: [
+      { name: 'National Stock Exchange (NSE India Market Feed)', url: 'https://nseindia.com', date: '28 Oct 2026', verified: true },
+      { name: 'BSE Market Bulletin', url: 'https://bseindia.com', date: '28 Oct 2026', verified: true }
+    ],
+    isTrending: true,
+    isTimelyNews: true,
+    sourceAttributionType: 'verified_news',
+    businessProfileId: 'bp_business'
+  },
+  {
+    id: 'idea_weather_mp_01',
+    title: 'How will the weather be in Madhya Pradesh today?',
+    titleHi: 'मध्य प्रदेश में आज कैसा रहेगा मौसम?',
+    industry: 'News & Media',
+    category: 'मौसम',
+    format: 'Short (15-30s)',
+    duration: 'Video 1 मिनट',
+    relevance: 'Trending',
+    relevanceLabel: 'मौसम अपडेट',
+    viewCount: 'आज - 1.2M views',
+    targetAudience: 'MP Citizens, Farmers, Commuters, Travelers',
+    engagementPotential: 'Trending',
+    usageCount: '1.2M views',
+    tags: ['#Weather', '#MP', '#Bhopal', '#Indore'],
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________18_-_Support_Tickets_Management_bea7e05e.png',
+    summary: 'Statewide meteorological bulletin for MP: morning chill in northern districts, clear skies in central regions, and agricultural advice for Rabi sowing.',
+    summaryHi: 'मौसम विभाग की ताज़ा रिपोर्ट: ग्वालियर-चंबल अंचल में सुबह ठंड की दस्तक, भोपाल-इंदौर में साफ मौसम और किसानों के लिए रबी फसलों की ज़रूरी सलाह।',
+    keyPoints: [
+      'Night temperatures dipped by 2 to 3 degrees across northern and eastern MP districts.',
+      'Day temperatures remain pleasant with minimal rain probability across Bhopal, Indore, and Jabalpur.',
+      'Agricultural advisory recommends timely soil preparation for wheat and mustard cultivation.'
+    ],
+    keyPointsHi: [
+      'ग्वालियर, रीवा और चंबल संभाग में रात के तापमान में 2 से 3 डिग्री की गिरावट दर्ज की गई है।',
+      'भोपाल, इंदौर और नर्मदापुरम में दिन में खिली धूप रहेगी, बारिश का कोई अनुमान नहीं है।',
+      'किसानों के लिए गेहूं व सरसों की बुवाई के संबंध में विशेष मौसम निर्देश जारी किए गए हैं।'
+    ],
+    outline: [
+      'Hook (0-5s): Changing weather across Madhya Pradesh today! Here is your quick district weather bulletin.',
+      'Core Points (5-35s): 1. Temperature drops in Gwalior-Chambal. 2. Clear sunny skies in Indore and Bhopal. 3. Advisory for Rabi farmers.',
+      'Call to Action (35-45s): Which district are you watching from? Comment your city weather below!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): मध्य प्रदेश में मौसम ने ली करवट! जानिए आज आपके जिले में कैसा रहेगा तापमान!',
+      'मुख्य बात (5-35 सेकंड): 1. उत्तरी जिलों में सुबह हल्की ठंडक की शुरुआत। 2. भोपाल और इंदौर में खिली धूप के साथ मौसम सुहावना रहेगा। 3. रबी फसलों की बुवाई के लिए मौसम पूरी तरह अनुकूल है।',
+      'निष्कर्ष और CTA (35-45 सेकंड): अपने शहर का मौसम जानने के लिए कमेंट में अपने जिले का नाम लिखें और वीडियो शेयर करें!'
+    ],
+    sources: [
+      { name: 'India Meteorological Department (IMD Bhopal Centre)', url: 'https://mausam.imd.gov.in', date: '28 Oct 2026', verified: true },
+      { name: 'MP State Disaster & Weather Monitoring Centre', url: 'https://mp.gov.in', date: '28 Oct 2026', verified: true }
+    ],
+    isTrending: true,
+    isTimelyNews: true,
+    sourceAttributionType: 'verified_news',
+    businessProfileId: 'bp_media'
   },
   {
     id: 'idea_orchha_01',
     title: '5 Big Reasons Why Orchha Tourism is Booming',
-    titleHi: 'ओरछा पर्यटन को बढ़ाने के 5 बड़े कारण',
+    titleHi: 'MP के पर्यटन स्थलों पर एक खास वीडियो',
     industry: 'Hospitality',
-    category: 'ट्रैवल',
+    category: 'यात्रा',
     format: 'Medium (30-60s)',
+    duration: 'Reels 90 सेकंड',
+    relevance: 'High',
+    relevanceLabel: 'उच्च',
+    viewCount: '856K views',
     targetAudience: 'Travel Enthusiasts, History Buffs & Weekend Explorers',
     engagementPotential: 'Trending',
     usageCount: '856 उपयोग',
+    tags: ['#Tourism', '#MPTourism', '#TravelGuide', '#Heritage'],
     imageUrl: '/assets/aistudio/Master_Admin_UI___________18_-_Support_Tickets_Management_bea7e05e.png',
     summary: 'Showcases Orchha\'s historical palaces, Raja Ram Temple reverence, Betwa river rafting, heritage homestays, and UNESCO tentative heritage status.',
     summaryHi: 'ओरछा के भव्य महल, रामराजा मंदिर की अनूठी परंपरा, बेतवा नदी में रिवर राफ्टिंग, हेरिटेज स्टे और ऐतिहासिक धरोहर के 5 प्रमुख कारण।',
+    keyPoints: [
+      'Raja Ram Temple is the only location in the world where Lord Ram receives an official state guard of honor.',
+      'Betwa river features picturesque stone cenotaphs (chhatris) and thrilling soft-water rafting.',
+      'Jahangir Mahal blends Mughal and Rajput palace architecture seamlessly.'
+    ],
+    keyPointsHi: [
+      'रामराजा मंदिर दुनिया का एकमात्र ऐसा स्थान है जहाँ भगवान राम को सशस्त्र पुलिस द्वारा गार्ड ऑफ ऑनर दिया जाता है।',
+      'बेतवा नदी के किनारे ऐतिहासिक छतरियां और रिवर राफ्टिंग का अद्भुत संगम देखने को मिलता है।',
+      'जहांगीर महल और चतुर्भुज मंदिर राजपूत व मुग़ल वास्तुकला की बेमिसाल मिसाल हैं।'
+    ],
     outline: [
       'Hook (0-5s): Did you know about the only town in India where Lord Ram is worshipped as a living king?',
       'Core Points (5-40s): 1. Raja Ram Temple guard of honor. 2. Jahangir Mahal architectural marvel. 3. Betwa rafting & cenotaphs.',
@@ -424,21 +813,37 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
       { name: 'Archaeological Survey of India (ASI)', url: 'https://asi.nic.in', date: 'Aug 2026', verified: true }
     ],
     isTrending: true,
+    sourceAttributionType: 'public_research',
     businessProfileId: 'bp_food'
   },
   {
     id: 'idea_immunity_trending_01',
     title: 'Simple Home Remedies to Boost Immunity Fast',
-    titleHi: 'इम्युनिटी बढ़ाने के आसान घरेलू उपाय',
+    titleHi: 'इम्युनिटी बढ़ाने के 5 आसान उपाय',
     industry: 'Healthcare & Wellness',
     category: 'स्वास्थ्य',
     format: 'Short (15-30s)',
+    duration: 'Shorts 45 सेकंड',
+    relevance: 'High',
+    relevanceLabel: 'उच्च',
+    viewCount: '2.4K उपयोग',
     targetAudience: 'Families, Senior Citizens, Working Professionals',
     engagementPotential: 'Viral',
     usageCount: '2.4K उपयोग',
+    tags: ['#Health', '#Immunity', '#Ayurveda', '#Wellness'],
     imageUrl: '/assets/aistudio/Master_Admin_UI___________16_-_Feedback_Management_65370e7a.png',
     summary: '3 natural Indian kitchen essentials to boost your daily immune response: Amla, Tulsi-Ginger Kadha, and turmeric with black pepper.',
-    summaryHi: 'रसोई में मौजूद आंवला, तुलसी-अदरक का काढ़ा और हल्दी-काली मिर्च के नियमित सेवन से मजबूत इम्यूनिटी पाने के आसान टिप्स।',
+    summaryHi: 'रसोई में मौजूद आंवला, तुलसी-अदरक का काढ़ा और हल्दी-काली मिर्च के नियमित सेवन से मजबूत इम्यूनिटी पाने के 5 आसान उपाय।',
+    keyPoints: [
+      'Raw Amla provides 20x more Vitamin C than oranges and elevates white blood cell activity.',
+      'Piperine in black pepper increases curcumin absorption from turmeric by up to 2000%.',
+      'Steaming with Ajwain or Tulsi clears respiratory pathways within minutes.'
+    ],
+    keyPointsHi: [
+      'कच्चा आंवला संतरे से 20 गुना ज्यादा विटामिन सी देता है जो संक्रमण से लड़ने में मदद करता है।',
+      'हल्दी के साथ एक चुटकी काली मिर्च मिलाने से करक्यूमिन का अवशोषण 2000% तक बढ़ जाता है।',
+      'तुलसी और अदरक का ताजा काढ़ा मौसमी फ्लू और गले की खराश से तुरंत राहत देता है।'
+    ],
     outline: [
       'Hook (0-5s): Tired of catching a cold every season? Fix your immunity with 3 natural kitchen ingredients!',
       'Core Points (5-20s): 1. Fresh Amla juice on empty stomach. 2. Curcumin-rich Haldi Doodh with black pepper. 3. 20 mins morning sunlight.',
@@ -454,6 +859,7 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
       { name: 'ICMR Nutrition Advisory', url: 'https://icmr.gov.in', date: 'Sep 2026', verified: true }
     ],
     isTrending: true,
+    sourceAttributionType: 'public_research',
     businessProfileId: 'bp_health'
   },
   {
@@ -463,13 +869,25 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
     industry: 'News & Media',
     category: 'करेंट ट्रेंड्स',
     format: 'Short (15-30s)',
+    duration: 'Video 2 मिनट',
     targetAudience: 'Local Journalists, Digital Creators, Community Reporters',
     engagementPotential: 'Viral',
     usageCount: '932 उपयोग',
     isIndustryRecommendation: true,
+    tags: ['#LocalNews', '#Journalism', '#CivicIssues', '#CommunityNews'],
     imageUrl: '/assets/aistudio/Master_Admin_UI___________1_-_Notifications___Alerts_Management_e6446e8c.png',
     summary: 'Mastering hyper-local storytelling: strong civic hook in first 3 seconds, local landmark b-roll, and community call to action.',
     summaryHi: 'स्थानीय मुद्दों को डिजिटल ऑडियंस तक पहुंचाने के नियम: पहले 3 सेकंड में स्थानीय सवाल, लोकेशन फुटेज और नागरिक राय।',
+    keyPoints: [
+      'Show the physical civic issue (pothole, water leak, hospital queue) within the first 2 seconds.',
+      'Always quote local residents and tag responsible administrative authorities.',
+      'Maintain balanced, non-sensational factual reporting to build long-term local trust.'
+    ],
+    keyPointsHi: [
+      'पहले 2 सेकंड में समस्या का सीधा वीडियो दिखाएं ताकि स्थानीय लोग तुरंत पहचान सकें।',
+      'क्षेत्रीय लोगों की बात शामिल करें और संबंधित प्रशासनिक अधिकारियों को टैग करें।',
+      'सनसनीखेज दावों के बजाय तथ्यात्मक रिपोर्टिंग करें ताकि दर्शकों का स्थायी भरोसा बने।'
+    ],
     outline: [
       'Hook (0-5s): Local news does not have to be boring! Here is how creators are hitting 100k views on city issues.',
       'Core Points (5-20s): 1. Focus on common problems (traffic, roads, water). 2. Tag local authorities. 3. Ask audience for their city experiences.',
@@ -492,13 +910,25 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
     industry: 'News & Media',
     category: 'डिजिटल मीडिया',
     format: 'Medium (30-60s)',
+    duration: 'Reels 60 सेकंड',
     targetAudience: 'Creators, Small Brands, Freelancers',
     engagementPotential: 'Viral',
     usageCount: '1.8K उपयोग',
     isIndustryRecommendation: true,
+    tags: ['#SocialMediaGrowth', '#AudienceBuilding', '#CreatorEconomy'],
     imageUrl: '/assets/aistudio/Scripter_App_Tools_Showcase_819e4ce4.png',
     summary: 'A fast breakdown of algorithm-friendly habits: daily consistency, retention-focused hooks, community reply loops, and repurposing across platforms.',
     summaryHi: 'इंस्टाग्राम और यूट्यूब पर ऑर्गेनिक ग्रोथ के 10 नियम: डेली रील्स, 3-सेकंड हुक, तेज एडिटिंग और दर्शकों के सवालों पर वीडियो बनाना।',
+    keyPoints: [
+      'Batching content creation on weekends prevents mid-week creator burnout.',
+      'Optimizing video caption keywords improves search discovery across Instagram and YouTube.',
+      'Replying to comments in the first 60 minutes signals high engagement to the algorithm.'
+    ],
+    keyPointsHi: [
+      'वीकेंड पर एक साथ 4-5 वीडियो का ड्राफ्ट तैयार करने से निरंतरता बनी रहती है।',
+      'कैप्शन में प्रासंगिक कीवर्ड्स शामिल करने से सर्च रिजल्ट्स में वीडियो ऊपर आता है।',
+      'पहले 1 घंटे में कमेंट्स का जवाब देने से एंगेजमेंट तेजी से बढ़ता है।'
+    ],
     outline: [
       'Hook (0-5s): 95% of accounts stay under 1,000 followers because they make this one mistake.',
       'Core Points (5-45s): 1. Retention-first hooks. 2. Clear visual cues. 3. Post at consistent creator hours. 4. Reply to every first-hour comment.',
@@ -521,13 +951,25 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
     industry: 'Education & Training',
     category: 'मीडिया ट्रेनिंग',
     format: 'Short (15-30s)',
+    duration: 'Video 3 मिनट',
     targetAudience: 'Job Seekers, Students, Aspiring Broadcasters',
     engagementPotential: 'High',
     usageCount: '764 उपयोग',
     isIndustryRecommendation: true,
+    tags: ['#InterviewPrep', '#CareerTips', '#CommunicationSkills'],
     imageUrl: '/assets/aistudio/Master_Admin_UI___________2_User_Management_23b83c9a.png',
     summary: 'STAR technique explained simply: Situation, Task, Action, Result. Plus body language and teleprompter practice tips.',
     summaryHi: 'किसी भी इंटरव्यू या ऑन-कैमरा बाइट में आत्मविश्वास से बोलने के 3 नियम: स्पष्ट आवाज, STAR फॉर्मूला और चेहरे पर मुस्कान।',
+    keyPoints: [
+      'STAR Framework (Situation, Task, Action, Result) ensures concise, high-impact storytelling.',
+      'Practicing delivery with a teleprompter trains steady eye-level pacing and eliminates filler words.',
+      'Pausing for 2 seconds before answering demonstrates composure and clarity.'
+    ],
+    keyPointsHi: [
+      'STAR फॉर्मूला (स्थिति, काम, आपका कदम, परिणाम) लंबी बात को सटीक और असरदार बनाता है।',
+      'टेलीप्रॉम्प्टर के साथ बोलने का अभ्यास करने से नर्वसनेस दूर होती है और आंखों का संपर्क बना रहता है।',
+      'सवाल सुनने के बाद 2 सेकंड सोचकर बोलना आत्मविश्वास का प्रतीक होता है।'
+    ],
     outline: [
       'Hook (0-5s): Nervous before big interviews? Here is the STAR framework used by top leaders.',
       'Core Points (5-20s): 1. Explain the Situation clearly. 2. Define your specific Task. 3. Detail your Action. 4. Highlight the measurable Result.',

@@ -9,11 +9,13 @@ import {
   isGeminiConfigured,
 } from '../../services/aiService';
 import { saveProject, addNotification, getProjects } from '../../services/storage';
-import { ScriptScene, ScriptVersion, Project } from '../../types';
+import { ScriptScene, ScriptVersion, Project, TopicResearchContext, ContentIdea } from '../../types';
+import { DEMO_CONTENT_IDEAS } from '../../data/mockData';
 import {
   FileText,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   Copy,
   Check,
   Edit3,
@@ -42,6 +44,13 @@ import {
   Scissors,
   Maximize2,
   CheckCircle2,
+  BookOpen,
+  ExternalLink,
+  ShieldCheck,
+  Trash2,
+  Hash,
+  MessageSquare,
+  Flame,
 } from 'lucide-react';
 
 export const ScriptStudioPage: React.FC = () => {
@@ -50,7 +59,7 @@ export const ScriptStudioPage: React.FC = () => {
   const { activeBusinessProfile, useCredits, deductCredits, creditsInfo } = useRole();
   const { language } = useLanguage();
 
-  // Navigation state parameters (passed from Ideas or Projects)
+  // Navigation state parameters (passed from Ideas, Research or Projects)
   const navState = (location.state as {
     prefilledTopic?: string;
     ideaId?: string;
@@ -58,6 +67,8 @@ export const ScriptStudioPage: React.FC = () => {
     industry?: string;
     outline?: string[];
     projectId?: string;
+    researchContext?: TopicResearchContext;
+    initialHook?: string;
   }) || {};
 
   // Form & Settings State
@@ -66,26 +77,57 @@ export const ScriptStudioPage: React.FC = () => {
   const [isChangingTopic, setIsChangingTopic] = useState<boolean>(false);
   const [tempTopic, setTempTopic] = useState<string>(topic);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isResearchDrawerOpen, setIsResearchDrawerOpen] = useState<boolean>(false);
 
-  // Script Configuration (Panel 2)
+  // Look up matching research context if not passed directly via navigation state
+  const resolvedResearch: TopicResearchContext | null = React.useMemo(() => {
+    if (navState.researchContext) return navState.researchContext;
+    const match = DEMO_CONTENT_IDEAS.find((i) => i.id === navState.ideaId || i.title === topic || i.titleHi === topic);
+    if (match) {
+      return {
+        summary: match.summary,
+        summaryHi: match.summaryHi,
+        keyPoints: match.keyPoints || match.outline,
+        keyPointsHi: match.keyPointsHi || match.outlineHi,
+        sources: match.sources || [],
+        suggestedHooks: match.suggestedHooks,
+        suggestedAngles: match.suggestedAngles,
+        relevance: match.relevanceLabel || match.relevance,
+        tags: match.tags,
+        viewCount: match.viewCount,
+      };
+    }
+    return null;
+  }, [navState.researchContext, navState.ideaId, topic]);
+
+  // Script Configuration (Panel 3: फॉर्मेट, भाषा, लंबाई, टोन/शैली, प्लेटफॉर्म)
+  const [selectedFormat, setSelectedFormat] = useState<string>('Reels / Short');
   const [selectedLanguage, setSelectedLanguage] = useState<'hi' | 'en' | 'hinglish'>('hi');
   const [videoLength, setVideoLength] = useState<'30s' | '60s' | '90s' | '180s'>('60s');
-  const [tone, setTone] = useState<string>('शांत और प्रभावी');
-  const [targetAudience, setTargetAudience] = useState<string>('सामान्य जनता');
+  const [tone, setTone] = useState<string>('सरल और संवादात्मक');
+  const [targetAudience, setTargetAudience] = useState<string>('General Audience');
+  const [platform, setPlatform] = useState<string>('Instagram Reels');
 
-  // Script Content State (Sections Hook, Body, CTA)
+  // Script Content State (Structured Sections: Hook, Body, CTA)
   const [hook, setHook] = useState<string>(
-    'क्या आप हर महीने बढ़ते बिजली बिल से परेशान हैं?'
+    navState.initialHook ||
+      (language === 'hi'
+        ? 'क्या आपका भी बिजली का बिल हर महीने बढ़ता जा रहा है?'
+        : 'Are you frustrated with surging electricity bills every single month?')
   );
   const [mainBody, setMainBody] = useState<string>(
-    'तो सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है, अधिक यह पर्यावरण के लिए भी सुरक्षित है, यह सौर ऊर्जा से न सिर्फ आपके बिजली बिल में बड़ी कमी लाएगा बल्कि यह एक सुरक्षित निवेश भी साबित हो सकता है।'
+    language === 'hi'
+      ? 'तो इसके लिए एक बढ़िया समाधान है - सोलर पैनल। सोलर पैनल सूरज की रोशनी से बिजली बनाता है, जिससे आप अपने घर या ऑफिस की ज़रूरत का बड़ा हिस्सा खुद ही पूरा कर सकते हैं। इसकी लागत पहले जैसी नहीं रही, क्योंकि सरकार की सब्सिडी और कई योजनाओं से यह अब अधिक किफायती हो गया है।'
+      : 'Solar panels provide an immediate, eco-friendly solution that cuts electricity expenses by 80-90% while earning government subsidies under PM Surya Ghar Yojana.'
   );
   const [closingCta, setClosingCta] = useState<string>(
-    'अगर आप भी अपने घर या कारोबार में सोलर पैनल लगवाने की सोच रहे हैं, तो तुरंत नीचे दिए गए लिंक से डिटेल्स प्राप्त करें और आज ही अपनी छत को पावर प्लांट बनाएं!'
+    language === 'hi'
+      ? 'अगर आप भी बिजली बिल में लंबे समय तक बचत करना चाहते हैं, तो आज ही सोलर पैनल के विकल्पों के बारे में जानकारी लें और अपने घर के लिए सही सिस्टम चुनें। ऐसा ही और उपयोगी कंटेंट पाने के लिए हमारे चैनल को फॉलो करें!'
+      : 'If you are considering rooftop solar, check the link below to calculate your estimated savings today. Follow for daily energy-saving tips!'
   );
 
-  // Active View / Edit Mode
-  const [activeTabMode, setActiveTabMode] = useState<'script' | 'edit' | 'visuals'>('script');
+  // Active View Mode ('script' | 'edit' | 'research')
+  const [activeTabMode, setActiveTabMode] = useState<'script' | 'edit' | 'research'>('script');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [transformLoading, setTransformLoading] = useState<string | null>(null);
   const [customPromptOpen, setCustomPromptOpen] = useState<boolean>(false);
@@ -96,37 +138,44 @@ export const ScriptStudioPage: React.FC = () => {
   const [versions, setVersions] = useState<ScriptVersion[]>([
     {
       version: 1,
-      updatedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-      hook: 'क्या आप हर महीने बढ़ते बिजली बिल से परेशान हैं?',
-      mainContent: [
-        'तो सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है, अधिक यह पर्यावरण के लिए भी सुरक्षित है, यह सौर ऊर्जा से न सिर्फ आपके बिजली बिल में बड़ी कमी लाएगा बल्कि यह एक सुरक्षित निवेश भी साबित हो सकता है।'
-      ],
-      closing: 'अगर आप भी अपने घर या कारोबार में सोलर पैनल लगवाने की सोच रहे हैं, तो तुरंत नीचे दिए गए लिंक से डिटेल्स प्राप्त करें और आज ही अपनी छत को पावर प्लांट बनाएं!'
-    }
+      updatedAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+      hook: hook,
+      mainContent: [mainBody],
+      closing: closingCta,
+    },
   ]);
 
   // Project linkage
   const [savedProjectId, setSavedProjectId] = useState<string | null>(navState.projectId || null);
   const [saveSuccessToast, setSaveSuccessToast] = useState<boolean>(false);
   const [copiedToast, setCopiedToast] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isInsufficientCreditModalOpen, setIsInsufficientCreditModalOpen] = useState(false);
 
   // Calculate stats
   const fullScriptText = `${hook}\n\n${mainBody}\n\n${closingCta}`;
   const totalChars = fullScriptText.length;
-  const wordCount = fullScriptText.trim().split(/\s+/).length;
+  const wordCount = fullScriptText.trim().split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = Math.round((wordCount / 130) * 60);
 
   // If outline was passed from an idea on mount, set it up
   useEffect(() => {
     if (navState.outline && navState.outline.length >= 2) {
-      setHook(navState.outline[0] || hook);
+      setHook(navState.initialHook || navState.outline[0] || hook);
       setMainBody(navState.outline.slice(1, -1).join('\n\n') || navState.outline[1]);
       if (navState.outline.length > 2) {
         setClosingCta(navState.outline[navState.outline.length - 1]);
       }
     }
-  }, [navState.outline]);
+  }, [navState.outline, navState.initialHook]);
+
+  // Toast clear
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   // Save version snapshot helper
   const recordVersion = (newHook: string, newBody: string, newClosing: string) => {
@@ -140,7 +189,7 @@ export const ScriptStudioPage: React.FC = () => {
     setVersions((prev) => [newVer, ...prev]);
   };
 
-  // AI Generation (Primary)
+  // AI Generation (Primary - grounded in Research Context)
   const handleGenerateScript = async () => {
     if (creditsInfo.totalAvailable < 1) {
       setIsInsufficientCreditModalOpen(true);
@@ -150,12 +199,22 @@ export const ScriptStudioPage: React.FC = () => {
     setIsGenerating(true);
     try {
       const durSec = videoLength === '30s' ? 30 : videoLength === '60s' ? 60 : 90;
+
+      // Ground prompt in research facts if available
+      const researchBulletPoints = resolvedResearch
+        ? (language === 'hi' ? resolvedResearch.keyPointsHi : resolvedResearch.keyPoints)?.join('; ')
+        : '';
+      const additionalNotes = researchBulletPoints
+        ? `Grounded in verified facts: ${researchBulletPoints}`
+        : '';
+
       const result = await generateScriptWithAi({
         topic,
         videoType: videoLength === '30s' ? 'short' : 'medium',
         durationSeconds: durSec,
         language: selectedLanguage,
         tone,
+        additionalInstructions: additionalNotes,
         businessProfile: activeBusinessProfile,
       });
 
@@ -170,14 +229,7 @@ export const ScriptStudioPage: React.FC = () => {
         businessProfileName: activeBusinessProfile.name,
       });
 
-      addNotification({
-        type: 'script_ready',
-        title: language === 'en' ? 'Script Generated' : 'स्क्रिप्ट तैयार हो गई',
-        titleHi: 'स्क्रिप्ट तैयार हो गई',
-        message: `Generated: "${topic}"`,
-        messageHi: `"${topic}" के लिए आपकी स्क्रिप्ट तैयार है।`,
-        actionUrl: '/user/script-studio',
-      });
+      setToastMessage(language === 'en' ? 'Script generated successfully with verified facts!' : 'शोध आधारित स्क्रिप्ट सफलतापूर्वक तैयार हुई!');
     } catch (err) {
       console.error(err);
     } finally {
@@ -206,10 +258,32 @@ export const ScriptStudioPage: React.FC = () => {
       recordVersion(res.hook, res.mainContent.join('\n\n'), res.closing);
       setCustomPromptOpen(false);
       setCustomInstruction('');
+      setToastMessage(language === 'en' ? `Transformation applied: ${action}` : 'बदलाव लागू किया गया!');
     } catch (err) {
       console.error(err);
     } finally {
       setTransformLoading(null);
+    }
+  };
+
+  // Insert a research point directly into the script body
+  const handleInsertResearchPoint = (pointText: string) => {
+    setMainBody((prev) => `${prev}\n\n• ${pointText}`);
+    setToastMessage(language === 'en' ? 'Fact added to script!' : 'तथ्य स्क्रिप्ट में जोड़ा गया!');
+  };
+
+  // Apply alternate hook from research
+  const handleApplyResearchHook = (hookText: string) => {
+    setHook(hookText);
+    setToastMessage(language === 'en' ? 'Hook updated from research!' : 'हुक अपडेट किया गया!');
+  };
+
+  // Clear script
+  const handleClearScript = () => {
+    if (confirm(language === 'en' ? 'Clear the current script text?' : 'क्या आप वर्तमान स्क्रिप्ट खाली करना चाहते हैं?')) {
+      setHook('');
+      setMainBody('');
+      setClosingCta('');
     }
   };
 
@@ -243,7 +317,7 @@ export const ScriptStudioPage: React.FC = () => {
     setTimeout(() => setCopiedToast(false), 2000);
   };
 
-  // Open in Teleprompter (Direct Handoff as mandated in Prompt 6)
+  // Open in Teleprompter (Prompt 6 direct handoff)
   const handleOpenTeleprompter = () => {
     const proj = handleSaveProject();
     navigate('/user/teleprompter', {
@@ -256,18 +330,27 @@ export const ScriptStudioPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 pb-24 md:pb-12 space-y-5">
-      {/* 1. Top Breadcrumb & Selected Topic Bar (Panel 2) */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 pb-24 md:pb-12 space-y-5">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-20 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* 1. Top Breadcrumb & Selected Topic Banner (Panel 3 Image 1 & 2) */}
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/user/ideas')}
             className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
-            title="Back to Ideas"
+            title="Back to Ideas & Research"
           >
             ← {language === 'en' ? 'Back' : 'वापस'}
           </button>
-          <div>
+
+          <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-semibold">
                 {language === 'en' ? 'Selected Topic:' : 'चयनित विषय:'}
@@ -277,38 +360,70 @@ export const ScriptStudioPage: React.FC = () => {
                   setTempTopic(topic);
                   setIsChangingTopic(true);
                 }}
-                className="text-[11px] font-bold text-blue-600 hover:underline"
+                className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1"
               >
-                {language === 'en' ? 'Change' : 'विषय बदलें'}
+                <Edit3 className="w-3 h-3" />
+                <span>{language === 'en' ? 'Change' : 'विषय बदलें'}</span>
               </button>
             </div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 line-clamp-1">
+            <h1 className="text-base sm:text-xl font-bold text-slate-900 line-clamp-1">
               {topic}
             </h1>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsGuideOpen(true)}
-          className="text-xs font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 self-start sm:self-auto"
-        >
-          <HelpCircle className="w-3.5 h-3.5" />
-          <span>{language === 'en' ? 'How to write a script?' : 'स्क्रिप्ट कैसे लिखें?'}</span>
-        </button>
+        {/* Right side Topic Actions: Research Context Pill, Save Draft */}
+        <div className="flex items-center gap-2 self-end md:self-auto">
+          {resolvedResearch && (
+            <button
+              onClick={() => setIsResearchDrawerOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+              title="Open verified research context & source notes"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+              <span>{language === 'en' ? 'Research Context' : 'रिसर्च संदर्भ'}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
+          )}
+
+          <button
+            onClick={handleSaveProject}
+            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{language === 'en' ? 'Save Draft' : 'सेव ड्राफ्ट'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* 2. Script Settings Bar (Panel 2: भाषा, लंबाई, टोन, Audience) */}
+      {/* 2. Script Settings Bar (Panel 3: कंटेंट फॉर्मेट, भाषा, लंबाई, टोन/शैली, प्लेटफॉर्म) */}
       <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-3">
         <div className="flex items-center justify-between text-xs font-bold text-slate-800">
           <span className="uppercase tracking-wider text-[11px] text-slate-400">
             {language === 'en' ? 'Script Settings' : 'स्क्रिप्ट सेटिंग्स'}
           </span>
-          <span className="text-[11px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
-            Active: {activeBusinessProfile.name}
+          <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full font-semibold border border-emerald-200/50">
+            {activeBusinessProfile.name} • {activeBusinessProfile.industry}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+          {/* Content Format */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-slate-500">
+              {language === 'en' ? 'Format' : 'कंटेंट फॉर्मेट'}
+            </label>
+            <select
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value)}
+              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="Reels / Short">Short Video (Reels)</option>
+              <option value="Story">Story / Status</option>
+              <option value="Long Form">Long Video (YouTube)</option>
+            </select>
+          </div>
+
           {/* Language */}
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-slate-500">
@@ -336,54 +451,63 @@ export const ScriptStudioPage: React.FC = () => {
               className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value="30s">30 सेकंड (Shorts)</option>
-              <option value="60s">60 सेकंड (Reels)</option>
+              <option value="60s">~ 60 सेकंड (Reels)</option>
               <option value="90s">90 सेकंड</option>
               <option value="180s">3 मिनट (Long)</option>
             </select>
           </div>
 
-          {/* Tone */}
+          {/* Tone / Style */}
           <div className="space-y-1">
             <label className="text-[11px] font-semibold text-slate-500">
-              {language === 'en' ? 'Tone' : 'टोन'}
+              {language === 'en' ? 'Tone / Style' : 'टोन / शैली'}
             </label>
             <select
               value={tone}
               onChange={(e) => setTone(e.target.value)}
               className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
+              <option value="सरल और संवादात्मक">सरल और संवादात्मक (Friendly)</option>
               <option value="शांत और प्रभावी">शांत और प्रभावी (Calm)</option>
               <option value="उत्साही और वायरल">उत्साही और वायरल (Energetic)</option>
               <option value="पेशेवर">पेशेवर (Professional)</option>
-              <option value="सरल भाषा">सरल भाषा (Simple)</option>
-              <option value="प्रेरणादायक">प्रेरणादायक (Motivational)</option>
+              <option value="तथ्यात्मक">तथ्यात्मक (Factual)</option>
             </select>
           </div>
 
-          {/* Audience */}
-          <div className="space-y-1">
+          {/* Platform */}
+          <div className="space-y-1 col-span-2 sm:col-span-1">
             <label className="text-[11px] font-semibold text-slate-500">
-              {language === 'en' ? 'Audience' : 'Audience'}
+              {language === 'en' ? 'Platform' : 'प्लेटफॉर्म'}
             </label>
             <select
-              value={targetAudience}
-              onChange={(e) => setTargetAudience(e.target.value)}
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value)}
               className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
-              <option value="सामान्य जनता">सामान्य जनता (General)</option>
-              <option value="युवा और छात्र">युवा और छात्र (Youth)</option>
-              <option value="कारोबारी और उद्यमी">कारोबारी (Business)</option>
-              <option value="परिवार और वरिष्ठ">परिवार (Families)</option>
+              <option value="Instagram Reels">Instagram Reels</option>
+              <option value="YouTube Shorts">YouTube Shorts</option>
+              <option value="Facebook Reels">Facebook Reels</option>
+              <option value="LinkedIn Video">LinkedIn Video</option>
             </select>
           </div>
         </div>
 
-        {/* Primary AI Generation Trigger Button (Matching Panel 2) */}
-        <div className="pt-2 flex justify-end">
+        {/* Primary AI Generation Trigger Button */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+            <span>
+              {resolvedResearch
+                ? (language === 'en' ? 'Grounded in verified research facts & citations.' : 'सत्यापित शोध संदर्भों के आधार पर तैयार होगी।')
+                : (language === 'en' ? 'Ready to generate high-retention structured script.' : 'उच्च गुणवत्ता वाली संरचित स्क्रिप्ट तैयार करने के लिए तैयार।')}
+            </span>
+          </div>
+
           <button
             onClick={handleGenerateScript}
             disabled={isGenerating}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all disabled:opacity-60"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all disabled:opacity-60"
           >
             <Sparkles className="w-4 h-4 fill-white" />
             <span>
@@ -398,7 +522,7 @@ export const ScriptStudioPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Action Toolbar / Transformation Pills (Panel 2: AI स्क्रिप्ट, मेरा एडिट, री-राइट, लंबा करें...) */}
+      {/* 3. Action Toolbar: Transformation Pills (Panel 3: री-राइट, संक्षिप्त करें, विस्तारित करें...) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
         <button
           onClick={() => setActiveTabMode('script')}
@@ -409,22 +533,23 @@ export const ScriptStudioPage: React.FC = () => {
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>{language === 'en' ? 'AI Script' : 'AI स्क्रिप्ट'}</span>
+          <span>{language === 'en' ? 'Generated Script' : 'जनरेटेड स्क्रिप्ट'}</span>
         </button>
 
-        <button
-          onClick={() => setActiveTabMode('edit')}
-          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
-            activeTabMode === 'edit'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <Edit3 className="w-3.5 h-3.5" />
-          <span>{language === 'en' ? 'My Edit' : 'मेरा एडिट'}</span>
-        </button>
+        {resolvedResearch && (
+          <button
+            onClick={() => setActiveTabMode('research')}
+            className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              activeTabMode === 'research'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>{language === 'en' ? 'Research Context' : 'रिसर्च संदर्भ'}</span>
+          </button>
+        )}
 
-        {/* AI Quick Transformation Buttons */}
         <button
           onClick={() => handleTransform('rewrite')}
           disabled={Boolean(transformLoading)}
@@ -435,39 +560,21 @@ export const ScriptStudioPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => handleTransform('expand')}
-          disabled={Boolean(transformLoading)}
-          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
-        >
-          <Maximize2 className={`w-3.5 h-3.5 ${transformLoading === 'expand' ? 'animate-pulse text-blue-600' : ''}`} />
-          <span>{language === 'en' ? 'Expand' : 'लंबा करें'}</span>
-        </button>
-
-        <button
           onClick={() => handleTransform('shorten')}
           disabled={Boolean(transformLoading)}
           className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
         >
           <Scissors className={`w-3.5 h-3.5 ${transformLoading === 'shorten' ? 'animate-pulse text-blue-600' : ''}`} />
-          <span>{language === 'en' ? 'Shorten' : 'छोटा करें'}</span>
+          <span>{language === 'en' ? 'Shorten' : 'संक्षिप्त करें'}</span>
         </button>
 
         <button
-          onClick={() => handleTransform('add_hook')}
+          onClick={() => handleTransform('expand')}
           disabled={Boolean(transformLoading)}
           className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
         >
-          <Wand2 className={`w-3.5 h-3.5 ${transformLoading === 'add_hook' ? 'animate-pulse text-blue-600' : ''}`} />
-          <span>{language === 'en' ? 'Add Hook' : 'हुक जोड़ें'}</span>
-        </button>
-
-        <button
-          onClick={() => handleTransform('add_cta')}
-          disabled={Boolean(transformLoading)}
-          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
-        >
-          <ArrowRight className={`w-3.5 h-3.5 ${transformLoading === 'add_cta' ? 'animate-pulse text-blue-600' : ''}`} />
-          <span>{language === 'en' ? 'Add CTA' : 'CTA जोड़ें'}</span>
+          <Maximize2 className={`w-3.5 h-3.5 ${transformLoading === 'expand' ? 'animate-pulse text-blue-600' : ''}`} />
+          <span>{language === 'en' ? 'Expand' : 'विस्तारित करें'}</span>
         </button>
 
         <button
@@ -475,183 +582,402 @@ export const ScriptStudioPage: React.FC = () => {
           className="px-3.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
         >
           <Sliders className="w-3.5 h-3.5" />
-          <span>{language === 'en' ? 'Custom' : 'कस्टम'}</span>
+          <span>{language === 'en' ? 'Custom AI Edit' : 'कस्टम AI निर्देश'}</span>
         </button>
       </div>
 
-      {/* 4. Structured Script Sections (Panel 2: Hook, Core, CTA) */}
-      <div className="space-y-4">
-        {/* Section A: Hook (0-5s) */}
-        <div className="bg-white rounded-3xl p-5 border border-amber-200/90 shadow-xs space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1 rounded-lg bg-amber-100 text-amber-700">⚡</span>
-              <h3 className="text-xs sm:text-sm font-bold text-amber-950 uppercase tracking-wide">
-                {language === 'en' ? 'Hook (0-5 Seconds)' : 'हुक (0-5 सेकंड)'}
-              </h3>
-              <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">
-                Attention Grabber
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(hook);
-                setCopiedToast(true);
-                setTimeout(() => setCopiedToast(false), 2000);
-              }}
-              className="text-xs text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1"
-            >
-              <Copy className="w-3 h-3" />
-              <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
-            </button>
-          </div>
+      {/* 4. MAIN WORKSPACE: 2 Columns (Left: Script Editor, Right: AI Tools & Preview) matching Image 1 & 2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left Column (8 cols): Structured Script Editor */}
+        <div className="lg:col-span-8 space-y-4">
+          {activeTabMode === 'research' && resolvedResearch ? (
+            /* Inline Research Context View */
+            <div className="bg-white rounded-3xl p-5 border border-blue-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
+                    <BookOpen className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {language === 'en' ? 'Research Brief & Sources' : 'शोध सारांश व संदर्भ स्रोत'}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setActiveTabMode('script')}
+                  className="text-xs font-semibold text-blue-600 hover:underline"
+                >
+                  ← {language === 'en' ? 'Back to Script' : 'स्क्रिप्ट पर लौटें'}
+                </button>
+              </div>
 
-          <textarea
-            rows={2}
-            value={hook}
-            onChange={(e) => setHook(e.target.value)}
-            className="w-full p-3 rounded-2xl bg-amber-50/50 border border-amber-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500/20 leading-relaxed resize-none"
-            placeholder="Enter attention-grabbing opening hook..."
-          />
+              <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 text-xs text-blue-950 leading-relaxed">
+                {language === 'hi' ? resolvedResearch.summaryHi || resolvedResearch.summary : resolvedResearch.summary}
+              </div>
+
+              {/* Key points with one-click insert */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {language === 'en' ? 'Key Facts (Click + to insert into script)' : 'मुख्य बिंदु (+ पर क्लिक करके स्क्रिप्ट में जोड़ें)'}
+                </span>
+                <div className="space-y-2">
+                  {(language === 'hi' ? resolvedResearch.keyPointsHi || resolvedResearch.keyPoints : resolvedResearch.keyPoints)?.map((point, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3 text-xs"
+                    >
+                      <span className="leading-relaxed text-slate-800">{point}</span>
+                      <button
+                        onClick={() => handleInsertResearchPoint(point)}
+                        className="px-2.5 py-1 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold shrink-0 flex items-center gap-1 transition-colors"
+                        title="Add to script body"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>जोड़ें</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Verified Sources */}
+              {resolvedResearch.sources && resolvedResearch.sources.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    {language === 'en' ? 'Verified Sources' : 'सत्यापित संदर्भ स्रोत'}
+                  </span>
+                  <div className="space-y-1.5">
+                    {resolvedResearch.sources.map((s, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-slate-50 border border-slate-200"
+                      >
+                        <span className="font-semibold text-slate-800">{s.name}</span>
+                        <div className="flex items-center gap-2 font-mono text-[11px] text-slate-500">
+                          <span>{s.date}</span>
+                          {s.url && (
+                            <a href={s.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Structured Script Sections: Hook (0-5s), Main Content (5-50s), CTA (50-60s) */
+            <div className="space-y-4">
+              {/* Word count header indicator matching Image 2 Panel 3 */}
+              <div className="flex items-center justify-between text-xs font-semibold px-2">
+                <span className="text-slate-500">
+                  {language === 'en' ? 'Generated Script (Reels ~ 60s)' : 'जनरेटेड स्क्रिप्ट (Reels ~ 60 सेकंड)'}
+                </span>
+                <span className="font-mono text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                  {wordCount} / 600 {language === 'en' ? 'words' : 'शब्द'}
+                </span>
+              </div>
+
+              {/* Section A: Hook (0-5s) */}
+              <div className="bg-white rounded-3xl p-5 border border-amber-200 shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded-lg bg-amber-100 text-amber-700">⚡</span>
+                    <h3 className="text-xs sm:text-sm font-bold text-amber-950 uppercase tracking-wide">
+                      {language === 'en' ? '[Hook - 0-5 Seconds]' : '[Hook - 0-5 सेकंड]'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(hook);
+                      setCopiedToast(true);
+                      setTimeout(() => setCopiedToast(false), 2000);
+                    }}
+                    className="text-xs text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+                  </button>
+                </div>
+
+                <textarea
+                  rows={2}
+                  value={hook}
+                  onChange={(e) => setHook(e.target.value)}
+                  className="w-full p-3 rounded-2xl bg-amber-50/40 border border-amber-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500/20 leading-relaxed resize-none"
+                  placeholder="Enter attention-grabbing opening hook..."
+                />
+              </div>
+
+              {/* Section B: Main Content (5-50s) */}
+              <div className="bg-white rounded-3xl p-5 border border-blue-200 shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded-lg bg-blue-100 text-blue-700">💡</span>
+                    <h3 className="text-xs sm:text-sm font-bold text-blue-950 uppercase tracking-wide">
+                      {language === 'en' ? '[Main Content - 5-50 Seconds]' : '[मुख्य भाग - 5-50 सेकंड]'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(mainBody);
+                      setCopiedToast(true);
+                      setTimeout(() => setCopiedToast(false), 2000);
+                    }}
+                    className="text-xs text-blue-700 hover:text-blue-900 font-semibold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+                  </button>
+                </div>
+
+                <textarea
+                  rows={6}
+                  value={mainBody}
+                  onChange={(e) => setMainBody(e.target.value)}
+                  className="w-full p-3.5 rounded-2xl bg-blue-50/20 border border-blue-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 leading-relaxed resize-none"
+                  placeholder="Enter core content breakdown and value points..."
+                />
+              </div>
+
+              {/* Section C: Conclusion & CTA (50-60s) */}
+              <div className="bg-white rounded-3xl p-5 border border-emerald-200 shadow-xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 rounded-lg bg-emerald-100 text-emerald-700">🎯</span>
+                    <h3 className="text-xs sm:text-sm font-bold text-emerald-950 uppercase tracking-wide">
+                      {language === 'en' ? '[Closing & CTA - 50-60 Seconds]' : '[समापन और CTA - 50-60 सेकंड]'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(closingCta);
+                      setCopiedToast(true);
+                      setTimeout(() => setCopiedToast(false), 2000);
+                    }}
+                    className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+                  </button>
+                </div>
+
+                <textarea
+                  rows={3}
+                  value={closingCta}
+                  onChange={(e) => setClosingCta(e.target.value)}
+                  className="w-full p-3.5 rounded-2xl bg-emerald-50/30 border border-emerald-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 leading-relaxed resize-none"
+                  placeholder="Enter clear call to action..."
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Section B: Core Points (5-45s) */}
-        <div className="bg-white rounded-3xl p-5 border border-blue-200/90 shadow-xs space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1 rounded-lg bg-blue-100 text-blue-700">💡</span>
-              <h3 className="text-xs sm:text-sm font-bold text-blue-950 uppercase tracking-wide">
-                {language === 'en' ? 'Core Content (5-45 Seconds)' : 'मुख्य बात (5-45 सेकंड)'}
-              </h3>
-              <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">
-                Value & Solution
+        {/* Right Column (4 cols): AI Tools List & Video Preview matching Image 1 & 2 */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* SCRIPT PREVIEW BOX matching Image 1 Panel 3 */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Video className="w-3.5 h-3.5 text-blue-600" />
+                <span>{language === 'en' ? 'Script Preview' : 'स्क्रिप्ट प्रीव्यू'}</span>
+              </h4>
+              <span className="text-[10px] font-mono font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
+                ~{estimatedSeconds}s Reel
               </span>
             </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(mainBody);
-                setCopiedToast(true);
-                setTimeout(() => setCopiedToast(false), 2000);
-              }}
-              className="text-xs text-blue-700 hover:text-blue-900 font-semibold flex items-center gap-1"
-            >
-              <Copy className="w-3 h-3" />
-              <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
-            </button>
-          </div>
 
-          <textarea
-            rows={5}
-            value={mainBody}
-            onChange={(e) => setMainBody(e.target.value)}
-            className="w-full p-3.5 rounded-2xl bg-blue-50/30 border border-blue-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 leading-relaxed resize-none"
-            placeholder="Enter primary script points and value breakdown..."
-          />
-        </div>
+            {/* Video Preview Frame */}
+            <div className="relative rounded-2xl overflow-hidden aspect-video sm:aspect-[4/3] bg-slate-950 border border-slate-800 shadow-md">
+              <img
+                src="/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png"
+                alt="Presenter"
+                className="w-full h-full object-cover opacity-85"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
-        {/* Section C: Conclusion & CTA (45-60s) */}
-        <div className="bg-white rounded-3xl p-5 border border-emerald-200/90 shadow-xs space-y-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1 rounded-lg bg-emerald-100 text-emerald-700">🎯</span>
-              <h3 className="text-xs sm:text-sm font-bold text-emerald-950 uppercase tracking-wide">
-                {language === 'en' ? 'Conclusion & CTA (45-60 Seconds)' : 'निष्कर्ष और CTA (45-60 सेकंड)'}
-              </h3>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
-                Action Driven
-              </span>
+              {/* Subtitle Banner matching Image 1 Panel 3 */}
+              <div className="absolute bottom-3 left-3 right-3 bg-black/80 backdrop-blur-md p-2 rounded-xl border border-white/10 text-center">
+                <p className="text-xs font-bold text-amber-300 leading-snug line-clamp-2">
+                  "{hook || topic}"
+                </p>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-mono mt-1">
+                  <span>0:00 / 0:58</span>
+                  <span className="text-emerald-400 font-bold">HD 1080p</span>
+                </div>
+              </div>
             </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(closingCta);
-                setCopiedToast(true);
-                setTimeout(() => setCopiedToast(false), 2000);
-              }}
-              className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1"
-            >
-              <Copy className="w-3 h-3" />
-              <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
-            </button>
           </div>
 
-          <textarea
-            rows={3}
-            value={closingCta}
-            onChange={(e) => setClosingCta(e.target.value)}
-            className="w-full p-3.5 rounded-2xl bg-emerald-50/40 border border-emerald-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 leading-relaxed resize-none"
-            placeholder="Enter clear call to action, subscribe, or link reminder..."
-          />
-        </div>
+          {/* AI TOOLS LIST matching Image 2 Panel 3 */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-xs space-y-2.5">
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-slate-100">
+              <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+              <span>{language === 'en' ? 'Quick AI Tools' : 'AI टूल्स'}</span>
+            </h4>
 
-        {/* Live Counters & Helper */}
-        <div className="flex items-center justify-between text-xs text-slate-500 px-2">
-          <span className="font-mono">
-            {totalChars}/800 {language === 'en' ? 'characters' : 'वर्ण'} · ~{estimatedSeconds}s {language === 'en' ? 'read time' : 'अनुमानित समय'}
-          </span>
-          <button
-            onClick={() => setIsGuideOpen(true)}
-            className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
-          >
-            <span>{language === 'en' ? 'Script guidelines & tips' : 'स्क्रिप्ट कैसे लिखें?'}</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
+            <div className="space-y-1.5">
+              {[
+                { id: 'add_hook', label: language === 'en' ? 'Add Viral Hook' : '⚡ हुक जोड़ें', action: () => handleTransform('add_hook') },
+                { id: 'add_cta', label: language === 'en' ? 'Add High-Converting CTA' : '🎯 CTA जोड़ें', action: () => handleTransform('add_cta') },
+                { id: 'expand', label: language === 'en' ? 'Expand Bullet Points' : '📝 पॉइंट्स लिखें', action: () => handleTransform('expand') },
+                { id: 'tone', label: language === 'en' ? 'Switch Tone & Style' : '🎨 टोन बदलें', action: () => setCustomPromptOpen(true) },
+                { id: 'simplify', label: language === 'en' ? 'Simplify Language' : '🗣️ भाषा सरल करें', action: () => handleTransform('shorten') },
+                { id: 'notes', label: language === 'en' ? 'Add Custom Notes' : '✍️ अपने नोट्स जोड़ें', action: () => setCustomPromptOpen(true) },
+              ].map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={tool.action}
+                  className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-semibold flex items-center justify-between transition-colors border border-slate-100"
+                >
+                  <span>{tool.label}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400 -rotate-90" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 5. Bottom Sticky Action Bar (Panel 2: सेव करें, वर्जन हिस्ट्री, कॉपी करें, टेलीप्रॉम्प्टर में खोलें) */}
-      <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-3 border border-slate-200 shadow-xl flex flex-wrap items-center justify-between gap-3">
-        {/* Left Action Buttons */}
+      {/* 5. Bottom Sticky Action Bar matching Image 1 & 2 */}
+      <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-xl flex flex-wrap items-center justify-between gap-3">
+        {/* Left Utilities */}
         <div className="flex items-center gap-2">
           <button
-            onClick={handleSaveProject}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            onClick={handleClearScript}
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            title="Clear script fields"
           >
-            <Save className="w-3.5 h-3.5" />
-            <span>{language === 'en' ? 'Save Draft' : 'सेव करें'}</span>
-          </button>
-
-          <button
-            onClick={() => setIsVersionDrawerOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors relative"
-          >
-            <History className="w-3.5 h-3.5" />
-            <span>{language === 'en' ? 'Versions' : 'वर्जन हिस्ट्री'}</span>
-            <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 text-[10px] flex items-center justify-center font-mono">
-              {versions.length}
-            </span>
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>{language === 'en' ? 'Clear' : 'क्लियर'}</span>
           </button>
 
           <button
             onClick={handleCopyScript}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            title="Copy entire script to clipboard"
           >
             <Copy className="w-3.5 h-3.5" />
             <span>{language === 'en' ? 'Copy All' : 'कॉपी करें'}</span>
           </button>
+
+          <button
+            onClick={() => setIsVersionDrawerOpen(true)}
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            title="View revision history"
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>{versions.length} {language === 'en' ? 'Versions' : 'वर्जन'}</span>
+          </button>
         </div>
 
-        {/* Primary Right Button: Open in Teleprompter */}
+        {/* Primary Right Action: Teleprompter Handoff */}
         <button
           onClick={handleOpenTeleprompter}
           className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
         >
           <Video className="w-4 h-4 fill-white" />
-          <span>{language === 'en' ? 'Open in Teleprompter' : 'टेलीप्रॉम्प्टर में खोलें'}</span>
-          <ArrowRight className="w-4 h-4" />
+          <span>{language === 'en' ? 'Send to Teleprompter →' : '🚀 टेलीप्रॉम्प्टर में खोलें'}</span>
         </button>
       </div>
 
-      {/* Toast Feedback */}
-      {saveSuccessToast && (
-        <div className="fixed bottom-20 right-6 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-          <CheckCircle2 className="w-4 h-4" />
-          <span>{language === 'en' ? 'Script saved to projects successfully!' : 'स्क्रिप्ट प्रोजेक्ट्स में सेव हो गई!'}</span>
-        </div>
-      )}
-      {copiedToast && (
-        <div className="fixed bottom-20 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-          <Check className="w-4 h-4 text-emerald-400" />
-          <span>{language === 'en' ? 'Copied to clipboard!' : 'क्लिपबोर्ड पर कॉपी हो गया!'}</span>
+      {/* RESEARCH CONTEXT DRAWER / MODAL */}
+      {isResearchDrawerOpen && resolvedResearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
+                  <BookOpen className="w-4 h-4" />
+                </span>
+                <h3 className="text-base font-bold text-slate-900">
+                  {language === 'en' ? 'Research Context & Facts' : 'रिसर्च संदर्भ और तथ्य'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsResearchDrawerOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Overview */}
+            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 text-xs text-blue-950 leading-relaxed">
+              {language === 'hi' ? resolvedResearch.summaryHi || resolvedResearch.summary : resolvedResearch.summary}
+            </div>
+
+            {/* Key Facts with insert button */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                {language === 'en' ? 'Facts & Talking Points (Insert into script)' : 'मुख्य तथ्य (स्क्रिप्ट में जोड़ें)'}
+              </h4>
+              <div className="space-y-2">
+                {(language === 'hi' ? resolvedResearch.keyPointsHi || resolvedResearch.keyPoints : resolvedResearch.keyPoints)?.map((pt, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3 text-xs"
+                  >
+                    <span className="leading-relaxed text-slate-800">{pt}</span>
+                    <button
+                      onClick={() => handleInsertResearchPoint(pt)}
+                      className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shrink-0 flex items-center gap-1 transition-colors text-[11px]"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>जोड़ें</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Alternate Hooks */}
+            {resolvedResearch.suggestedHooks && resolvedResearch.suggestedHooks.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {language === 'en' ? 'Alternative Opening Hooks' : 'वैकल्पिक शुरुआती हुक'}
+                </h4>
+                <div className="space-y-2">
+                  {resolvedResearch.suggestedHooks.map((h, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-amber-800 block">{h.type}</span>
+                        <p className="font-semibold text-slate-900 mt-0.5">"{language === 'hi' ? h.hookHi : h.hook}"</p>
+                      </div>
+                      <button
+                        onClick={() => handleApplyResearchHook(language === 'hi' ? h.hookHi : h.hook)}
+                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold shrink-0 text-[11px]"
+                      >
+                        लागू करें
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Verified Sources */}
+            {resolvedResearch.sources && (
+              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {language === 'en' ? 'Verified Citations' : 'सत्यापित संदर्भ स्रोत'}
+                </h4>
+                <div className="space-y-1">
+                  {resolvedResearch.sources.map((s, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-700">
+                      <span className="font-medium">{s.name}</span>
+                      <span className="text-[10px] font-mono text-slate-400">{s.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -701,8 +1027,8 @@ export const ScriptStudioPage: React.FC = () => {
             </h3>
             <p className="text-xs text-slate-500">
               {language === 'en'
-                ? 'Tell the AI exactly how you want to adjust your script (e.g. make it funnier, add doctor advice, quote a statistic)...'
-                : 'AI को बताएं कि स्क्रिप्ट में क्या बदलाव करना है (जैसे: थोड़ा मजाकिया बनाएं, डॉक्टर की सलाह जोड़ें)...'}
+                ? 'Tell the AI exactly how you want to adjust your script (e.g. make it funnier, quote official data, simplify language)...'
+                : 'AI को बताएं कि स्क्रिप्ट में क्या बदलाव करना है (जैसे: थोड़ा मजाकिया बनाएं, सरकारी डेटा जोड़ें)...'}
             </p>
             <textarea
               rows={3}
@@ -730,54 +1056,15 @@ export const ScriptStudioPage: React.FC = () => {
         </div>
       )}
 
-      {/* Script Guide Modal */}
-      {isGuideOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">
-                {language === 'en' ? 'How to Write Viral Short-Form Scripts' : 'स्क्रिप्ट कैसे लिखें? (गाइड)'}
-              </h3>
-              <button
-                onClick={() => setIsGuideOpen(false)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950">
-                <p className="font-bold mb-1">1. 3-सेकंड का मजबूत हुक (Hook):</p>
-                <p>वीडियो शुरू होते ही दर्शक का ध्यान आकर्षित करने के लिए कोई सवाल पूछें या चौंकाने वाला तथ्य बताएं। कभी भी लंबा परिचय न दें।</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-blue-950">
-                <p className="font-bold mb-1">2. सीधे मुख्य बात पर आएं (Core Value):</p>
-                <p>मुद्दे को 2-3 छोटे और स्पष्ट बिंदुओं में समझाएं। हर वाक्य 8-10 शब्दों से बड़ा न हो ताकि टेलीप्रॉम्प्टर पर आसानी से पढ़ा जा सके।</p>
-              </div>
-              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
-                <p className="font-bold mb-1">3. स्पष्ट कॉल टू एक्शन (Call to Action):</p>
-                <p>अंत में दर्शकों को बताएं कि उन्हें क्या करना है—वीडियो सेव करें, लिंक देखें या कमेंट में राय दें।</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsGuideOpen(false)}
-              className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
-            >
-              {language === 'en' ? 'Got It' : 'समझ गया'}
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Version History Drawer */}
       {isVersionDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white w-full max-w-md h-full shadow-2xl p-6 overflow-y-auto space-y-4 animate-in slide-in-from-right duration-200">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-md h-full p-6 shadow-2xl border-l border-slate-200 flex flex-col justify-between space-y-4 animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <History className="w-5 h-5 text-blue-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  {language === 'en' ? 'Script Version History' : 'वर्जन हिस्ट्री'}
+                  {language === 'en' ? 'Script Revision History' : 'वर्जन हिस्ट्री'}
                 </h3>
               </div>
               <button
@@ -788,93 +1075,43 @@ export const ScriptStudioPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-3">
-              {versions.map((ver, idx) => (
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {versions.map((ver) => (
                 <div
-                  key={idx}
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-300 transition-all space-y-2 text-xs"
+                  key={ver.version}
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md font-mono">
-                      v{ver.version} {idx === 0 ? '(Current)' : ''}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-blue-600">v{ver.version}</span>
+                    <span className="text-slate-400 font-mono text-[11px]">
                       {new Date(ver.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-
-                  <p className="font-semibold text-slate-800 line-clamp-2">
+                  <p className="line-clamp-2 font-medium text-slate-800">
                     "{ver.hook}"
                   </p>
-                  <p className="text-slate-500 text-[11px] line-clamp-2">
-                    {ver.mainContent[0]}
-                  </p>
-
-                  {idx !== 0 && (
-                    <button
-                      onClick={() => {
-                        setHook(ver.hook);
-                        setMainBody(ver.mainContent.join('\n\n'));
-                        setClosingCta(ver.closing);
-                        setIsVersionDrawerOpen(false);
-                      }}
-                      className="w-full py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold text-[11px] transition-colors"
-                    >
-                      {language === 'en' ? 'Restore this version' : 'यह वर्जन लोड करें'}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setHook(ver.hook);
+                      setMainBody(ver.mainContent.join('\n\n'));
+                      setClosingCta(ver.closing);
+                      setIsVersionDrawerOpen(false);
+                      setToastMessage(language === 'en' ? `Restored v${ver.version}` : `वर्जन ${ver.version} रीस्टोर किया गया`);
+                    }}
+                    className="w-full py-1.5 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold transition-colors"
+                  >
+                    {language === 'en' ? 'Restore This Version' : 'यह वर्जन रीस्टोर करें'}
+                  </button>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Insufficient Credits Modal */}
-      {isInsufficientCreditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative text-center">
             <button
-              onClick={() => setIsInsufficientCreditModalOpen(false)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100"
+              onClick={() => setIsVersionDrawerOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
             >
-              <X className="w-5 h-5" />
+              {language === 'en' ? 'Close' : 'बंद करें'}
             </button>
-
-            <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
-              <Zap className="w-7 h-7 fill-amber-500 text-amber-600" />
-            </div>
-
-            <h3 className="text-lg font-bold text-slate-900">
-              {language === 'en' ? 'Insufficient AI Credits' : 'क्रेडिट समाप्त हो गए हैं'}
-            </h3>
-            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              {language === 'en'
-                ? `Generating a full YouTube/Reel script requires AI credits. You currently have ${creditsInfo.totalAvailable} credits remaining.`
-                : `स्क्रिप्ट जेनरेशन के लिए क्रेडिट आवश्यक हैं। आपके पास केवल ${creditsInfo.totalAvailable} क्रेडिट शेष हैं।`}
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 mt-5">
-              <button
-                onClick={() => {
-                  setIsInsufficientCreditModalOpen(false);
-                  navigate('/user/credits');
-                }}
-                className="py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>{language === 'en' ? 'Buy Top-up' : 'क्रेडिट खरीदें'}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsInsufficientCreditModalOpen(false);
-                  navigate('/user/subscription');
-                }}
-                className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
-              >
-                {language === 'en' ? 'Upgrade Plan' : 'प्लान अपग्रेड'}
-              </button>
-            </div>
           </div>
         </div>
       )}
