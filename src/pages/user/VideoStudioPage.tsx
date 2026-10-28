@@ -87,7 +87,7 @@ export const VideoStudioPage: React.FC = () => {
   const [playbackVolume, setPlaybackVolume] = useState<number>(1);
 
   // 3. Studio Draft & Editing State
-  const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9' | '1:1' | '4:5'>(
+  const [aspectRatio, setAspectRatio] = useState<'9:16' | '16:9' | '1:1' | '4:5' | '4:3'>(
     selectedProject?.studioDraft?.aspectRatio || activeMedia?.aspectRatio || '9:16'
   );
   const [trimStart, setTrimStart] = useState<number>(selectedProject?.studioDraft?.trimStart || 0);
@@ -527,21 +527,13 @@ export const VideoStudioPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Dynamic Subtitle / Caption Overlay (Poster 1 Screen 4 & Poster 4 Screen 3) */}
+              {/* Dynamic Subtitle / Caption Overlay (Poster 1 Screen 4 & Poster 5 Screen 1) */}
               {showSubtitles && (
                 <div className="absolute bottom-6 left-3 right-3 z-20 text-center pointer-events-none">
-                  <span
-                    className={`inline-block px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm tracking-wide shadow-lg transition-all ${
-                      subtitleStyle === 'highlight'
-                        ? 'bg-amber-400 text-slate-950 font-black'
-                        : subtitleStyle === 'karaoke'
-                        ? 'bg-blue-600 text-white border border-blue-400'
-                        : 'bg-black/75 text-white backdrop-blur-xs'
-                    }`}
-                  >
+                  <span className="inline-block px-4 py-2 rounded-2xl bg-black/85 text-amber-300 font-bold text-xs sm:text-sm tracking-wide shadow-xl border border-amber-400/30 backdrop-blur-xs">
                     {currentTime < 8
-                      ? (selectedProject?.scriptVersions?.[0]?.hook || 'सर्दियों में अपनी इम्यूनिटी कैसे बढ़ाएं?')
-                      : (selectedProject?.scriptVersions?.[0]?.mainContent[0] || 'आसान घरेलू उपाय अपनाकर आप स्वस्थ रह सकते हैं...')}
+                      ? (selectedProject?.scriptVersions?.[0]?.hook || selectedProject?.title || 'सोलर पैनल से बिजली बिल कैसे कम करें?')
+                      : (selectedProject?.scriptVersions?.[0]?.mainContent[0] || 'सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है...')}
                   </span>
                 </div>
               )}
@@ -642,6 +634,21 @@ export const VideoStudioPage: React.FC = () => {
                 <div className="w-3 h-3 rounded-full bg-amber-400 -mt-1 -ml-1 border-2 border-slate-900" />
               </div>
             </div>
+
+            {/* Subtitle Track matching Panel 5 */}
+            {showSubtitles && (
+              <div className="p-2 rounded-xl bg-teal-900/90 border border-teal-500/40 flex items-center justify-between text-xs text-teal-200">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="w-2 h-2 rounded-full bg-teal-400 shrink-0" />
+                  <span className="font-bold text-white text-[11px] truncate">
+                    {selectedProject?.scriptVersions?.[0]?.hook || selectedProject?.title || 'सोलर पैनल से बिजली बिल कैसे कम करें?'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-teal-300 font-mono shrink-0 ml-2">
+                  00:00 - {formatTime(duration)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1049,268 +1056,290 @@ export const VideoStudioPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Export & Share Modal (Poster 1 Screen 6 & Poster 4 Screen 4 & 5) */}
+      {/* 3. Export & Share Modal (Matching Poster Panel 6) */}
       {isExportModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 space-y-5">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-7 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
-                  <Download className="w-4 h-4 text-amber-700" />
+                <span className="p-2 rounded-xl bg-blue-100 text-blue-700">
+                  <Download className="w-5 h-5 text-blue-600" />
                 </span>
-                <h3 className="text-base font-bold text-slate-900">
-                  {exportProgress === 100
-                    ? (language === 'en' ? 'Video Ready to Share!' : 'वीडियो तैयार है!')
-                    : (language === 'en' ? 'Export & Rendering Studio' : 'एक्सपोर्ट एवं शेयर')}
-                </h3>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                    {language === 'en' ? 'Export & Share' : 'एक्सपोर्ट और शेयर'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {selectedProject?.title || 'Solar Panel Reel - Draft'}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setIsExportModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* State A: Configuration before Export */}
-            {exportProgress < 100 && !isExporting && (
+            {/* 2-Column Grid matching Panel 6 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Export Settings */}
               <div className="space-y-4 text-xs">
-                {/* Title */}
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{language === 'en' ? 'Export Settings' : 'एक्सपोर्ट सेटिंग्स'}</span>
+                </h4>
+
+                {/* Video Quality */}
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-700">Video Title</label>
-                  <input
-                    type="text"
-                    value={exportTitle}
-                    onChange={(e) => setExportTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:bg-white"
-                  />
+                  <label className="font-semibold text-slate-700">
+                    {language === 'en' ? 'Video Quality' : 'वीडियो गुणवत्ता'}
+                  </label>
+                  <select
+                    value={exportQuality}
+                    onChange={(e) => setExportQuality(e.target.value as any)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold text-slate-800 focus:bg-white"
+                  >
+                    <option value="1080p">1080p (Full HD - Recommended)</option>
+                    <option value="720p">720p (HD - Fast Render)</option>
+                    <option value="4k">4K (Ultra HD)</option>
+                  </select>
                 </div>
 
-                {/* Social Media Export Preset (Poster 4 Screen 4) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="font-semibold text-slate-700">Social Media Preset</label>
-                    <span className="text-[10px] text-slate-400">Platform format standards</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                    {exportPresets.slice(0, 4).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleSelectPreset(p)}
-                        className={`p-2 rounded-xl text-left border transition-all ${
-                          selectedPresetId === p.id
-                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/20'
-                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <p className="font-bold text-slate-900 text-[11px] truncate">{p.name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono">{p.aspectRatio} · {p.resolution}</p>
-                      </button>
-                    ))}
-                  </div>
+                {/* Aspect Ratio */}
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">
+                    {language === 'en' ? 'Aspect Ratio' : 'आस्पेक्ट रेशियो'}
+                  </label>
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value as any)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold text-slate-800 focus:bg-white"
+                  >
+                    <option value="9:16">9:16 (Reels/Shorts - Vertical)</option>
+                    <option value="1:1">1:1 (Square)</option>
+                    <option value="16:9">16:9 (Landscape - YouTube)</option>
+                    <option value="4:5">4:3 / 4:5 (Standard Feed)</option>
+                  </select>
                 </div>
 
-                {/* Thumbnail Section (Poster 4 Screen 4) */}
-                <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                {/* Format */}
+                <div className="space-y-1">
+                  <label className="font-semibold text-slate-700">
+                    {language === 'en' ? 'Format' : 'फॉर्मेट'}
+                  </label>
+                  <select
+                    value={exportFormat}
+                    onChange={(e) => setExportFormat(e.target.value as any)}
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-bold text-slate-800 focus:bg-white"
+                  >
+                    <option value="mp4">MP4 (Recommended - Universal)</option>
+                    <option value="webm">WebM (Fast Browser Native)</option>
+                    <option value="mp3">MP3 (Audio Only)</option>
+                  </select>
+                </div>
+
+                {/* Watermark Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div>
+                    <p className="font-bold text-slate-800">
+                      {language === 'en' ? 'Watermark (If Applicable)' : 'वॉटरमार्क (यदि लागू हो)'}
+                    </p>
+                    <p className="text-[10px] text-slate-400">Includes brand logo overlay on video</p>
+                  </div>
+                  <button
+                    onClick={() => setShowLogoWatermark(!showLogoWatermark)}
+                    className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                      showLogoWatermark ? 'bg-blue-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <div
+                      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                        showLogoWatermark ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Custom Thumbnail */}
+                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="font-bold text-slate-800">Thumbnail & Cover</label>
+                    <div>
+                      <p className="font-bold text-slate-800">
+                        {language === 'en' ? 'Custom Thumbnail' : 'कस्टम थंबनेल'}
+                      </p>
+                      <p className="text-[10px] text-slate-400">High-CTR video cover image</p>
+                    </div>
                     <button
-                      type="button"
-                      onClick={() => {
-                        setIsExportModalOpen(false);
-                        navigate('/user/thumbnail-studio', { state: { projectId: selectedProject?.id } });
-                      }}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      onClick={() => navigate('/user/thumbnail-studio', { state: { projectId: selectedProjectId } })}
+                      className="text-xs font-bold text-blue-600 hover:underline"
                     >
-                      <ImageIcon className="w-3.5 h-3.5" />
-                      <span>{selectedProject?.thumbnails?.length ? 'Edit in Thumbnail Studio' : 'Create Thumbnail'}</span>
+                      {language === 'en' ? 'Change' : 'थंबनेल बदलें'}
                     </button>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-10 rounded-lg bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-16 h-10 rounded-lg bg-slate-900 overflow-hidden shrink-0">
                       <img
-                        src={selectedProject?.thumbnails?.[0]?.imageUrl || activeMedia?.thumbnailUrl || '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png'}
-                        alt="Thumbnail"
+                        src="/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png"
+                        alt="Cover"
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="text-[11px] text-slate-500">
-                      {selectedProject?.thumbnails?.[0] ? (
-                        <p className="font-semibold text-slate-800 truncate">{selectedProject.thumbnails[0].headline}</p>
-                      ) : (
-                        <p>No custom thumbnail attached. Using default video frame.</p>
-                      )}
+                    <span className="text-[11px] text-slate-500 font-medium truncate">
+                      {selectedProject?.title || 'Solar Panel Reel'} Cover Frame
+                    </span>
+                  </div>
+                </div>
+
+                {/* Render Progress or Trigger Button */}
+                {isExporting ? (
+                  <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 text-center space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-blue-900">
+                      <span>{exportStatusText}</span>
+                      <span className="font-mono">{exportProgress}%</span>
+                    </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${exportProgress}%` }}
+                      />
                     </div>
                   </div>
-                </div>
-
-                {/* Resolution & Quality */}
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-700">Export Resolution</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: '1080p', label: '1080p (Full HD)', badge: 'Recommended' },
-                      { id: '720p', label: '720p (HD)', badge: 'Faster' },
-                    ].map((res) => (
-                      <button
-                        key={res.id}
-                        onClick={() => setExportQuality(res.id as any)}
-                        className={`p-3 rounded-2xl border text-left transition-all ${
-                          exportQuality === res.id
-                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/20'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <p className="font-bold text-slate-900">{res.label}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{res.badge}</p>
-                      </button>
-                    ))}
+                ) : exportProgress === 100 ? (
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-center text-xs text-emerald-900 font-bold flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>{language === 'en' ? 'Video Rendered Successfully!' : 'वीडियो सफलतापूर्वक रेंडर हो गया!'}</span>
+                    </div>
+                    <a
+                      href={exportedVideoUrl || activeMedia?.url}
+                      download={`${exportTitle.replace(/\s+/g, '_')}_1080p.${exportFormat}`}
+                      className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>{language === 'en' ? 'Download Video File' : 'वीडियो डाउनलोड करें'}</span>
+                    </a>
                   </div>
-                </div>
-
-                {/* Format: MP4 vs MP3 */}
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-slate-700">Format</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { id: 'mp4', label: 'MP4 (Video)' },
-                      { id: 'mp3', label: 'MP3 (Audio Only)' },
-                    ].map((fmt) => (
-                      <button
-                        key={fmt.id}
-                        onClick={() => setExportFormat(fmt.id as any)}
-                        className={`py-2 rounded-xl font-bold border transition-all ${
-                          exportFormat === fmt.id
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {fmt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-2">
+                ) : (
                   <button
                     onClick={handleStartExport}
-                    className="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-md shadow-amber-400/20 active:scale-98 transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
                   >
-                    <Download className="w-4 h-4 stroke-[2.5]" />
-                    <span>{language === 'en' ? 'Start Export Rendering' : 'एक्सपोर्ट शुरू करें'}</span>
+                    <Download className="w-4 h-4" />
+                    <span>{language === 'en' ? 'Export Video' : 'वीडियो एक्सपोर्ट करें'}</span>
                   </button>
-                </div>
+                )}
               </div>
-            )}
 
-            {/* State B: Export In-Progress (Poster 1 State 4 "एक्सपोर्ट प्रोग्रेस 68%") */}
-            {isExporting && (
-              <div className="py-8 text-center space-y-4">
-                <div className="w-20 h-20 rounded-full border-4 border-slate-100 border-t-amber-400 animate-spin mx-auto flex items-center justify-center">
-                  <span className="font-mono text-sm font-bold text-slate-800 -rotate-90">
-                    {exportProgress}%
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-base font-bold text-slate-900">
-                    {language === 'en' ? 'Exporting Video...' : 'वीडियो एक्सपोर्ट हो रहा है...'}
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-1 font-mono">{exportStatusText}</p>
-                </div>
-                {/* Progress bar */}
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden max-w-xs mx-auto">
-                  <div
-                    className="bg-amber-400 h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${exportProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
+              {/* Right Column: Share to Social Platforms matching Panel 6 */}
+              <div className="space-y-4 text-xs">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                  <Share2 className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{language === 'en' ? 'Share To Social Media' : 'शेयर करें'}</span>
+                </h4>
 
-            {/* State C: Export Success & Share (Poster 1 Screen 6 & Poster 4 Screen 5) */}
-            {exportProgress === 100 && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <div className="text-center space-y-1">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2">
-                    <CheckCircle2 className="w-7 h-7" />
+                <div className="space-y-2.5">
+                  {[
+                    {
+                      id: 'instagram',
+                      name: 'Instagram Reels',
+                      icon: Instagram,
+                      color: 'text-pink-600 bg-pink-50',
+                      action: () => window.open('https://www.instagram.com', '_blank'),
+                    },
+                    {
+                      id: 'youtube',
+                      name: 'YouTube Shorts',
+                      icon: Youtube,
+                      color: 'text-red-600 bg-red-50',
+                      action: () => window.open('https://studio.youtube.com', '_blank'),
+                    },
+                    {
+                      id: 'facebook',
+                      name: 'Facebook',
+                      icon: Facebook,
+                      color: 'text-blue-600 bg-blue-50',
+                      action: () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank'),
+                    },
+                    {
+                      id: 'whatsapp',
+                      name: 'WhatsApp',
+                      icon: Send,
+                      color: 'text-emerald-600 bg-emerald-50',
+                      action: () => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(exportTitle + ' - Created with Scripter ' + window.location.href)}`, '_blank'),
+                    },
+                    {
+                      id: 'x',
+                      name: 'X (Twitter)',
+                      icon: Sparkles,
+                      color: 'text-slate-900 bg-slate-100',
+                      action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(exportTitle)}&url=${encodeURIComponent(window.location.href)}`, '_blank'),
+                    },
+                    {
+                      id: 'linkedin',
+                      name: 'LinkedIn',
+                      icon: Linkedin,
+                      color: 'text-blue-700 bg-blue-50',
+                      action: () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, '_blank'),
+                    },
+                  ].map((plat) => {
+                    const Icon = plat.icon;
+                    return (
+                      <div
+                        key={plat.id}
+                        className="p-2.5 rounded-2xl bg-white border border-slate-200/90 hover:border-slate-300 flex items-center justify-between gap-3 shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className={`p-2 rounded-xl ${plat.color}`}>
+                            <Icon className="w-4 h-4" />
+                          </span>
+                          <span className="font-bold text-slate-800 text-xs">{plat.name}</span>
+                        </div>
+                        <button
+                          onClick={plat.action}
+                          className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition-colors"
+                        >
+                          {language === 'en' ? 'Share' : 'शेयर करें'}
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* Copy Link Row */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 truncate">
+                      <span className="p-2 rounded-xl bg-slate-200 text-slate-700">
+                        <Copy className="w-4 h-4" />
+                      </span>
+                      <div className="truncate">
+                        <p className="font-bold text-slate-800 text-xs">
+                          {language === 'en' ? 'Copy Project Link' : 'लिंक कॉपी करें'}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-mono truncate">{window.location.href}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        setShareSuccessMessage('Link copied to clipboard!');
+                        setTimeout(() => setShareSuccessMessage(null), 2500);
+                      }}
+                      className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] transition-colors shrink-0"
+                    >
+                      {language === 'en' ? 'Copy' : 'कॉपी'}
+                    </button>
                   </div>
-                  <h4 className="text-base font-bold text-slate-900">
-                    {language === 'en' ? 'Your video is ready!' : 'आपका वीडियो सफलतापूर्वक एक्सपोर्ट हो गया है!'}
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    Duration: {formatTime(trimEnd - trimStart)} · {exportQuality} · {exportFormat.toUpperCase()}
-                  </p>
                 </div>
 
                 {shareSuccessMessage && (
-                  <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold text-center border border-emerald-200">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold text-center text-xs">
                     {shareSuccessMessage}
                   </div>
                 )}
-
-                {/* Primary Download Button */}
-                <div className="grid grid-cols-2 gap-2">
-                  <a
-                    href={exportedVideoUrl || activeMedia?.url}
-                    download={`${exportTitle.replace(/\s+/g, '_')}_1080p.${exportFormat}`}
-                    className="py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Download to Device</span>
-                  </a>
-
-                  <button
-                    onClick={handleShareVideo}
-                    className="py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    <span>Share Reel</span>
-                  </button>
-                </div>
-
-                {/* Direct Social Publish Shortcuts (Poster 3 Screen 5 & Poster 4 Screen 5) */}
-                <div className="pt-3 border-t border-slate-100 space-y-2">
-                  <span className="text-xs font-semibold text-slate-600">Publish to Platforms:</span>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { name: 'YouTube', icon: Youtube, color: 'text-red-600' },
-                      { name: 'Instagram', icon: Instagram, color: 'text-pink-600' },
-                      { name: 'Facebook', icon: Facebook, color: 'text-blue-600' },
-                      { name: 'Telegram', icon: Send, color: 'text-sky-500' },
-                    ].map((platform) => {
-                      const Icon = platform.icon;
-                      return (
-                        <button
-                          key={platform.name}
-                          onClick={() => {
-                            setShareSuccessMessage(`Opening ${platform.name} sharing flow...`);
-                            setTimeout(() => setShareSuccessMessage(null), 3000);
-                          }}
-                          className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex flex-col items-center gap-1 transition-colors"
-                        >
-                          <Icon className={`w-4 h-4 ${platform.color}`} />
-                          <span className="text-[10px] font-semibold text-slate-700">{platform.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Back to Projects */}
-                <div className="pt-2">
-                  <button
-                    onClick={() => {
-                      setIsExportModalOpen(false);
-                      navigate('/user/projects');
-                    }}
-                    className="w-full py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-colors"
-                  >
-                    {language === 'en' ? 'Return to Projects' : 'प्रोजेक्ट्स पर वापस जाएं'}
-                  </button>
-                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

@@ -361,18 +361,18 @@ export const UserHome: React.FC = () => {
               color: 'text-emerald-500',
               bg: 'bg-emerald-50',
               border: 'border-emerald-200',
-              status: 'Teleprompter Mode',
-              path: '/user/script-studio',
+              status: 'Teleprompter & Record',
+              path: '/user/teleprompter',
             },
             {
               step: '05',
               name: t('stepProduce'),
-              icon: FolderKanban,
+              icon: Film,
               color: 'text-purple-500',
               bg: 'bg-purple-50',
               border: 'border-purple-200',
-              status: 'My Projects Ready',
-              path: '/user/projects',
+              status: 'Video Studio & Export',
+              path: '/user/video-studio',
             },
           ].map((stage) => {
             const Icon = stage.icon;

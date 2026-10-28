@@ -366,6 +366,184 @@ export const DEMO_TOP_TEMPLATES = [
 
 export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
   {
+    id: 'idea_solar_01',
+    title: 'How to Reduce Electricity Bill with Solar Panels',
+    titleHi: 'सोलर पैनल से बिजली बिल कैसे कम करें?',
+    industry: 'Real Estate',
+    category: 'बिज़नेस',
+    format: 'Short (15-30s)',
+    targetAudience: 'Homeowners, Business Owners & Small Factory Owners',
+    engagementPotential: 'Viral',
+    usageCount: '1.2K उपयोग',
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________9_Payments___Billing_Management_7414dccf.png',
+    summary: 'Explains how rooftop solar panels can reduce residential and commercial electricity bills by up to 90%, including government subsidies under PM Surya Ghar Yojana.',
+    summaryHi: 'सोलर पैनल लगाकर कैसे आप अपने बिजली बिल को 80-90% तक कम कर सकते हैं और पीएम सूर्य घर योजना की सब्सिडी पा सकते हैं।',
+    outline: [
+      'Hook (0-5s): Are you frustrated with surging electricity bills every single month?',
+      'Core Points (5-45s): Solar panels provide an immediate, eco-friendly solution that cuts electricity expenses by 80-90% while earning government subsidies.',
+      'Call to Action (45-60s): If you are considering rooftop solar, check the link below to calculate your estimated savings today!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): क्या आप हर महीने बढ़ते बिजली बिल से परेशान हैं?',
+      'मुख्य बात (5-45 सेकंड): तो सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है, अधिक यह पर्यावरण के लिए भी सुरक्षित है, यह सौर ऊर्जा से न सिर्फ आपके बिजली बिल में बड़ी कमी लाएगा बल्कि यह एक सुरक्षित निवेश भी साबित हो सकता है।',
+      'निष्कर्ष और CTA (45-60 सेकंड): अगर आप भी अपने घर या कारोबार में सोलर पैनल लगवाने की सोच रहे हैं, तो तुरंत नीचे दिए गए लिंक से डिटेल्स प्राप्त करें और आज ही अपनी छत को पावर प्लांट बनाएं!'
+    ],
+    sources: [
+      { name: 'PM Surya Ghar Muft Bijli Yojana Portal', url: 'https://pmsuryaghar.gov.in', date: 'Oct 2026', verified: true },
+      { name: 'Ministry of New & Renewable Energy Advisory', url: 'https://mnre.gov.in', date: 'Sep 2026', verified: true },
+      { name: 'Central Electricity Regulatory Commission (CERC)', url: 'https://cercind.gov.in', date: '2026', verified: true }
+    ],
+    isTrending: true,
+    businessProfileId: 'bp_realestate'
+  },
+  {
+    id: 'idea_orchha_01',
+    title: '5 Big Reasons Why Orchha Tourism is Booming',
+    titleHi: 'ओरछा पर्यटन को बढ़ाने के 5 बड़े कारण',
+    industry: 'Hospitality',
+    category: 'ट्रैवल',
+    format: 'Medium (30-60s)',
+    targetAudience: 'Travel Enthusiasts, History Buffs & Weekend Explorers',
+    engagementPotential: 'Trending',
+    usageCount: '856 उपयोग',
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________18_-_Support_Tickets_Management_bea7e05e.png',
+    summary: 'Showcases Orchha\'s historical palaces, Raja Ram Temple reverence, Betwa river rafting, heritage homestays, and UNESCO tentative heritage status.',
+    summaryHi: 'ओरछा के भव्य महल, रामराजा मंदिर की अनूठी परंपरा, बेतवा नदी में रिवर राफ्टिंग, हेरिटेज स्टे और ऐतिहासिक धरोहर के 5 प्रमुख कारण।',
+    outline: [
+      'Hook (0-5s): Did you know about the only town in India where Lord Ram is worshipped as a living king?',
+      'Core Points (5-40s): 1. Raja Ram Temple guard of honor. 2. Jahangir Mahal architectural marvel. 3. Betwa rafting & cenotaphs.',
+      'Call to Action (40-60s): Plan your next weekend getaway to Orchha! Save this video and share with your travel buddies.'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): क्या आप भारत के एकमात्र ऐसे शहर के बारे में जानते हैं जहां भगवान राम को राजा के रूप में गार्ड ऑफ ऑनर दिया जाता है?',
+      'मुख्य बात (5-45 सेकंड): ओरछा पर्यटन तेजी से बढ़ रहा है—1. रामराजा सरकार का अनोखा दरबार, 2. जहांगीर महल व चतुर्भुज मंदिर, 3. बेतवा नदी की सुंदर छतरियां और रिवर राफ्टिंग।',
+      'निष्कर्ष और CTA (45-60 सेकंड): अगर आप इतिहास और प्राकृतिक सुंदरता के शौकीन हैं तो ओरछा जरूर आएं। वीडियो सेव करें और दोस्तों से शेयर करें!'
+    ],
+    sources: [
+      { name: 'Madhya Pradesh Tourism Board', url: 'https://mptourism.com', date: 'Oct 2026', verified: true },
+      { name: 'Archaeological Survey of India (ASI)', url: 'https://asi.nic.in', date: 'Aug 2026', verified: true }
+    ],
+    isTrending: true,
+    businessProfileId: 'bp_food'
+  },
+  {
+    id: 'idea_immunity_trending_01',
+    title: 'Simple Home Remedies to Boost Immunity Fast',
+    titleHi: 'इम्युनिटी बढ़ाने के आसान घरेलू उपाय',
+    industry: 'Healthcare & Wellness',
+    category: 'स्वास्थ्य',
+    format: 'Short (15-30s)',
+    targetAudience: 'Families, Senior Citizens, Working Professionals',
+    engagementPotential: 'Viral',
+    usageCount: '2.4K उपयोग',
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________16_-_Feedback_Management_65370e7a.png',
+    summary: '3 natural Indian kitchen essentials to boost your daily immune response: Amla, Tulsi-Ginger Kadha, and turmeric with black pepper.',
+    summaryHi: 'रसोई में मौजूद आंवला, तुलसी-अदरक का काढ़ा और हल्दी-काली मिर्च के नियमित सेवन से मजबूत इम्यूनिटी पाने के आसान टिप्स।',
+    outline: [
+      'Hook (0-5s): Tired of catching a cold every season? Fix your immunity with 3 natural kitchen ingredients!',
+      'Core Points (5-20s): 1. Fresh Amla juice on empty stomach. 2. Curcumin-rich Haldi Doodh with black pepper. 3. 20 mins morning sunlight.',
+      'Call to Action (20-30s): Which one do you practice daily? Tell us in the comments and follow for daily health tips!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): मौसम बदलते ही क्या आप भी बार-बार बीमार पड़ जाते हैं? अपनी इम्यूनिटी को प्राकृतिक रूप से मजबूत बनाएं!',
+      'मुख्य बात (5-25 सेकंड): 1. सुबह खाली पेट आंवला रस। 2. रात में हल्दी और चुटकी भर काली मिर्च वाला गुनगुना दूध। 3. 20 मिनट सुबह की ताजी धूप।',
+      'निष्कर्ष और CTA (25-30 सेकंड): इन आसान घरेलू उपायों को अपनाएं और स्वस्थ रहें। अपनी राय कमेंट में बताएं और वीडियो शेयर करें!'
+    ],
+    sources: [
+      { name: 'Ministry of Ayush Guidelines', url: 'https://ayush.gov.in', date: 'Oct 2026', verified: true },
+      { name: 'ICMR Nutrition Advisory', url: 'https://icmr.gov.in', date: 'Sep 2026', verified: true }
+    ],
+    isTrending: true,
+    businessProfileId: 'bp_health'
+  },
+  {
+    id: 'idea_local_news_01',
+    title: 'How to Make Local News Content Go Viral?',
+    titleHi: 'लोकल न्यूज़ को वायरल कैसे बनाएं?',
+    industry: 'News & Media',
+    category: 'करेंट ट्रेंड्स',
+    format: 'Short (15-30s)',
+    targetAudience: 'Local Journalists, Digital Creators, Community Reporters',
+    engagementPotential: 'Viral',
+    usageCount: '932 उपयोग',
+    isIndustryRecommendation: true,
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________1_-_Notifications___Alerts_Management_e6446e8c.png',
+    summary: 'Mastering hyper-local storytelling: strong civic hook in first 3 seconds, local landmark b-roll, and community call to action.',
+    summaryHi: 'स्थानीय मुद्दों को डिजिटल ऑडियंस तक पहुंचाने के नियम: पहले 3 सेकंड में स्थानीय सवाल, लोकेशन फुटेज और नागरिक राय।',
+    outline: [
+      'Hook (0-5s): Local news does not have to be boring! Here is how creators are hitting 100k views on city issues.',
+      'Core Points (5-20s): 1. Focus on common problems (traffic, roads, water). 2. Tag local authorities. 3. Ask audience for their city experiences.',
+      'Call to Action (20-30s): What local issue needs attention in your city? Tell us in the comments below!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): आपके शहर की लोकल खबर भी लाखों लोगों तक पहुंच सकती है अगर आप ये 3 तकनीक अपनाएं!',
+      'मुख्य बात (5-25 सेकंड): 1. पहले 3 सेकंड में मुख्य समस्या सीधे दिखाएं। 2. स्थानीय लोगों की राय और सबूत शामिल करें। 3. स्पष्ट और निष्पक्ष भाषा रखें।',
+      'निष्कर्ष और CTA (25-30 सेकंड): आपके क्षेत्र में कौन सी समस्या सबसे बड़ी है? कमेंट में बताएं और चैनल को फॉलो करें!'
+    ],
+    sources: [
+      { name: 'Digital Media Trends Report 2026', date: 'Oct 2026', verified: true }
+    ],
+    businessProfileId: 'bp_media'
+  },
+  {
+    id: 'idea_growth_01',
+    title: '10 Proven Tactics to Grow Your Social Media Following',
+    titleHi: 'सोशल मीडिया पर ग्रोथ के 10 तरीके',
+    industry: 'News & Media',
+    category: 'डिजिटल मीडिया',
+    format: 'Medium (30-60s)',
+    targetAudience: 'Creators, Small Brands, Freelancers',
+    engagementPotential: 'Viral',
+    usageCount: '1.8K उपयोग',
+    isIndustryRecommendation: true,
+    imageUrl: '/assets/aistudio/Scripter_App_Tools_Showcase_819e4ce4.png',
+    summary: 'A fast breakdown of algorithm-friendly habits: daily consistency, retention-focused hooks, community reply loops, and repurposing across platforms.',
+    summaryHi: 'इंस्टाग्राम और यूट्यूब पर ऑर्गेनिक ग्रोथ के 10 नियम: डेली रील्स, 3-सेकंड हुक, तेज एडिटिंग और दर्शकों के सवालों पर वीडियो बनाना।',
+    outline: [
+      'Hook (0-5s): 95% of accounts stay under 1,000 followers because they make this one mistake.',
+      'Core Points (5-45s): 1. Retention-first hooks. 2. Clear visual cues. 3. Post at consistent creator hours. 4. Reply to every first-hour comment.',
+      'Call to Action (45-60s): Save this checklist for your next month plan. Follow Scripter for daily creator guides!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): 90% नए क्रिएटर्स 1000 फॉलोअर्स पर अटक जाते हैं क्योंकि वो यह एक गलती करते हैं!',
+      'मुख्य बात (5-45 सेकंड): 1. पहले 3 सेकंड में विजुअल हुक दें। 2. हर हफ्ते कम से कम 5 रील्स कंसिस्टेंटली पोस्ट करें। 3. कमेंट्स में बातचीत बढ़ाएं।',
+      'निष्कर्ष और CTA (45-60 सेकंड): इस गाइड को अभी सेव कर लें और उन दोस्तों को भेजें जो सोशल मीडिया पर बढ़ना चाहते हैं!'
+    ],
+    sources: [
+      { name: 'Social Media Algorithm Study 2026', date: 'Sep 2026', verified: true }
+    ],
+    businessProfileId: 'bp_media'
+  },
+  {
+    id: 'idea_interview_01',
+    title: 'How to Prepare for Media & Job Interviews with Confidence',
+    titleHi: 'इंटरव्यू की तैयारी कैसे करें?',
+    industry: 'Education & Training',
+    category: 'मीडिया ट्रेनिंग',
+    format: 'Short (15-30s)',
+    targetAudience: 'Job Seekers, Students, Aspiring Broadcasters',
+    engagementPotential: 'High',
+    usageCount: '764 उपयोग',
+    isIndustryRecommendation: true,
+    imageUrl: '/assets/aistudio/Master_Admin_UI___________2_User_Management_23b83c9a.png',
+    summary: 'STAR technique explained simply: Situation, Task, Action, Result. Plus body language and teleprompter practice tips.',
+    summaryHi: 'किसी भी इंटरव्यू या ऑन-कैमरा बाइट में आत्मविश्वास से बोलने के 3 नियम: स्पष्ट आवाज, STAR फॉर्मूला और चेहरे पर मुस्कान।',
+    outline: [
+      'Hook (0-5s): Nervous before big interviews? Here is the STAR framework used by top leaders.',
+      'Core Points (5-20s): 1. Explain the Situation clearly. 2. Define your specific Task. 3. Detail your Action. 4. Highlight the measurable Result.',
+      'Call to Action (20-30s): Practice your answers using Scripter\'s teleprompter today. Best of luck!'
+    ],
+    outlineHi: [
+      'हुक (0-5 सेकंड): इंटरव्यू में अक्सर जवाब भूल जाते हैं? यह STAR तकनीक आपको कभी अटकने नहीं देगी!',
+      'मुख्य बात (5-20 सेकंड): 1. स्थिति (Situation) स्पष्ट बताएं। 2. अपना काम (Task) समझाएं। 3. आपने क्या किया (Action) और 4. क्या परिणाम (Result) मिला।',
+      'निष्कर्ष और CTA (20-30 सेकंड): वीडियो को सेव करें और इंटरव्यू से पहले दोहराएं। शुभकामनाएं!'
+    ],
+    sources: [
+      { name: 'National Career Service Advisory', url: 'https://ncs.gov.in', date: '2026', verified: true }
+    ],
+    businessProfileId: 'bp_education'
+  },
+  {
     id: 'idea_01',
     title: 'How to Boost Immunity Naturally in Winter (30s Reel)',
     titleHi: 'सर्दियों में इम्यूनिटी कैसे बढ़ाएं (30 सेकंड रील)',

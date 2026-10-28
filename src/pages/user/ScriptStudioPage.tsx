@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { generateScriptWithAi, GeneratedScriptResult, isGeminiConfigured } from '../../services/aiService';
-import { saveProject, addNotification } from '../../services/storage';
-import { ScriptScene, ScriptVersion } from '../../types';
+import {
+  generateScriptWithAi,
+  transformScriptWithAi,
+  GeneratedScriptResult,
+  isGeminiConfigured,
+} from '../../services/aiService';
+import { saveProject, addNotification, getProjects } from '../../services/storage';
+import { ScriptScene, ScriptVersion, Project } from '../../types';
 import {
   FileText,
   Sparkles,
@@ -29,880 +34,799 @@ import {
   Save,
   Zap,
   ShoppingBag,
-  X
+  X,
+  History,
+  ChevronDown,
+  Wand2,
+  HelpCircle,
+  Scissors,
+  Maximize2,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const ScriptStudioPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { activeBusinessProfile, useCredits, deductCredits, creditsInfo, creditsUsed, creditsTotal } = useRole();
+  const { activeBusinessProfile, useCredits, deductCredits, creditsInfo } = useRole();
   const { language } = useLanguage();
-  const [isInsufficientCreditModalOpen, setIsInsufficientCreditModalOpen] = useState(false);
 
-  // Location state parameters (passed from Ideas page if clicked)
+  // Navigation state parameters (passed from Ideas or Projects)
   const navState = (location.state as {
     prefilledTopic?: string;
     ideaId?: string;
     category?: string;
     industry?: string;
+    outline?: string[];
+    projectId?: string;
   }) || {};
 
-  // Form State
-  const [topic, setTopic] = useState(
-    navState.prefilledTopic ||
-      (language === 'hi'
-        ? 'सर्दियों में इम्यूनिटी कैसे बढ़ाएं'
-        : 'How to Boost Immunity Naturally in Winter')
+  // Form & Settings State
+  const defaultTopic = language === 'hi' ? 'सोलर पैनल से बिजली बिल कैसे कम करें?' : 'How to Reduce Electricity Bill with Solar Panels';
+  const [topic, setTopic] = useState<string>(navState.prefilledTopic || defaultTopic);
+  const [isChangingTopic, setIsChangingTopic] = useState<boolean>(false);
+  const [tempTopic, setTempTopic] = useState<string>(topic);
+  const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+
+  // Script Configuration (Panel 2)
+  const [selectedLanguage, setSelectedLanguage] = useState<'hi' | 'en' | 'hinglish'>('hi');
+  const [videoLength, setVideoLength] = useState<'30s' | '60s' | '90s' | '180s'>('60s');
+  const [tone, setTone] = useState<string>('शांत और प्रभावी');
+  const [targetAudience, setTargetAudience] = useState<string>('सामान्य जनता');
+
+  // Script Content State (Sections Hook, Body, CTA)
+  const [hook, setHook] = useState<string>(
+    'क्या आप हर महीने बढ़ते बिजली बिल से परेशान हैं?'
   );
-  const [videoType, setVideoType] = useState<'short' | 'medium' | 'long' | 'custom'>('short');
-  const [selectedLanguage, setSelectedLanguage] = useState<'hi' | 'en' | 'hinglish'>(
-    language === 'hi' ? 'hi' : 'en'
+  const [mainBody, setMainBody] = useState<string>(
+    'तो सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है, अधिक यह पर्यावरण के लिए भी सुरक्षित है, यह सौर ऊर्जा से न सिर्फ आपके बिजली बिल में बड़ी कमी लाएगा बल्कि यह एक सुरक्षित निवेश भी साबित हो सकता है।'
   );
-  const [tone, setTone] = useState<string>('Educational & Informative');
-  const [additionalInstructions, setAdditionalInstructions] = useState('');
+  const [closingCta, setClosingCta] = useState<string>(
+    'अगर आप भी अपने घर या कारोबार में सोलर पैनल लगवाने की सोच रहे हैं, तो तुरंत नीचे दिए गए लिंक से डिटेल्स प्राप्त करें और आज ही अपनी छत को पावर प्लांट बनाएं!'
+  );
 
-  // Generation & Flow States
-  // 'form' | 'generating' | 'result'
-  const [studioStage, setStudioStage] = useState<'form' | 'generating' | 'result'>('form');
-  const [generatingProgress, setGeneratingProgress] = useState(0);
-  const [activeResultTab, setActiveResultTab] = useState<'script' | 'visuals' | 'voice'>('script');
+  // Active View / Edit Mode
+  const [activeTabMode, setActiveTabMode] = useState<'script' | 'edit' | 'visuals'>('script');
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [transformLoading, setTransformLoading] = useState<string | null>(null);
+  const [customPromptOpen, setCustomPromptOpen] = useState<boolean>(false);
+  const [customInstruction, setCustomInstruction] = useState<string>('');
 
-  // Script Data State
-  const [generatedScript, setGeneratedScript] = useState<GeneratedScriptResult | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editableHook, setEditableHook] = useState('');
-  const [editableMain, setEditableMain] = useState<string[]>([]);
-  const [editableClosing, setEditableClosing] = useState('');
-  const [scenes, setScenes] = useState<ScriptScene[]>([]);
-  const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const [isSavedToProject, setIsSavedToProject] = useState(false);
-  const [savedProjectId, setSavedProjectId] = useState<string | null>(null);
+  // Version History State
+  const [isVersionDrawerOpen, setIsVersionDrawerOpen] = useState<boolean>(false);
+  const [versions, setVersions] = useState<ScriptVersion[]>([
+    {
+      version: 1,
+      updatedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+      hook: 'क्या आप हर महीने बढ़ते बिजली बिल से परेशान हैं?',
+      mainContent: [
+        'तो सोलर पैनल आपके लिए एक बेहतरीन समाधान हो सकता है, अधिक यह पर्यावरण के लिए भी सुरक्षित है, यह सौर ऊर्जा से न सिर्फ आपके बिजली बिल में बड़ी कमी लाएगा बल्कि यह एक सुरक्षित निवेश भी साबित हो सकता है।'
+      ],
+      closing: 'अगर आप भी अपने घर या कारोबार में सोलर पैनल लगवाने की सोच रहे हैं, तो तुरंत नीचे दिए गए लिंक से डिटेल्स प्राप्त करें और आज ही अपनी छत को पावर प्लांट बनाएं!'
+    }
+  ]);
 
-  // Teleprompter Controls State
-  const [teleprompterSpeed, setTeleprompterSpeed] = useState<number>(3);
-  const [teleprompterFontSize, setTeleprompterFontSize] = useState<number>(18);
-  const [isTeleprompterPlaying, setIsTeleprompterPlaying] = useState(false);
+  // Project linkage
+  const [savedProjectId, setSavedProjectId] = useState<string | null>(navState.projectId || null);
+  const [saveSuccessToast, setSaveSuccessToast] = useState<boolean>(false);
+  const [copiedToast, setCopiedToast] = useState<boolean>(false);
+  const [isInsufficientCreditModalOpen, setIsInsufficientCreditModalOpen] = useState(false);
 
-  const durationSeconds = videoType === 'short' ? 30 : videoType === 'medium' ? 60 : 120;
-  const hasGemini = isGeminiConfigured();
+  // Calculate stats
+  const fullScriptText = `${hook}\n\n${mainBody}\n\n${closingCta}`;
+  const totalChars = fullScriptText.length;
+  const wordCount = fullScriptText.trim().split(/\s+/).length;
+  const estimatedSeconds = Math.round((wordCount / 130) * 60);
 
-  // Tone Options
-  const toneOptions = [
-    { id: 'Educational & Informative', labelEn: 'Informative', labelHi: 'जानकारीपूर्ण' },
-    { id: 'Professional', labelEn: 'Professional', labelHi: 'पेशेवर' },
-    { id: 'Conversational', labelEn: 'Conversational', labelHi: 'संवादात्मक' },
-    { id: 'Motivational', labelEn: 'Motivational', labelHi: 'प्रेरणादायक' },
-    { id: 'Simple & Clear', labelEn: 'Simple Language', labelHi: 'सरल भाषा' },
-  ];
+  // If outline was passed from an idea on mount, set it up
+  useEffect(() => {
+    if (navState.outline && navState.outline.length >= 2) {
+      setHook(navState.outline[0] || hook);
+      setMainBody(navState.outline.slice(1, -1).join('\n\n') || navState.outline[1]);
+      if (navState.outline.length > 2) {
+        setClosingCta(navState.outline[navState.outline.length - 1]);
+      }
+    }
+  }, [navState.outline]);
 
-  const handleGenerate = async () => {
-    if (!topic.trim()) return;
+  // Save version snapshot helper
+  const recordVersion = (newHook: string, newBody: string, newClosing: string) => {
+    const newVer: ScriptVersion = {
+      version: versions.length + 1,
+      updatedAt: new Date().toISOString(),
+      hook: newHook,
+      mainContent: [newBody],
+      closing: newClosing,
+    };
+    setVersions((prev) => [newVer, ...prev]);
+  };
 
-    // Check credits before executing
-    if (creditsInfo.totalAvailable < 10) {
+  // AI Generation (Primary)
+  const handleGenerateScript = async () => {
+    if (creditsInfo.totalAvailable < 1) {
       setIsInsufficientCreditModalOpen(true);
       return;
     }
 
-    setStudioStage('generating');
-    setGeneratingProgress(15);
-
-    // Simulate animated generation pipeline
-    const interval = setInterval(() => {
-      setGeneratingProgress((prev) => {
-        if (prev >= 85) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 25;
-      });
-    }, 350);
-
+    setIsGenerating(true);
     try {
+      const durSec = videoLength === '30s' ? 30 : videoLength === '60s' ? 60 : 90;
       const result = await generateScriptWithAi({
         topic,
-        videoType,
-        durationSeconds,
+        videoType: videoLength === '30s' ? 'short' : 'medium',
+        durationSeconds: durSec,
         language: selectedLanguage,
         tone,
-        additionalInstructions,
         businessProfile: activeBusinessProfile,
       });
 
-      clearInterval(interval);
-      setGeneratingProgress(100);
+      setHook(result.hook);
+      setMainBody(result.mainContent.join('\n\n'));
+      setClosingCta(result.closing);
+      recordVersion(result.hook, result.mainContent.join('\n\n'), result.closing);
 
-      setTimeout(() => {
-        setGeneratedScript(result);
-        setEditableHook(result.hook);
-        setEditableMain(result.mainContent);
-        setEditableClosing(result.closing);
-        setScenes(result.scenes.map((s) => ({ ...s, selected: true })));
-        setStudioStage('result');
-        useCredits(10);
-        deductCredits(10, 'script_generation', `AI Script: "${topic}"`, {
-          businessProfileName: activeBusinessProfile.name,
-        });
-        addNotification({
-          type: 'script_ready',
-          title: language === 'en' ? 'Script Generated Successfully' : 'स्क्रिप्ट तैयार हो गई',
-          titleHi: 'स्क्रिप्ट तैयार हो गई',
-          message: language === 'en' ? `Your YouTube/Reel script for "${topic}" is ready for recording.` : `"${topic}" के लिए आपकी स्क्रिप्ट तैयार है।`,
-          messageHi: `"${topic}" के लिए आपकी स्क्रिप्ट तैयार है।`,
-          actionUrl: '/user/script-studio',
-          actionLabel: language === 'en' ? 'View Script →' : 'स्क्रिप्ट देखें →',
-          actionLabelHi: 'स्क्रिप्ट देखें →'
-        });
-      }, 400);
+      // Deduct 1 credit atomically
+      useCredits(1);
+      deductCredits(1, 'script_generation', `AI Script for: "${topic}"`, {
+        businessProfileName: activeBusinessProfile.name,
+      });
+
+      addNotification({
+        type: 'script_ready',
+        title: language === 'en' ? 'Script Generated' : 'स्क्रिप्ट तैयार हो गई',
+        titleHi: 'स्क्रिप्ट तैयार हो गई',
+        message: `Generated: "${topic}"`,
+        messageHi: `"${topic}" के लिए आपकी स्क्रिप्ट तैयार है।`,
+        actionUrl: '/user/script-studio',
+      });
     } catch (err) {
-      clearInterval(interval);
-      setStudioStage('form');
       console.error(err);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  const copyToClipboard = (text: string, sectionKey: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedSection(sectionKey);
-    setTimeout(() => setCopiedSection(null), 2000);
+  // Quick Transformation Handlers
+  const handleTransform = async (action: 'rewrite' | 'expand' | 'shorten' | 'add_hook' | 'add_cta' | 'custom') => {
+    setTransformLoading(action);
+    try {
+      const res = await transformScriptWithAi({
+        action,
+        currentHook: hook,
+        currentMain: [mainBody],
+        currentClosing: closingCta,
+        topic,
+        language: selectedLanguage,
+        tone,
+        customInstruction: action === 'custom' ? customInstruction : undefined,
+      });
+
+      setHook(res.hook);
+      setMainBody(res.mainContent.join('\n\n'));
+      setClosingCta(res.closing);
+      recordVersion(res.hook, res.mainContent.join('\n\n'), res.closing);
+      setCustomPromptOpen(false);
+      setCustomInstruction('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTransformLoading(null);
+    }
   };
 
-  const handleSaveToProject = () => {
-    const titleText = topic;
+  // Save to Project
+  const handleSaveProject = () => {
     const project = saveProject({
       id: savedProjectId || undefined,
-      title: titleText,
-      titleHi: selectedLanguage === 'hi' ? titleText : undefined,
+      title: topic,
+      titleHi: selectedLanguage === 'hi' ? topic : undefined,
       industry: activeBusinessProfile.industry,
       category: activeBusinessProfile.category,
       status: 'in_progress',
-      format: videoType === 'short' ? 'reel' : 'short',
-      duration: `${durationSeconds}s`,
-      scriptSnippet: editableHook,
+      format: videoLength === '30s' ? 'short' : 'reel',
+      duration: `${estimatedSeconds}s`,
+      scriptSnippet: hook,
       businessProfileId: activeBusinessProfile.id,
-      scriptVersions: [
-        {
-          version: 1,
-          updatedAt: new Date().toISOString(),
-          hook: editableHook,
-          mainContent: editableMain,
-          closing: editableClosing,
-        },
-      ],
-      scenes: scenes,
-      notes: `Generated in Script Studio with ${tone} tone.`,
+      scriptVersions: versions,
+      notes: `Tone: ${tone} · Length: ${videoLength}`,
     });
 
     setSavedProjectId(project.id);
-    setIsSavedToProject(true);
+    setSaveSuccessToast(true);
+    setTimeout(() => setSaveSuccessToast(false), 2500);
+    return project;
+  };
+
+  // Copy full script
+  const handleCopyScript = () => {
+    navigator.clipboard.writeText(fullScriptText);
+    setCopiedToast(true);
+    setTimeout(() => setCopiedToast(false), 2000);
+  };
+
+  // Open in Teleprompter (Direct Handoff as mandated in Prompt 6)
+  const handleOpenTeleprompter = () => {
+    const proj = handleSaveProject();
+    navigate('/user/teleprompter', {
+      state: {
+        projectId: proj.id,
+        scriptText: fullScriptText,
+        title: topic,
+      },
+    });
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-12 space-y-6">
-      {/* Top Breadcrumb & Status */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 pb-24 md:pb-12 space-y-5">
+      {/* 1. Top Breadcrumb & Selected Topic Bar (Panel 2) */}
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => {
-              if (studioStage === 'result') setStudioStage('form');
-              else navigate('/user/home');
-            }}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            onClick={() => navigate('/user/ideas')}
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shrink-0"
+            title="Back to Ideas"
           >
-            ←
+            ← {language === 'en' ? 'Back' : 'वापस'}
           </button>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-              <span>{language === 'en' ? 'Script Studio' : 'स्क्रिप्ट स्टूडियो'}</span>
-              <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">
-                Phase 2
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-semibold">
+                {language === 'en' ? 'Selected Topic:' : 'चयनित विषय:'}
               </span>
+              <button
+                onClick={() => {
+                  setTempTopic(topic);
+                  setIsChangingTopic(true);
+                }}
+                className="text-[11px] font-bold text-blue-600 hover:underline"
+              >
+                {language === 'en' ? 'Change' : 'विषय बदलें'}
+              </button>
+            </div>
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 line-clamp-1">
+              {topic}
             </h1>
-            <p className="text-xs text-slate-500">
-              {language === 'en'
-                ? 'From idea to viral script in seconds'
-                : 'विषय से तैयार स्क्रिप्ट तक — सरल, तेज़ और पेशेवर'}
-            </p>
           </div>
         </div>
 
-        {/* AI Engine Status Badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs">
-          <Sparkles className={`w-3.5 h-3.5 ${hasGemini ? 'text-blue-600' : 'text-amber-500'}`} />
-          <span className="text-[11px] font-medium hidden sm:inline">
-            {hasGemini ? 'Gemini 2.5 Flash' : 'Curated Engine (Demo Mode)'}
+        <button
+          onClick={() => setIsGuideOpen(true)}
+          className="text-xs font-semibold text-slate-500 hover:text-blue-600 flex items-center gap-1 self-start sm:self-auto"
+        >
+          <HelpCircle className="w-3.5 h-3.5" />
+          <span>{language === 'en' ? 'How to write a script?' : 'स्क्रिप्ट कैसे लिखें?'}</span>
+        </button>
+      </div>
+
+      {/* 2. Script Settings Bar (Panel 2: भाषा, लंबाई, टोन, Audience) */}
+      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs space-y-3">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+          <span className="uppercase tracking-wider text-[11px] text-slate-400">
+            {language === 'en' ? 'Script Settings' : 'स्क्रिप्ट सेटिंग्स'}
           </span>
+          <span className="text-[11px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">
+            Active: {activeBusinessProfile.name}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          {/* Language */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-slate-500">
+              {language === 'en' ? 'Language' : 'भाषा'}
+            </label>
+            <select
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value as any)}
+              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="hi">हिंदी (Hindi)</option>
+              <option value="en">English</option>
+              <option value="hinglish">Hinglish</option>
+            </select>
+          </div>
+
+          {/* Length */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-slate-500">
+              {language === 'en' ? 'Length' : 'लंबाई'}
+            </label>
+            <select
+              value={videoLength}
+              onChange={(e) => setVideoLength(e.target.value as any)}
+              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="30s">30 सेकंड (Shorts)</option>
+              <option value="60s">60 सेकंड (Reels)</option>
+              <option value="90s">90 सेकंड</option>
+              <option value="180s">3 मिनट (Long)</option>
+            </select>
+          </div>
+
+          {/* Tone */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-slate-500">
+              {language === 'en' ? 'Tone' : 'टोन'}
+            </label>
+            <select
+              value={tone}
+              onChange={(e) => setTone(e.target.value)}
+              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="शांत और प्रभावी">शांत और प्रभावी (Calm)</option>
+              <option value="उत्साही और वायरल">उत्साही और वायरल (Energetic)</option>
+              <option value="पेशेवर">पेशेवर (Professional)</option>
+              <option value="सरल भाषा">सरल भाषा (Simple)</option>
+              <option value="प्रेरणादायक">प्रेरणादायक (Motivational)</option>
+            </select>
+          </div>
+
+          {/* Audience */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-slate-500">
+              {language === 'en' ? 'Audience' : 'Audience'}
+            </label>
+            <select
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="सामान्य जनता">सामान्य जनता (General)</option>
+              <option value="युवा और छात्र">युवा और छात्र (Youth)</option>
+              <option value="कारोबारी और उद्यमी">कारोबारी (Business)</option>
+              <option value="परिवार और वरिष्ठ">परिवार (Families)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Primary AI Generation Trigger Button (Matching Panel 2) */}
+        <div className="pt-2 flex justify-end">
+          <button
+            onClick={handleGenerateScript}
+            disabled={isGenerating}
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all disabled:opacity-60"
+          >
+            <Sparkles className="w-4 h-4 fill-white" />
+            <span>
+              {isGenerating
+                ? (language === 'en' ? 'Generating Script...' : 'AI से स्क्रिप्ट बन रही है...')
+                : (language === 'en' ? 'Create Script with AI' : 'AI से स्क्रिप्ट बनाएं')}
+            </span>
+            <span className="px-2 py-0.5 rounded-md bg-white/20 text-[11px] font-mono">
+              1 क्रेडिट
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* ================= STAGE 1: CREATE SCRIPT FORM ================= */}
-      {studioStage === 'form' && (
-        <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-6">
-          {/* Active Profile context */}
-          <div className="flex items-center justify-between p-3 bg-blue-50/60 rounded-2xl border border-blue-100 text-xs text-blue-900">
+      {/* 3. Action Toolbar / Transformation Pills (Panel 2: AI स्क्रिप्ट, मेरा एडिट, री-राइट, लंबा करें...) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+        <button
+          onClick={() => setActiveTabMode('script')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+            activeTabMode === 'script'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{language === 'en' ? 'AI Script' : 'AI स्क्रिप्ट'}</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTabMode('edit')}
+          className={`px-3.5 py-1.5 rounded-xl font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+            activeTabMode === 'edit'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>{language === 'en' ? 'My Edit' : 'मेरा एडिट'}</span>
+        </button>
+
+        {/* AI Quick Transformation Buttons */}
+        <button
+          onClick={() => handleTransform('rewrite')}
+          disabled={Boolean(transformLoading)}
+          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+        >
+          <RotateCcw className={`w-3.5 h-3.5 ${transformLoading === 'rewrite' ? 'animate-spin text-blue-600' : ''}`} />
+          <span>{language === 'en' ? 'Rewrite' : 'री-राइट'}</span>
+        </button>
+
+        <button
+          onClick={() => handleTransform('expand')}
+          disabled={Boolean(transformLoading)}
+          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+        >
+          <Maximize2 className={`w-3.5 h-3.5 ${transformLoading === 'expand' ? 'animate-pulse text-blue-600' : ''}`} />
+          <span>{language === 'en' ? 'Expand' : 'लंबा करें'}</span>
+        </button>
+
+        <button
+          onClick={() => handleTransform('shorten')}
+          disabled={Boolean(transformLoading)}
+          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+        >
+          <Scissors className={`w-3.5 h-3.5 ${transformLoading === 'shorten' ? 'animate-pulse text-blue-600' : ''}`} />
+          <span>{language === 'en' ? 'Shorten' : 'छोटा करें'}</span>
+        </button>
+
+        <button
+          onClick={() => handleTransform('add_hook')}
+          disabled={Boolean(transformLoading)}
+          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+        >
+          <Wand2 className={`w-3.5 h-3.5 ${transformLoading === 'add_hook' ? 'animate-pulse text-blue-600' : ''}`} />
+          <span>{language === 'en' ? 'Add Hook' : 'हुक जोड़ें'}</span>
+        </button>
+
+        <button
+          onClick={() => handleTransform('add_cta')}
+          disabled={Boolean(transformLoading)}
+          className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+        >
+          <ArrowRight className={`w-3.5 h-3.5 ${transformLoading === 'add_cta' ? 'animate-pulse text-blue-600' : ''}`} />
+          <span>{language === 'en' ? 'Add CTA' : 'CTA जोड़ें'}</span>
+        </button>
+
+        <button
+          onClick={() => setCustomPromptOpen(true)}
+          className="px-3.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>{language === 'en' ? 'Custom' : 'कस्टम'}</span>
+        </button>
+      </div>
+
+      {/* 4. Structured Script Sections (Panel 2: Hook, Core, CTA) */}
+      <div className="space-y-4">
+        {/* Section A: Hook (0-5s) */}
+        <div className="bg-white rounded-3xl p-5 border border-amber-200/90 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-blue-600 shrink-0" />
-              <span>
-                {language === 'en' ? 'Active Profile:' : 'सक्रिय प्रोफाइल:'}{' '}
-                <strong>{activeBusinessProfile.name}</strong> ({activeBusinessProfile.industry})
+              <span className="p-1 rounded-lg bg-amber-100 text-amber-700">⚡</span>
+              <h3 className="text-xs sm:text-sm font-bold text-amber-950 uppercase tracking-wide">
+                {language === 'en' ? 'Hook (0-5 Seconds)' : 'हुक (0-5 सेकंड)'}
+              </h3>
+              <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">
+                Attention Grabber
               </span>
             </div>
             <button
-              onClick={() => navigate('/user/ideas')}
-              className="text-[11px] font-bold text-blue-700 hover:underline shrink-0"
+              onClick={() => {
+                navigator.clipboard.writeText(hook);
+                setCopiedToast(true);
+                setTimeout(() => setCopiedToast(false), 2000);
+              }}
+              className="text-xs text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1"
             >
-              {language === 'en' ? 'Browse Ideas' : 'आइडिया देखें'} →
+              <Copy className="w-3 h-3" />
+              <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
             </button>
           </div>
 
-          {/* 1. Topic / Idea input */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs sm:text-sm font-bold text-slate-900">
-                1. {language === 'en' ? 'Topic / Content Idea' : 'विषय / आइडिया'}
-              </label>
-              <span className="text-[11px] text-slate-400 font-mono">{topic.length}/200</span>
+          <textarea
+            rows={2}
+            value={hook}
+            onChange={(e) => setHook(e.target.value)}
+            className="w-full p-3 rounded-2xl bg-amber-50/50 border border-amber-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-500/20 leading-relaxed resize-none"
+            placeholder="Enter attention-grabbing opening hook..."
+          />
+        </div>
+
+        {/* Section B: Core Points (5-45s) */}
+        <div className="bg-white rounded-3xl p-5 border border-blue-200/90 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-lg bg-blue-100 text-blue-700">💡</span>
+              <h3 className="text-xs sm:text-sm font-bold text-blue-950 uppercase tracking-wide">
+                {language === 'en' ? 'Core Content (5-45 Seconds)' : 'मुख्य बात (5-45 सेकंड)'}
+              </h3>
+              <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">
+                Value & Solution
+              </span>
             </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(mainBody);
+                setCopiedToast(true);
+                setTimeout(() => setCopiedToast(false), 2000);
+              }}
+              className="text-xs text-blue-700 hover:text-blue-900 font-semibold flex items-center gap-1"
+            >
+              <Copy className="w-3 h-3" />
+              <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+            </button>
+          </div>
+
+          <textarea
+            rows={5}
+            value={mainBody}
+            onChange={(e) => setMainBody(e.target.value)}
+            className="w-full p-3.5 rounded-2xl bg-blue-50/30 border border-blue-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 leading-relaxed resize-none"
+            placeholder="Enter primary script points and value breakdown..."
+          />
+        </div>
+
+        {/* Section C: Conclusion & CTA (45-60s) */}
+        <div className="bg-white rounded-3xl p-5 border border-emerald-200/90 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-lg bg-emerald-100 text-emerald-700">🎯</span>
+              <h3 className="text-xs sm:text-sm font-bold text-emerald-950 uppercase tracking-wide">
+                {language === 'en' ? 'Conclusion & CTA (45-60 Seconds)' : 'निष्कर्ष और CTA (45-60 सेकंड)'}
+              </h3>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
+                Action Driven
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(closingCta);
+                setCopiedToast(true);
+                setTimeout(() => setCopiedToast(false), 2000);
+              }}
+              className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1"
+            >
+              <Copy className="w-3 h-3" />
+              <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+            </button>
+          </div>
+
+          <textarea
+            rows={3}
+            value={closingCta}
+            onChange={(e) => setClosingCta(e.target.value)}
+            className="w-full p-3.5 rounded-2xl bg-emerald-50/40 border border-emerald-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 leading-relaxed resize-none"
+            placeholder="Enter clear call to action, subscribe, or link reminder..."
+          />
+        </div>
+
+        {/* Live Counters & Helper */}
+        <div className="flex items-center justify-between text-xs text-slate-500 px-2">
+          <span className="font-mono">
+            {totalChars}/800 {language === 'en' ? 'characters' : 'वर्ण'} · ~{estimatedSeconds}s {language === 'en' ? 'read time' : 'अनुमानित समय'}
+          </span>
+          <button
+            onClick={() => setIsGuideOpen(true)}
+            className="text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
+          >
+            <span>{language === 'en' ? 'Script guidelines & tips' : 'स्क्रिप्ट कैसे लिखें?'}</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
+      {/* 5. Bottom Sticky Action Bar (Panel 2: सेव करें, वर्जन हिस्ट्री, कॉपी करें, टेलीप्रॉम्प्टर में खोलें) */}
+      <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-3 border border-slate-200 shadow-xl flex flex-wrap items-center justify-between gap-3">
+        {/* Left Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSaveProject}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{language === 'en' ? 'Save Draft' : 'सेव करें'}</span>
+          </button>
+
+          <button
+            onClick={() => setIsVersionDrawerOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors relative"
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>{language === 'en' ? 'Versions' : 'वर्जन हिस्ट्री'}</span>
+            <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 text-[10px] flex items-center justify-center font-mono">
+              {versions.length}
+            </span>
+          </button>
+
+          <button
+            onClick={handleCopyScript}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span>{language === 'en' ? 'Copy All' : 'कॉपी करें'}</span>
+          </button>
+        </div>
+
+        {/* Primary Right Button: Open in Teleprompter */}
+        <button
+          onClick={handleOpenTeleprompter}
+          className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
+        >
+          <Video className="w-4 h-4 fill-white" />
+          <span>{language === 'en' ? 'Open in Teleprompter' : 'टेलीप्रॉम्प्टर में खोलें'}</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Toast Feedback */}
+      {saveSuccessToast && (
+        <div className="fixed bottom-20 right-6 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4" />
+          <span>{language === 'en' ? 'Script saved to projects successfully!' : 'स्क्रिप्ट प्रोजेक्ट्स में सेव हो गई!'}</span>
+        </div>
+      )}
+      {copiedToast && (
+        <div className="fixed bottom-20 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+          <Check className="w-4 h-4 text-emerald-400" />
+          <span>{language === 'en' ? 'Copied to clipboard!' : 'क्लिपबोर्ड पर कॉपी हो गया!'}</span>
+        </div>
+      )}
+
+      {/* Change Topic Modal */}
+      {isChangingTopic && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">
+              {language === 'en' ? 'Edit Topic / Idea' : 'विषय बदलें'}
+            </h3>
             <textarea
               rows={3}
-              value={topic}
-              onChange={(e) => setTopic(e.target.value.slice(0, 200))}
-              placeholder={
-                language === 'en'
-                  ? 'e.g. How to control high blood pressure naturally in 30 days...'
-                  : 'जैसे: सर्दियों में इम्युनिटी कैसे बढ़ाएं, डायबिटीज कंट्रोल टिप्स...'
-              }
-              className="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              value={tempTopic}
+              onChange={(e) => setTempTopic(e.target.value)}
+              className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter new content idea or question..."
             />
-          </div>
-
-          {/* 2. Video Duration / Type */}
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-bold text-slate-900">
-              2. {language === 'en' ? 'Video Format & Duration' : 'वीडियो प्रकार एवं अवधि'}
-            </label>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {[
-                { id: 'short', label: 'Short', range: '15-30s', icon: '⚡' },
-                { id: 'medium', label: 'Medium', range: '30-60s', icon: '⏱️' },
-                { id: 'long', label: 'Long', range: '60-180s', icon: '📺' },
-              ].map((item) => {
-                const isSelected = videoType === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setVideoType(item.id as any)}
-                    className={`p-3 rounded-2xl border text-center transition-all ${
-                      isSelected
-                        ? 'border-amber-400 bg-amber-50/50 shadow-2xs ring-1 ring-amber-400'
-                        : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
-                    }`}
-                  >
-                    <span className="text-sm">{item.icon}</span>
-                    <p className="text-xs font-bold text-slate-900 mt-1">{item.label}</p>
-                    <span className="text-[10px] text-slate-500 block font-mono">{item.range}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Language & Tone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-bold text-slate-900">
-                3. {language === 'en' ? 'Script Language' : 'भाषा'}
-              </label>
-              <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value as any)}
-                className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsChangingTopic(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
               >
-                <option value="hi">हिंदी (Hindi - Devanagari)</option>
-                <option value="en">English (Universal)</option>
-                <option value="hinglish">Hinglish (Hindi in Roman script)</option>
-              </select>
+                {language === 'en' ? 'Cancel' : 'रद्द करें'}
+              </button>
+              <button
+                onClick={() => {
+                  if (tempTopic.trim()) {
+                    setTopic(tempTopic.trim());
+                  }
+                  setIsChangingTopic(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700"
+              >
+                {language === 'en' ? 'Update Topic' : 'अपडेट करें'}
+              </button>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="space-y-2">
-              <label className="text-xs sm:text-sm font-bold text-slate-900">
-                4. {language === 'en' ? 'Tone & Style' : 'टोन / शैली'}
-              </label>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {toneOptions.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setTone(t.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                      tone === t.id
-                        ? 'bg-blue-600 text-white shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
-                    }`}
-                  >
-                    {language === 'en' ? t.labelEn : t.labelHi}
-                  </button>
-                ))}
+      {/* Custom AI Instruction Modal */}
+      {customPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <h3 className="text-base font-bold text-slate-900">
+              {language === 'en' ? 'Custom AI Transformation' : 'कस्टम AI निर्देश'}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {language === 'en'
+                ? 'Tell the AI exactly how you want to adjust your script (e.g. make it funnier, add doctor advice, quote a statistic)...'
+                : 'AI को बताएं कि स्क्रिप्ट में क्या बदलाव करना है (जैसे: थोड़ा मजाकिया बनाएं, डॉक्टर की सलाह जोड़ें)...'}
+            </p>
+            <textarea
+              rows={3}
+              value={customInstruction}
+              onChange={(e) => setCustomInstruction(e.target.value)}
+              className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. Add 2 practical real-world statistics..."
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setCustomPromptOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                {language === 'en' ? 'Cancel' : 'रद्द करें'}
+              </button>
+              <button
+                onClick={() => handleTransform('custom')}
+                disabled={!customInstruction.trim()}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 disabled:opacity-50"
+              >
+                {language === 'en' ? 'Apply Instruction' : 'लागू करें'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Script Guide Modal */}
+      {isGuideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
+                {language === 'en' ? 'How to Write Viral Short-Form Scripts' : 'स्क्रिप्ट कैसे लिखें? (गाइड)'}
+              </h3>
+              <button
+                onClick={() => setIsGuideOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950">
+                <p className="font-bold mb-1">1. 3-सेकंड का मजबूत हुक (Hook):</p>
+                <p>वीडियो शुरू होते ही दर्शक का ध्यान आकर्षित करने के लिए कोई सवाल पूछें या चौंकाने वाला तथ्य बताएं। कभी भी लंबा परिचय न दें।</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-blue-950">
+                <p className="font-bold mb-1">2. सीधे मुख्य बात पर आएं (Core Value):</p>
+                <p>मुद्दे को 2-3 छोटे और स्पष्ट बिंदुओं में समझाएं। हर वाक्य 8-10 शब्दों से बड़ा न हो ताकि टेलीप्रॉम्प्टर पर आसानी से पढ़ा जा सके।</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
+                <p className="font-bold mb-1">3. स्पष्ट कॉल टू एक्शन (Call to Action):</p>
+                <p>अंत में दर्शकों को बताएं कि उन्हें क्या करना है—वीडियो सेव करें, लिंक देखें या कमेंट में राय दें।</p>
               </div>
             </div>
-          </div>
-
-          {/* 5. Additional Instructions */}
-          <div className="space-y-2">
-            <label className="text-xs sm:text-sm font-bold text-slate-900">
-              5. {language === 'en' ? 'Additional Instructions (Optional)' : 'अतिरिक्त निर्देश (वैकल्पिक)'}
-            </label>
-            <input
-              type="text"
-              value={additionalInstructions}
-              onChange={(e) => setAdditionalInstructions(e.target.value)}
-              placeholder={
-                language === 'en'
-                  ? 'e.g. Include 3 kitchen ingredients, keep sentences short for speaking...'
-                  : 'जैसे: आसान घरेलू उपाय शामिल करें, बोलने में आसान वाक्य हों...'
-              }
-              className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200/90 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
-
-          {/* Submit Button */}
-          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span className="p-1 rounded-md bg-amber-100 text-amber-700">
-                <Sparkles className="w-3.5 h-3.5 fill-amber-500" />
-              </span>
-              <span>
-                Cost: <strong>10 AI Credits</strong> ({creditsTotal - creditsUsed} remaining)
-              </span>
-            </div>
-
             <button
-              onClick={handleGenerate}
-              disabled={!topic.trim()}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-98 text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setIsGuideOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
             >
-              <Sparkles className="w-4 h-4 fill-slate-950" />
-              <span>{language === 'en' ? 'Generate Script' : 'स्क्रिप्ट जनरेट करें ✨'}</span>
+              {language === 'en' ? 'Got It' : 'समझ गया'}
             </button>
           </div>
         </div>
       )}
 
-      {/* ================= STAGE 2: GENERATING PROGRESS ================= */}
-      {studioStage === 'generating' && (
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-md text-center max-w-lg mx-auto space-y-6">
-          {/* Animated Mascot / Icon */}
-          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-amber-400 text-white flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20 animate-bounce">
-            <Sparkles className="w-10 h-10 fill-white" />
-          </div>
-
-          <div>
-            <h3 className="text-xl font-bold text-slate-900">
-              {language === 'en'
-                ? 'Crafting Your Script...'
-                : 'आपकी स्क्रिप्ट तैयार हो रही है...'}
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              {language === 'en'
-                ? 'Synthesizing viral hooks, researched points, and timing...'
-                : 'AI आपके विषय के अनुसार उत्तम और प्रभावशाली स्क्रिप्ट लिख रहा है'}
-            </p>
-          </div>
-
-          {/* 4-Step Checklist */}
-          <div className="space-y-2 text-left max-w-xs mx-auto text-xs text-slate-700">
-            <div className="flex items-center gap-2 text-emerald-600">
-              <Check className="w-4 h-4 stroke-[3]" />
-              <span>{language === 'en' ? 'Topic analysis' : 'विषय का विश्लेषण'}</span>
-            </div>
-            <div className={`flex items-center gap-2 ${generatingProgress >= 40 ? 'text-emerald-600' : 'text-slate-400'}`}>
-              <Check className="w-4 h-4 stroke-[3]" />
-              <span>{language === 'en' ? 'Gathering research & clinical facts' : 'संबंधित जानकारी जुटाई जा रही है'}</span>
-            </div>
-            <div className={`flex items-center gap-2 ${generatingProgress >= 70 ? 'text-emerald-600' : 'text-slate-400'}`}>
-              <Check className="w-4 h-4 stroke-[3]" />
-              <span>{language === 'en' ? 'Structuring timing & hooks' : 'संरचना तैयार की जा रही है'}</span>
-            </div>
-            <div className={`flex items-center gap-2 ${generatingProgress >= 90 ? 'text-emerald-600' : 'text-slate-400'}`}>
-              <Check className="w-4 h-4 stroke-[3]" />
-              <span>{language === 'en' ? 'Finalizing script draft' : 'आकर्षक स्क्रिप्ट लिखी जा रही है...'}</span>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-1">
-            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-blue-600 to-amber-400 h-3 rounded-full transition-all duration-300"
-                style={{ width: `${generatingProgress}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-              <span>Estimated: 5-10s</span>
-              <span>{generatingProgress}%</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================= STAGE 3: SCRIPT RESULT ================= */}
-      {studioStage === 'result' && generatedScript && (
-        <div className="space-y-6">
-          {/* Navigation Tabs for Result */}
-          <div className="bg-white rounded-2xl p-1.5 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-1">
-            <div className="flex items-center gap-1 w-full sm:w-auto">
-              <button
-                onClick={() => setActiveResultTab('script')}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                  activeResultTab === 'script'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <FileText className="w-4 h-4" />
-                <span>{language === 'en' ? 'Script' : 'स्क्रिप्ट'}</span>
-              </button>
-
-              <button
-                onClick={() => setActiveResultTab('visuals')}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                  activeResultTab === 'visuals'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                <span>{language === 'en' ? 'Visual Storyboard' : 'विजुअल सुझाव'}</span>
-                <span className="w-4 h-4 rounded-full bg-white/20 text-[10px] flex items-center justify-center font-mono">
-                  {scenes.length}
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveResultTab('voice')}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                  activeResultTab === 'voice'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Volume2 className="w-4 h-4" />
-                <span>{language === 'en' ? 'Voice & Teleprompter' : 'वॉइस व टेलीप्रॉम्प्टर'}</span>
-              </button>
-            </div>
-
-            <div className="hidden sm:flex items-center gap-2">
-              <button
-                onClick={() => setStudioStage('form')}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>New</span>
-              </button>
-            </div>
-          </div>
-
-          {/* TAB 1: SCRIPT TAB */}
-          {activeResultTab === 'script' && (
-            <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-6">
-              {/* Header Info */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">{topic}</h2>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-blue-600" />
-                      <span>{durationSeconds} seconds duration</span>
-                    </span>
-                    <span>·</span>
-                    <span>{tone}</span>
-                    <span>·</span>
-                    <span className="text-emerald-600 font-medium">Ready to record</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
-                      isEditing
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>{isEditing ? 'Save Edits' : 'Edit Inline'}</span>
-                  </button>
-
-                  <button
-                    onClick={handleSaveToProject}
-                    disabled={isSavedToProject}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                      isSavedToProject
-                        ? 'bg-emerald-100 text-emerald-800 cursor-default'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
-                    }`}
-                  >
-                    {isSavedToProject ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Saved to Projects</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-3.5 h-3.5" />
-                        <span>Save to Projects</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* 1. Hook Card */}
-              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                      Hook (0-5s)
-                    </span>
-                    <span className="text-[10px] text-amber-700 bg-amber-200/60 px-1.5 py-0.5 rounded-md">
-                      Attention Grabber
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(editableHook, 'hook')}
-                    className="p-1 rounded-md text-amber-700 hover:bg-amber-100 transition-colors"
-                    title="Copy Hook"
-                  >
-                    {copiedSection === 'hook' ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {isEditing ? (
-                  <textarea
-                    rows={2}
-                    value={editableHook}
-                    onChange={(e) => setEditableHook(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-amber-300 text-xs sm:text-sm text-slate-900 focus:outline-hidden"
-                  />
-                ) : (
-                  <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
-                    "{editableHook}"
-                  </p>
-                )}
-              </div>
-
-              {/* 2. Main Content Card */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Main Content (5-{durationSeconds - 5}s)
-                    </span>
-                    <span className="text-[10px] text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded-md">
-                      Core Value Points
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(editableMain.join('\n'), 'main')}
-                    className="p-1 rounded-md text-slate-500 hover:bg-slate-200 transition-colors"
-                    title="Copy Content"
-                  >
-                    {copiedSection === 'main' ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {isEditing ? (
-                  <textarea
-                    rows={5}
-                    value={editableMain.join('\n')}
-                    onChange={(e) => setEditableMain(e.target.value.split('\n'))}
-                    className="w-full p-2.5 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-hidden"
-                  />
-                ) : (
-                  <ul className="space-y-2">
-                    {editableMain.map((point, idx) => (
-                      <li key={idx} className="text-xs sm:text-sm text-slate-800 leading-relaxed flex items-start gap-2">
-                        <span className="text-blue-600 font-bold mt-0.5">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* 3. Closing / CTA Card */}
-              <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">
-                      Closing & CTA ({durationSeconds - 5}-{durationSeconds}s)
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(editableClosing, 'closing')}
-                    className="p-1 rounded-md text-emerald-700 hover:bg-emerald-100 transition-colors"
-                    title="Copy CTA"
-                  >
-                    {copiedSection === 'closing' ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {isEditing ? (
-                  <textarea
-                    rows={2}
-                    value={editableClosing}
-                    onChange={(e) => setEditableClosing(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-white border border-emerald-300 text-xs sm:text-sm text-slate-900 focus:outline-hidden"
-                  />
-                ) : (
-                  <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
-                    "{editableClosing}"
-                  </p>
-                )}
-              </div>
-
-              {/* Bottom Flow Actions */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                <button
-                  onClick={() => {
-                    const fullText = `HOOK:\n${editableHook}\n\nMAIN:\n${editableMain.join('\n')}\n\nCLOSING:\n${editableClosing}`;
-                    copyToClipboard(fullText, 'all');
-                  }}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
-                >
-                  {copiedSection === 'all' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedSection === 'all' ? 'Entire Script Copied!' : 'Copy Complete Script'}</span>
-                </button>
-
-                <button
-                  onClick={() => setActiveResultTab('visuals')}
-                  className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-xs transition-colors"
-                >
-                  <span>{language === 'en' ? 'Next: Visual Storyboard' : 'अगला: विजुअल सुझाव'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: VISUAL STORYBOARD */}
-          {activeResultTab === 'visuals' && (
-            <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-6">
-              <div>
+      {/* Version History Drawer */}
+      {isVersionDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white w-full max-w-md h-full shadow-2xl p-6 overflow-y-auto space-y-4 animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-blue-600" />
                 <h3 className="text-base font-bold text-slate-900">
-                  {language === 'en' ? 'Scene-by-Scene Visual Storyboard' : 'सीन-अनुसार विजुअल सुझाव'}
+                  {language === 'en' ? 'Script Version History' : 'वर्जन हिस्ट्री'}
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {language === 'en'
-                    ? 'Recommended B-roll, illustrations, and camera angles for each segment'
-                    : 'प्रत्येक दृश्य के लिए उपयुक्त B-roll और फुटेज'}
-                </p>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {scenes.map((scene, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-3"
-                  >
-                    <div className="w-20 h-16 rounded-xl bg-slate-200 overflow-hidden shrink-0 border border-slate-200 relative group">
-                      <img
-                        src={scene.imageUrl}
-                        alt={`Scene ${scene.sceneNumber}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <span className="absolute bottom-1 right-1 px-1 rounded bg-black/70 text-[9px] font-mono text-white">
-                        {scene.timeRange}
-                      </span>
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-blue-700 uppercase">
-                          Scene {scene.sceneNumber} ({scene.timeRange})
-                        </span>
-                        <span className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
-                          Matched
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-800 mt-1 leading-snug">
-                        {language === 'hi' && scene.descriptionHi ? scene.descriptionHi : scene.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <button
-                  onClick={() => setActiveResultTab('script')}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                >
-                  ← {language === 'en' ? 'Back to Script' : 'स्क्रिप्ट पर वापस'}
-                </button>
-                <button
-                  onClick={() => setActiveResultTab('voice')}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-xs transition-colors"
-                >
-                  <span>{language === 'en' ? 'Next: Voice & Teleprompter' : 'अगला: टेलीप्रॉम्प्टर'}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => setIsVersionDrawerOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          )}
 
-          {/* TAB 3: VOICE TIPS & TELEPROMPTER */}
-          {activeResultTab === 'voice' && (
-            <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-6">
-              {/* Presentation Tips */}
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Volume2 className="w-4 h-4 text-blue-600" />
-                  <span>{language === 'en' ? 'Speaker Presentation Tips' : 'प्रेजेंटेशन टिप्स'}</span>
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                  {generatedScript.voiceTips.map((tip, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 flex items-start gap-2"
-                    >
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{tip}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Teleprompter Preview Simulator */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Video className="w-4 h-4 text-purple-600" />
-                    <span>{language === 'en' ? 'Interactive Teleprompter View' : 'टेलीप्रॉम्प्टर मोड'}</span>
-                  </h4>
-
-                  {/* Teleprompter Controls */}
-                  <div className="flex items-center gap-3 text-xs">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-400 text-[11px]">Speed:</span>
-                      <input
-                        type="range"
-                        min={1}
-                        max={5}
-                        value={teleprompterSpeed}
-                        onChange={(e) => setTeleprompterSpeed(parseInt(e.target.value, 10))}
-                        className="w-16 accent-blue-600"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-400 text-[11px]">Text:</span>
-                      <button
-                        onClick={() => setTeleprompterFontSize((prev) => Math.max(14, prev - 2))}
-                        className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono"
-                      >
-                        A-
-                      </button>
-                      <button
-                        onClick={() => setTeleprompterFontSize((prev) => Math.min(26, prev + 2))}
-                        className="px-1.5 py-0.5 bg-slate-100 rounded text-xs font-mono"
-                      >
-                        A+
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Teleprompter Dark Screen Preview */}
-                <div className="bg-slate-950 text-white rounded-2xl p-6 sm:p-8 relative overflow-hidden border border-slate-800 shadow-inner">
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded-full text-[10px] text-amber-300 font-mono">
-                    <Clock className="w-3 h-3" />
-                    <span>{durationSeconds}s</span>
-                  </div>
-
-                  <div className="max-w-md mx-auto text-center space-y-4">
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-blue-400 bg-blue-950/60 px-2.5 py-1 rounded-md border border-blue-800">
-                      Live Reading Frame
+            <div className="space-y-3">
+              {versions.map((ver, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-300 transition-all space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md font-mono">
+                      v{ver.version} {idx === 0 ? '(Current)' : ''}
                     </span>
-                    <p
-                      style={{ fontSize: `${teleprompterFontSize}px` }}
-                      className="font-medium text-amber-200 leading-relaxed transition-all"
-                    >
-                      "{editableHook}"
-                    </p>
-                    <p
-                      style={{ fontSize: `${teleprompterFontSize - 2}px` }}
-                      className="text-slate-300 leading-relaxed opacity-85"
-                    >
-                      {editableMain[0]}
-                    </p>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {new Date(ver.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                </div>
-              </div>
 
-              {/* Final Actions: Save & Projects */}
-              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <button
-                  onClick={() => setActiveResultTab('script')}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  ← {language === 'en' ? 'Back to Script' : 'स्क्रिप्ट पर वापस'}
-                </button>
+                  <p className="font-semibold text-slate-800 line-clamp-2">
+                    "{ver.hook}"
+                  </p>
+                  <p className="text-slate-500 text-[11px] line-clamp-2">
+                    {ver.mainContent[0]}
+                  </p>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={handleSaveToProject}
-                    className="px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{isSavedToProject ? 'Saved!' : 'Save Project'}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSaveToProject();
-                      navigate('/user/teleprompter', {
-                        state: {
-                          projectId: savedProjectId,
-                          scriptText: `${editableHook}\n\n${editableMain.join('\n\n')}\n\n${editableClosing}`,
-                          title: topic,
-                        },
-                      });
-                    }}
-                    className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
-                  >
-                    <Video className="w-4 h-4" />
-                    <span>{language === 'en' ? 'Launch Teleprompter' : 'टेलीप्रॉम्प्टर खोलें'}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSaveToProject();
-                      navigate('/user/projects');
-                    }}
-                    className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
-                  >
-                    <span>{language === 'en' ? 'Projects' : 'प्रोजेक्ट्स'}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {idx !== 0 && (
+                    <button
+                      onClick={() => {
+                        setHook(ver.hook);
+                        setMainBody(ver.mainContent.join('\n\n'));
+                        setClosingCta(ver.closing);
+                        setIsVersionDrawerOpen(false);
+                      }}
+                      className="w-full py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold text-[11px] transition-colors"
+                    >
+                      {language === 'en' ? 'Restore this version' : 'यह वर्जन लोड करें'}
+                    </button>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -926,14 +850,9 @@ export const ScriptStudioPage: React.FC = () => {
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
               {language === 'en'
-                ? `Generating a full YouTube/Reel script requires 10 AI credits. You currently have ${creditsInfo.totalAvailable} credits remaining.`
-                : `स्क्रिप्ट जेनरेशन के लिए 10 क्रेडिट आवश्यक हैं। आपके पास केवल ${creditsInfo.totalAvailable} क्रेडिट शेष हैं।`}
+                ? `Generating a full YouTube/Reel script requires AI credits. You currently have ${creditsInfo.totalAvailable} credits remaining.`
+                : `स्क्रिप्ट जेनरेशन के लिए क्रेडिट आवश्यक हैं। आपके पास केवल ${creditsInfo.totalAvailable} क्रेडिट शेष हैं।`}
             </p>
-
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 mt-4 text-xs flex justify-between">
-              <span className="text-slate-500">Operation Cost:</span>
-              <span className="font-bold text-slate-800">10 Credits</span>
-            </div>
 
             <div className="grid grid-cols-2 gap-3 mt-5">
               <button

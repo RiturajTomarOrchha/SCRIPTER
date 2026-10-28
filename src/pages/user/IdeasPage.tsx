@@ -22,6 +22,16 @@ import {
   TrendingUp,
   X,
   Share2,
+  Edit3,
+  Landmark,
+  Briefcase,
+  GraduationCap,
+  HeartPulse,
+  Compass,
+  Utensils,
+  Palette,
+  ChevronRight,
+  BookOpen,
 } from 'lucide-react';
 
 export const IdeasPage: React.FC = () => {
@@ -30,20 +40,22 @@ export const IdeasPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilterTab, setActiveFilterTab] = useState<'for_you' | 'trending' | 'latest' | 'my_industry' | 'saved'>('for_you');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
   const [selectedIdea, setSelectedIdea] = useState<ContentIdea | null>(null);
   const [savedIds, setSavedIds] = useState<string[]>(() => {
     return DEMO_CONTENT_IDEAS.filter((i) => isIdeaSaved(i.id)).map((i) => i.id);
   });
 
   const categories = [
-    { id: 'all', labelEn: 'All Topics', labelHi: 'सभी विषय' },
-    { id: 'Healthcare & Wellness', labelEn: 'Health & Wellness', labelHi: 'हेल्थ व वेलनेस' },
-    { id: 'Tech & Software', labelEn: 'Technology & AI', labelHi: 'टेक्नोलॉजी व AI' },
-    { id: 'Education & Training', labelEn: 'Education', labelHi: 'शिक्षा व करियर' },
-    { id: 'Hospitality', labelEn: 'Food & Lifestyle', labelHi: 'खान-पान व लाइफस्टाइल' },
-    { id: 'Real Estate', labelEn: 'Real Estate', labelHi: 'रियल एस्टेट' },
+    { id: 'all', labelEn: 'All', labelHi: 'सभी', icon: Sparkles, color: 'text-blue-600 bg-blue-50' },
+    { id: 'राजनीति', labelEn: 'Politics', labelHi: 'राजनीति', icon: Landmark, color: 'text-rose-600 bg-rose-50' },
+    { id: 'बिज़नेस', labelEn: 'Business', labelHi: 'बिज़नेस', icon: Briefcase, color: 'text-amber-600 bg-amber-50' },
+    { id: 'शिक्षा', labelEn: 'Education', labelHi: 'शिक्षा', icon: GraduationCap, color: 'text-indigo-600 bg-indigo-50' },
+    { id: 'स्वास्थ्य', labelEn: 'Health', labelHi: 'स्वास्थ्य', icon: HeartPulse, color: 'text-emerald-600 bg-emerald-50' },
+    { id: 'ट्रैवल', labelEn: 'Travel', labelHi: 'ट्रैवल', icon: Compass, color: 'text-sky-600 bg-sky-50' },
+    { id: 'फूड', labelEn: 'Food', labelHi: 'फूड', icon: Utensils, color: 'text-orange-600 bg-orange-50' },
+    { id: 'लाइफस्टाइल', labelEn: 'Lifestyle', labelHi: 'लाइफस्टाइल', icon: Palette, color: 'text-purple-600 bg-purple-50' },
   ];
 
   const handleToggleSave = (ideaId: string, e: React.MouseEvent) => {
@@ -51,28 +63,6 @@ export const IdeasPage: React.FC = () => {
     const isNowSaved = toggleSaveIdea(ideaId);
     setSavedIds((prev) => (isNowSaved ? [...prev, ideaId] : prev.filter((id) => id !== ideaId)));
   };
-
-  const filteredIdeas = useMemo(() => {
-    return DEMO_CONTENT_IDEAS.filter((idea) => {
-      // Tab filter
-      if (activeTab === 'saved' && !savedIds.includes(idea.id)) {
-        return false;
-      }
-      // Category filter
-      if (selectedCategory !== 'all' && idea.industry !== selectedCategory) {
-        return false;
-      }
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = idea.title.toLowerCase().includes(q) || idea.titleHi.toLowerCase().includes(q);
-        const matchCat = idea.category.toLowerCase().includes(q);
-        const matchSummary = idea.summary.toLowerCase().includes(q) || idea.summaryHi.toLowerCase().includes(q);
-        return matchTitle || matchCat || matchSummary;
-      }
-      return true;
-    });
-  }, [searchQuery, selectedCategory, activeTab, savedIds]);
 
   const handleStartScript = (idea: ContentIdea) => {
     const topicText = language === 'hi' ? idea.titleHi : idea.title;
@@ -82,352 +72,494 @@ export const IdeasPage: React.FC = () => {
         ideaId: idea.id,
         category: idea.category,
         industry: idea.industry,
+        outline: language === 'hi' ? idea.outlineHi : idea.outline,
       },
     });
   };
 
+  // Filter ideas based on active tab, search, category, and business profile
+  const filteredIdeas = useMemo(() => {
+    return DEMO_CONTENT_IDEAS.filter((idea) => {
+      // 1. Tab filter
+      if (activeFilterTab === 'saved') {
+        if (!savedIds.includes(idea.id)) return false;
+      } else if (activeFilterTab === 'trending') {
+        if (!idea.isTrending && idea.engagementPotential !== 'Viral') return false;
+      } else if (activeFilterTab === 'my_industry') {
+        if (idea.businessProfileId && idea.businessProfileId !== activeBusinessProfile.id) return false;
+      }
+
+      // 2. Category filter
+      if (selectedCategory !== 'all') {
+        const matchesCategory =
+          idea.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+          idea.industry.toLowerCase().includes(selectedCategory.toLowerCase());
+        if (!matchesCategory) return false;
+      }
+
+      // 3. Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = idea.title.toLowerCase().includes(q) || idea.titleHi.toLowerCase().includes(q);
+        const matchCat = idea.category.toLowerCase().includes(q) || idea.industry.toLowerCase().includes(q);
+        const matchSummary = idea.summary.toLowerCase().includes(q) || idea.summaryHi.toLowerCase().includes(q);
+        return matchTitle || matchCat || matchSummary;
+      }
+
+      return true;
+    });
+  }, [searchQuery, selectedCategory, activeFilterTab, savedIds, activeBusinessProfile]);
+
+  // Section 1: Today's Trending Ideas
+  const trendingSectionIdeas = useMemo(() => {
+    return DEMO_CONTENT_IDEAS.filter((i) => i.isTrending || i.id.startsWith('idea_solar') || i.id.startsWith('idea_orchha') || i.id.startsWith('idea_immunity')).slice(0, 3);
+  }, []);
+
+  // Section 2: Industry Recommendations
+  const industryRecommendations = useMemo(() => {
+    return DEMO_CONTENT_IDEAS.filter((i) => i.isIndustryRecommendation || i.businessProfileId === activeBusinessProfile.id || i.industry.includes('Media')).slice(0, 3);
+  }, [activeBusinessProfile]);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-12 space-y-6">
-      {/* Header & Personalization Banner */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-amber-100 text-amber-700">
-                <Lightbulb className="w-5 h-5 fill-amber-500 text-amber-600" />
-              </span>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                {language === 'en' ? 'Ideas & Research Engine' : 'आइडिया एवं रिसर्च इंजन'}
-              </h1>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              {language === 'en'
-                ? `Trending topic discovery and researched outlines tailored for ${activeBusinessProfile.name}.`
-                : `${activeBusinessProfile.name} के लिए विशेष रूप से चुने गए विषय और प्रामाणिक रिसर्च।`}
-            </p>
-          </div>
-
-          {/* Tab Switcher: All Ideas vs Saved */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-2xl self-start sm:self-auto">
+      {/* 1. Header & Search Bar matching Panel 1 */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+        {/* Top Search Input with Search Icon */}
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={
+              language === 'en'
+                ? 'Search topics, keywords or industry (e.g. solar panel, immunity, viral news)...'
+                : 'विषय, कीवर्ड या इंडस्ट्री खोजें (जैसे: सोलर पैनल, ओरछा, इम्युनिटी)...'
+            }
+            className="w-full pl-11 pr-10 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-2xs"
+          />
+          {searchQuery && (
             <button
-              onClick={() => setActiveTab('all')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'all'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
             >
-              {language === 'en' ? 'Explore All' : 'सभी विषय'}
-            </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                activeTab === 'saved'
-                  ? 'bg-white text-blue-600 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Bookmark className="w-3.5 h-3.5 fill-current" />
-              <span>{language === 'en' ? 'Saved Ideas' : 'सेव किए गए'}</span>
-              <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 text-[10px] flex items-center justify-center font-mono">
-                {savedIds.length}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Search Bar & Industry Quick Selectors */}
-        <div className="mt-5 space-y-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={
-                language === 'en'
-                  ? 'Search topics, categories, or keywords (e.g. immunity, screen time, study)...'
-                  : 'विषय, कैटेगरी या कीवर्ड खोजें (जैसे: इम्यूनिटी, स्क्रीन डिटॉक्स, पढ़ाई)...'
-              }
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
-                  }`}
-                >
-                  {language === 'en' ? cat.labelEn : cat.labelHi}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Ideas Grid */}
-      {filteredIdeas.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
-          <Lightbulb className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-700">
-            {activeTab === 'saved'
-              ? language === 'en'
-                ? 'No Saved Ideas Yet'
-                : 'अभी कोई आइडिया सेव नहीं किया गया है'
-              : language === 'en'
-              ? 'No Topics Found'
-              : 'कोई विषय नहीं मिला'}
-          </h3>
-          <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            {activeTab === 'saved'
-              ? language === 'en'
-                ? 'Tap the bookmark icon on any idea card to save it here for quick access.'
-                : 'किसी भी कार्ड पर बुकमार्क आइकन दबाकर उसे यहाँ सेव करें।'
-              : language === 'en'
-              ? 'Try modifying your search or switching to a different industry category.'
-              : 'सर्च शब्द बदलें या अन्य कैटेगरी चुनकर देखें।'}
-          </p>
-          {activeTab === 'saved' && (
-            <button
-              onClick={() => setActiveTab('all')}
-              className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
-            >
-              {language === 'en' ? 'Browse All Topics' : 'सभी विषय देखें'}
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredIdeas.map((idea) => {
-            const isSaved = savedIds.includes(idea.id);
-            const isMatchingCurrentProfile = idea.businessProfileId === activeBusinessProfile.id;
 
+        {/* Filter Pills row (For You, Trending, Latest News, My Industry, Saved Ideas) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+          {[
+            { id: 'for_you', labelEn: 'For You', labelHi: 'मेरे लिए' },
+            { id: 'trending', labelEn: 'Trending', labelHi: 'ट्रेंडिंग' },
+            { id: 'latest', labelEn: 'Latest News', labelHi: 'ताज़ा ख़बरें' },
+            { id: 'my_industry', labelEn: 'My Industry', labelHi: 'मेरी इंडस्ट्री' },
+            { id: 'saved', labelEn: `Saved Ideas (${savedIds.length})`, labelHi: `सेव्ड आइडिया (${savedIds.length})` },
+          ].map((tab) => {
+            const isActive = activeFilterTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilterTab(tab.id as any)}
+                className={`px-3.5 py-1.5 rounded-full font-bold transition-all shrink-0 ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                }`}
+              >
+                {language === 'en' ? tab.labelEn : tab.labelHi}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Category Pills with Colorful Icons */}
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none pt-1">
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold shrink-0 transition-all border ${
+                  isSelected
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-2xs ring-1 ring-slate-900'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <span className={`p-1 rounded-lg ${cat.color} shrink-0`}>
+                  <Icon className="w-3.5 h-3.5" />
+                </span>
+                <span>{language === 'en' ? cat.labelEn : cat.labelHi}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. SECTION A: आज के ट्रेंडिंग आइडिया (Today's Trending Ideas) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              {language === 'en' ? "Today's Trending Ideas" : 'आज के ट्रेंडिंग आइडिया'}
+            </h2>
+          </div>
+          <button
+            onClick={() => setActiveFilterTab('trending')}
+            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-0.5"
+          >
+            <span>{language === 'en' ? 'View All' : 'सभी देखें'}</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {trendingSectionIdeas.map((idea) => {
+            const isSaved = savedIds.includes(idea.id);
             return (
               <div
                 key={idea.id}
-                onClick={() => setSelectedIdea(idea)}
-                className={`group bg-white rounded-2xl p-5 border transition-all hover:shadow-md cursor-pointer flex flex-col justify-between space-y-4 ${
-                  isMatchingCurrentProfile
-                    ? 'border-blue-200 hover:border-blue-400'
-                    : 'border-slate-200/80 hover:border-slate-300'
-                }`}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
               >
                 <div>
-                  {/* Top Badges */}
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold">
-                        {idea.category}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium">
-                        {idea.format}
-                      </span>
-                      {idea.isTrending && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200/60">
-                          <TrendingUp className="w-3 h-3 text-amber-600" />
-                          <span>{language === 'en' ? 'Trending' : 'ट्रेंडिंग'}</span>
-                        </span>
-                      )}
-                    </div>
+                  {/* Thumbnail Banner with Tag */}
+                  <div className="relative h-36 bg-slate-900 overflow-hidden">
+                    <img
+                      src={idea.imageUrl || '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png'}
+                      alt={idea.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-rose-600 text-white text-[10px] font-bold uppercase tracking-wider shadow-xs">
+                      Trending
+                    </span>
 
-                    {/* Bookmark Toggle */}
                     <button
                       onClick={(e) => handleToggleSave(idea.id, e)}
-                      className={`p-1.5 rounded-lg transition-colors ${
-                        isSaved
-                          ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
-                          : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                      className={`absolute top-2.5 right-2.5 p-1.5 rounded-full backdrop-blur-md transition-colors ${
+                        isSaved ? 'bg-amber-400 text-slate-950' : 'bg-black/50 text-white hover:bg-black/70'
                       }`}
-                      title={isSaved ? 'Remove Bookmark' : 'Save Idea'}
+                      title={isSaved ? 'Saved' : 'Save Idea'}
                     >
-                      {isSaved ? (
-                        <BookmarkCheck className="w-4 h-4 fill-amber-500" />
-                      ) : (
-                        <Bookmark className="w-4 h-4" />
-                      )}
+                      <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
                     </button>
+
+                    <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-slate-300 font-medium">
+                      <span>{idea.category}</span>
+                      <span>{idea.usageCount || '1.2K उपयोग'}</span>
+                    </div>
                   </div>
 
-                  {/* Idea Title */}
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                    {language === 'hi' ? idea.titleHi : idea.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                    {language === 'hi' ? idea.summaryHi : idea.summary}
-                  </p>
+                  {/* Title & Summary */}
+                  <div className="p-4 space-y-2">
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+                      {language === 'hi' ? idea.titleHi : idea.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 line-clamp-2">
+                      {language === 'hi' ? idea.summaryHi : idea.summary}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>{idea.sources.length} Verified Sources</span>
-                  </div>
+                {/* Bottom Actions Bar */}
+                <div className="p-4 pt-0 flex items-center gap-2">
+                  <button
+                    onClick={() => handleStartScript(idea)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>{language === 'en' ? 'Create Script' : 'स्क्रिप्ट बनाएं'}</span>
+                  </button>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedIdea(idea);
-                      }}
-                      className="px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 text-xs font-semibold transition-colors"
-                    >
-                      {language === 'en' ? 'Research' : 'रिसर्च'}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleStartScript(idea);
-                      }}
-                      className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 transition-colors shadow-xs"
-                    >
-                      <span>{language === 'en' ? 'Create Script' : 'स्क्रिप्ट बनाएं'}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setSelectedIdea(idea)}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                    title={language === 'en' ? 'View Research Outline' : 'रिसर्च देखें'}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
-      )}
+      </section>
 
-      {/* Idea Detail & Research Modal */}
+      {/* 3. SECTION B: आपकी इंडस्ट्री के लिए सुझाव (Recommendations for your Industry) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-lg bg-blue-100 text-blue-700">
+              <Briefcase className="w-3.5 h-3.5" />
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              {language === 'en'
+                ? `Recommendations for your Industry (${activeBusinessProfile.name})`
+                : `आपकी इंडस्ट्री के लिए सुझाव (${activeBusinessProfile.name})`}
+            </h2>
+          </div>
+          <span className="text-xs font-semibold text-slate-400">
+            {language === 'en' ? 'Personalized' : 'निजीकृत सुझाव'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {industryRecommendations.map((idea) => {
+            const isSaved = savedIds.includes(idea.id);
+            return (
+              <div
+                key={idea.id}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="relative h-32 bg-slate-900 overflow-hidden">
+                    <img
+                      src={idea.imageUrl || '/assets/aistudio/Scripter_App_Tools_Showcase_819e4ce4.png'}
+                      alt={idea.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    <button
+                      onClick={(e) => handleToggleSave(idea.id, e)}
+                      className={`absolute top-2.5 right-2.5 p-1.5 rounded-full backdrop-blur-md transition-colors ${
+                        isSaved ? 'bg-amber-400 text-slate-950' : 'bg-black/50 text-white hover:bg-black/70'
+                      }`}
+                      title={isSaved ? 'Saved' : 'Save Idea'}
+                    >
+                      <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                    </button>
+
+                    <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-slate-300 font-medium">
+                      <span>{idea.category}</span>
+                      <span>{idea.usageCount || '932 उपयोग'}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-1.5">
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+                      {language === 'hi' ? idea.titleHi : idea.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 line-clamp-2">
+                      {language === 'hi' ? idea.summaryHi : idea.summary}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 pt-0 flex items-center gap-2">
+                  <button
+                    onClick={() => handleStartScript(idea)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>{language === 'en' ? 'Create Script' : 'स्क्रिप्ट बनाएं'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedIdea(idea)}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                    title={language === 'en' ? 'View Research Outline' : 'रिसर्च देखें'}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 4. Full Catalog Grid (Filtered View) */}
+      <section className="space-y-3 pt-2">
+        <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+          {language === 'en' ? 'Explore All Topics' : 'सभी आइडिया और रिसर्च'} ({filteredIdeas.length})
+        </h2>
+
+        {filteredIdeas.length === 0 ? (
+          <div className="bg-white rounded-3xl p-10 text-center border border-slate-200/80">
+            <Lightbulb className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <h3 className="text-sm font-bold text-slate-700">
+              {activeFilterTab === 'saved'
+                ? language === 'en'
+                  ? 'No Saved Ideas'
+                  : 'कोई सेव किया गया आइडिया नहीं है'
+                : language === 'en'
+                ? 'No Topics Found'
+                : 'कोई विषय नहीं मिला'}
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              {language === 'en'
+                ? 'Try adjusting your search keywords or switching filters.'
+                : 'सर्च शब्द बदलें या फिल्टर बदलकर देखें।'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredIdeas.map((idea) => {
+              const isSaved = savedIds.includes(idea.id);
+              return (
+                <div
+                  key={idea.id}
+                  className="bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between space-y-3"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold">
+                          {idea.category}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium">
+                          {idea.format}
+                        </span>
+                        {idea.isTrending && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200/60">
+                            <TrendingUp className="w-3 h-3 text-amber-600" />
+                            <span>Trending</span>
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => handleToggleSave(idea.id, e)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isSaved ? 'text-amber-500 bg-amber-50' : 'text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {language === 'hi' ? idea.titleHi : idea.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                      {language === 'hi' ? idea.summaryHi : idea.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setSelectedIdea(idea)}
+                      className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{language === 'en' ? 'Research Outline' : 'आउटलाइन'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleStartScript(idea)}
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Create Script' : 'स्क्रिप्ट बनाएं'}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* 5. RESEARCH OUTLINE DRAWER / MODAL */}
       {selectedIdea && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto space-y-5">
             {/* Modal Header */}
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs font-bold">
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">
                     {selectedIdea.category}
                   </span>
-                  <span className="text-xs text-slate-400">· {selectedIdea.format}</span>
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-semibold">
+                    {selectedIdea.format}
+                  </span>
                 </div>
-                <button
-                  onClick={() => setSelectedIdea(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Title & Summary */}
-              <div className="mt-4 space-y-2">
-                <h3 className="text-lg font-bold text-slate-900 leading-snug">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">
                   {language === 'hi' ? selectedIdea.titleHi : selectedIdea.title}
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {language === 'hi' ? selectedIdea.summaryHi : selectedIdea.summary}
-                </p>
+                </h2>
               </div>
+              <button
+                onClick={() => setSelectedIdea(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              {/* Target Audience */}
-              <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
-                <span className="font-semibold text-slate-700">
-                  {language === 'en' ? 'Recommended Audience:' : 'लक्षित दर्शक:'}
-                </span>{' '}
-                <span className="text-slate-600">{selectedIdea.targetAudience}</span>
-              </div>
+            {/* Summary */}
+            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 text-xs text-blue-950 space-y-1">
+              <span className="font-bold uppercase tracking-wider text-[10px] text-blue-700">
+                {language === 'en' ? 'Research Summary' : 'रिसर्च सारांश'}
+              </span>
+              <p className="leading-relaxed">
+                {language === 'hi' ? selectedIdea.summaryHi : selectedIdea.summary}
+              </p>
+            </div>
 
-              {/* Researched Outline Breakdown */}
-              <div className="mt-4 space-y-2 overflow-y-auto max-h-48 pr-1">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>{language === 'en' ? 'Researched Script Outline' : 'शोधित स्क्रिप्ट रूपरेखा'}</span>
-                </h4>
-                <div className="space-y-1.5">
-                  {(language === 'hi' ? selectedIdea.outlineHi : selectedIdea.outline).map(
-                    (step, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-800 leading-relaxed"
-                      >
-                        {step}
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Research Sources & Fact Verification */}
-              <div className="mt-4 pt-3 border-t border-slate-100">
-                <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{language === 'en' ? 'Verified Fact Sources & Citations' : 'सत्यापित स्रोत एवं संदर्भ'}</span>
-                </h4>
-                <div className="space-y-1.5">
-                  {selectedIdea.sources.map((src, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between text-[11px] text-slate-600 bg-slate-50/80 px-2.5 py-1.5 rounded-lg border border-slate-100"
-                    >
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                        <span className="font-medium truncate">{src.name}</span>
-                      </div>
-                      <span className="text-slate-400 text-[10px] shrink-0 font-mono">{src.date}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-[10px] text-slate-400 mt-1.5 italic">
-                  * All factual claims are grounded in published clinical/industry reports. Summaries are tailored by Scripter engine.
-                </p>
+            {/* Outline Points */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                {language === 'en' ? 'Structured Script Flow' : 'संरचित स्क्रिप्ट रूपरेखा'}
+              </h4>
+              <div className="space-y-2">
+                {(language === 'hi' ? selectedIdea.outlineHi : selectedIdea.outline).map((point, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed"
+                  >
+                    {point}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Modal Bottom CTAs */}
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-              <button
-                onClick={(e) => handleToggleSave(selectedIdea.id, e)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
-              >
-                {savedIds.includes(selectedIdea.id) ? (
-                  <>
-                    <BookmarkCheck className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span>Saved</span>
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="w-4 h-4 text-slate-400" />
-                    <span>Save Idea</span>
-                  </>
-                )}
-              </button>
+            {/* Verified Sources */}
+            {selectedIdea.sources && selectedIdea.sources.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  {language === 'en' ? 'Verified Reference Sources' : 'सत्यापित संदर्भ स्रोत'}
+                </span>
+                <div className="space-y-1">
+                  {selectedIdea.sources.map((src, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-xs p-2 rounded-lg bg-emerald-50/60 border border-emerald-100 text-emerald-900"
+                    >
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{src.name}</span>
+                      </span>
+                      <span className="text-[10px] text-emerald-700 font-mono">{src.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
+            {/* Modal Bottom Action Bar */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setSelectedIdea(null)}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                {language === 'en' ? 'Close' : 'बंद करें'}
+              </button>
               <button
                 onClick={() => {
                   const idea = selectedIdea;
                   setSelectedIdea(null);
                   handleStartScript(idea);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all"
               >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>
-                  {language === 'en'
-                    ? 'Generate Script with this Idea'
-                    : 'इस आइडिया से स्क्रिप्ट बनाएं'}
-                </span>
+                <Sparkles className="w-4 h-4" />
+                <span>{language === 'en' ? 'Generate Script from this Idea' : 'इस आइडिया से स्क्रिप्ट बनाएं'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

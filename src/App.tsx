@@ -5,6 +5,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminSidebar } from './components/AdminSidebar';
+import { UserSidebar } from './components/UserSidebar';
 import { UserHome } from './pages/user/UserHome';
 import { IdeasPage } from './pages/user/IdeasPage';
 import { ScriptStudioPage } from './pages/user/ScriptStudioPage';
@@ -57,31 +58,41 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const isAdminArea = role === 'admin' || role === 'master-admin' || location.pathname.startsWith('/admin') || location.pathname.startsWith('/master-admin');
+  const isFullscreenTeleprompter = location.pathname === '/user/teleprompter' && location.search.includes('fullscreen=true');
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-blue-100 selection:text-blue-900">
       {/* Shared Header across all perspectives */}
-      <Header
-        showSidebarToggle={isAdminArea}
-        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-      />
+      {!isFullscreenTeleprompter && (
+        <Header
+          showSidebarToggle={true}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        />
+      )}
 
-      {/* Main viewport with responsive sidebar for Admin / Master Admin */}
+      {/* Main viewport with responsive sidebar for Admin / Master Admin and Creator User */}
       <div className="flex-1 flex flex-row">
-        {isAdminArea && (
+        {isAdminArea ? (
           <AdminSidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
           />
+        ) : (
+          !isFullscreenTeleprompter && (
+            <UserSidebar
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+            />
+          )
         )}
 
-        <main className={`flex-1 transition-all duration-300 w-full ${isAdminArea ? 'lg:pl-72' : ''}`}>
+        <main className={`flex-1 transition-all duration-300 w-full ${isAdminArea ? 'lg:pl-72' : !isFullscreenTeleprompter ? 'lg:pl-64' : ''}`}>
           {children}
         </main>
       </div>
 
-      {/* User Mobile Bottom Navigation (only shown for user role on mobile) */}
-      {!isAdminArea && <MobileBottomNav />}
+      {/* User Mobile Bottom Navigation (only shown for user role on mobile when not in fullscreen teleprompter) */}
+      {!isAdminArea && !isFullscreenTeleprompter && <MobileBottomNav />}
     </div>
   );
 };

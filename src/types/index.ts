@@ -41,7 +41,7 @@ export interface ProjectMedia {
   url: string;
   type: 'recorded' | 'imported' | 'sample';
   duration: number; // seconds
-  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5' | '4:3';
   recordedAt: string;
   resolution?: string;
   fileSize?: string;
@@ -52,7 +52,7 @@ export interface ProjectMedia {
 }
 
 export interface VideoStudioDraft {
-  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5' | '4:3';
   trimStart: number;
   trimEnd: number;
   showSubtitles: boolean;
@@ -72,7 +72,7 @@ export interface ExportRecord {
   title: string;
   quality: '1080p' | '720p';
   format: 'mp4' | 'mp3';
-  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5' | '4:3';
   fileSize: string;
   downloadUrl: string;
 }
@@ -213,6 +213,9 @@ export interface ContentIdea {
   sources: Array<{ name: string; url?: string; date: string; verified: boolean }>;
   isTrending?: boolean;
   businessProfileId?: string;
+  imageUrl?: string;
+  usageCount?: string;
+  isIndustryRecommendation?: boolean;
 }
 
 export interface ScriptDraft {
