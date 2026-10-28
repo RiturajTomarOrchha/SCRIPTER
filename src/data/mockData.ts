@@ -165,7 +165,39 @@ export const DEMO_PROJECTS: Project[] = [
         selected: true
       }
     ],
-    notes: 'Approved by clinical advisory team. Ready for teleprompter recording.'
+    notes: 'Approved by clinical advisory team. Ready for teleprompter recording.',
+    media: [
+      {
+        id: 'media_demo_01',
+        title: 'Take 1 - Natural Light Kitchen',
+        url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        type: 'recorded',
+        duration: 42,
+        aspectRatio: '9:16',
+        recordedAt: '2026-10-26T14:45:00',
+        resolution: '1080p (Full HD)',
+        fileSize: '24.8 MB',
+        mimeType: 'video/mp4',
+        trimStart: 0,
+        trimEnd: 42,
+        thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png'
+      }
+    ],
+    activeMediaId: 'media_demo_01',
+    studioDraft: {
+      aspectRatio: '9:16',
+      trimStart: 0,
+      trimEnd: 42,
+      showSubtitles: true,
+      subtitleStyle: 'highlight',
+      showLogoWatermark: true,
+      watermarkText: 'Scripter Creator',
+      backgroundMusic: true,
+      musicVolume: 35,
+      selectedClipIndex: 0,
+      appliedAiSuggestions: ['Remove 3 silent pauses (1.2s)', 'Auto-generate captions'],
+      updatedAt: '2026-10-26T15:10:00'
+    }
   },
   {
     id: 'proj_02',

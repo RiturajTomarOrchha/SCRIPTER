@@ -10,6 +10,8 @@ import { IdeasPage } from './pages/user/IdeasPage';
 import { ScriptStudioPage } from './pages/user/ScriptStudioPage';
 import { ProjectsPage } from './pages/user/ProjectsPage';
 import { BusinessProfilesPage } from './pages/user/BusinessProfilesPage';
+import { TeleprompterPage } from './pages/user/TeleprompterPage';
+import { VideoStudioPage } from './pages/user/VideoStudioPage';
 import { AdminHome } from './pages/admin/AdminHome';
 import { MasterAdminHome } from './pages/master-admin/MasterAdminHome';
 import { ComingSoonPage } from './pages/shared/ComingSoonPage';
@@ -72,9 +74,10 @@ export default function App() {
               <Route path="/user/projects" element={<ProjectsPage />} />
               <Route path="/user/business-profiles" element={<BusinessProfilesPage />} />
               <Route path="/user/profile" element={<ComingSoonPage featureName="User Profile & Settings" category="Account Management" />} />
-              <Route path="/user/teleprompter" element={<ScriptStudioPage />} />
-              <Route path="/user/video-recording" element={<ComingSoonPage featureName="Video Recording" category="Production" />} />
-              <Route path="/user/video-studio" element={<ComingSoonPage featureName="Video Studio & Editor" category="Post-Production" />} />
+              <Route path="/user/teleprompter" element={<TeleprompterPage defaultMode="prompter" />} />
+              <Route path="/user/video-recording" element={<TeleprompterPage defaultMode="record" />} />
+              <Route path="/user/video-studio" element={<VideoStudioPage />} />
+              <Route path="/user/export" element={<VideoStudioPage />} />
               <Route path="/user/library" element={<ComingSoonPage featureName="Saved Content & Library" category="Asset Management" />} />
               <Route path="/user/templates" element={<ComingSoonPage featureName="Templates & Visual Packs" category="Creative Assets" />} />
               <Route path="/user/notifications" element={<ComingSoonPage featureName="Notifications & Alerts" category="Activity" />} />

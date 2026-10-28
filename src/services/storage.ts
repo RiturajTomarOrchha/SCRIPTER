@@ -86,6 +86,10 @@ export const saveProject = (projectData: Partial<Project> & { title: string }): 
     scriptVersions: projectData.scriptVersions || [],
     scenes: projectData.scenes || [],
     notes: projectData.notes || '',
+    media: projectData.media || [],
+    activeMediaId: projectData.activeMediaId,
+    studioDraft: projectData.studioDraft,
+    exports: projectData.exports || [],
   };
 
   const updatedProjects = [newProject, ...projects];
@@ -122,6 +126,130 @@ export const deleteProject = (id: string): boolean => {
     return true;
   }
   return false;
+};
+
+/**
+ * Phase 3 Media & Studio Persistence
+ */
+export const attachMediaToProject = (
+  projectId: string,
+  mediaData: Omit<import('../types').ProjectMedia, 'id'>
+): { project: Project; media: import('../types').ProjectMedia } | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const newMedia: import('../types').ProjectMedia = {
+    ...mediaData,
+    id: `media_${Date.now()}`,
+  };
+
+  const existingMedia = projects[index].media || [];
+  const updatedProject: Project = {
+    ...projects[index],
+    media: [newMedia, ...existingMedia],
+    activeMediaId: newMedia.id,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+    status: projects[index].status === 'draft' ? 'in_progress' : projects[index].status,
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return { project: updatedProject, media: newMedia };
+};
+
+export const updateProjectMedia = (
+  projectId: string,
+  mediaId: string,
+  updates: Partial<import('../types').ProjectMedia>
+): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const mediaList = projects[index].media || [];
+  const mediaIdx = mediaList.findIndex((m) => m.id === mediaId);
+  if (mediaIdx === -1) return undefined;
+
+  mediaList[mediaIdx] = { ...mediaList[mediaIdx], ...updates };
+  const updatedProject: Project = {
+    ...projects[index],
+    media: [...mediaList],
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updatedProject;
+};
+
+export const deleteProjectMedia = (projectId: string, mediaId: string): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const mediaList = (projects[index].media || []).filter((m) => m.id !== mediaId);
+  const updatedProject: Project = {
+    ...projects[index],
+    media: mediaList,
+    activeMediaId: projects[index].activeMediaId === mediaId ? (mediaList[0]?.id || undefined) : projects[index].activeMediaId,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updatedProject;
+};
+
+export const saveStudioDraft = (
+  projectId: string,
+  draft: import('../types').VideoStudioDraft
+): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const updatedProject: Project = {
+    ...projects[index],
+    studioDraft: draft,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updatedProject;
+};
+
+export const addProjectExport = (
+  projectId: string,
+  exportData: Omit<import('../types').ExportRecord, 'id' | 'exportedAt'>
+): { project: Project; exportRecord: import('../types').ExportRecord } | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const newExport: import('../types').ExportRecord = {
+    ...exportData,
+    id: `exp_${Date.now()}`,
+    exportedAt: new Date().toISOString(),
+  };
+
+  const existingExports = projects[index].exports || [];
+  const updatedProject: Project = {
+    ...projects[index],
+    exports: [newExport, ...existingExports],
+    status: 'completed',
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return { project: updatedProject, exportRecord: newExport };
 };
 
 /**

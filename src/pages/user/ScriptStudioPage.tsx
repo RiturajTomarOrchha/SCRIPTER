@@ -842,22 +842,38 @@ export const ScriptStudioPage: React.FC = () => {
                   ← {language === 'en' ? 'Back to Script' : 'स्क्रिप्ट पर वापस'}
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={handleSaveToProject}
-                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                    className="px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    <span>{isSavedToProject ? 'Saved!' : 'Save & Open in My Projects'}</span>
+                    <span>{isSavedToProject ? 'Saved!' : 'Save Project'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleSaveToProject();
+                      navigate('/user/teleprompter', {
+                        state: {
+                          projectId: savedProjectId,
+                          scriptText: `${editableHook}\n\n${editableMain.join('\n\n')}\n\n${editableClosing}`,
+                          title: topic,
+                        },
+                      });
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                  >
+                    <Video className="w-4 h-4" />
+                    <span>{language === 'en' ? 'Launch Teleprompter' : 'टेलीप्रॉम्प्टर खोलें'}</span>
                   </button>
                   <button
                     onClick={() => {
                       handleSaveToProject();
                       navigate('/user/projects');
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors"
                   >
-                    <span>{language === 'en' ? 'Go to Projects' : 'प्रोजेक्ट्स देखें'}</span>
+                    <span>{language === 'en' ? 'Projects' : 'प्रोजेक्ट्स'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

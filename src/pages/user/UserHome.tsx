@@ -20,6 +20,7 @@ import {
   ExternalLink,
   TrendingUp,
   FolderKanban,
+  Film,
 } from 'lucide-react';
 
 export const UserHome: React.FC = () => {
@@ -189,14 +190,28 @@ export const UserHome: React.FC = () => {
           <div className="grid grid-cols-2 gap-2 pt-2">
             <button
               onClick={() => navigate('/user/projects')}
-              className="p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1.5"
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
             >
               <FolderKanban className="w-4 h-4 text-blue-600" />
               <span className="text-xs font-semibold">My Projects</span>
             </button>
             <button
+              onClick={() => navigate('/user/teleprompter')}
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
+            >
+              <Video className="w-4 h-4 text-purple-600" />
+              <span className="text-xs font-semibold">Teleprompter</span>
+            </button>
+            <button
+              onClick={() => navigate('/user/video-studio')}
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 text-left transition-colors border border-slate-100 flex flex-col gap-1"
+            >
+              <Film className="w-4 h-4 text-amber-600" />
+              <span className="text-xs font-semibold">Video Studio</span>
+            </button>
+            <button
               onClick={() => navigate('/user/business-profiles')}
-              className="p-3 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1.5"
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
             >
               <Briefcase className="w-4 h-4 text-indigo-600" />
               <span className="text-xs font-semibold">Profiles</span>

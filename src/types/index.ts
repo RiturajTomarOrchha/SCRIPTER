@@ -35,6 +35,48 @@ export interface ScriptVersion {
   closing: string;
 }
 
+export interface ProjectMedia {
+  id: string;
+  title: string;
+  url: string;
+  type: 'recorded' | 'imported' | 'sample';
+  duration: number; // seconds
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  recordedAt: string;
+  resolution?: string;
+  fileSize?: string;
+  mimeType?: string;
+  trimStart?: number;
+  trimEnd?: number;
+  thumbnailUrl?: string;
+}
+
+export interface VideoStudioDraft {
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  trimStart: number;
+  trimEnd: number;
+  showSubtitles: boolean;
+  subtitleStyle: 'classic' | 'highlight' | 'karaoke';
+  showLogoWatermark: boolean;
+  watermarkText?: string;
+  backgroundMusic: boolean;
+  musicVolume: number;
+  selectedClipIndex: number;
+  appliedAiSuggestions: string[];
+  updatedAt: string;
+}
+
+export interface ExportRecord {
+  id: string;
+  exportedAt: string;
+  title: string;
+  quality: '1080p' | '720p';
+  format: 'mp4' | 'mp3';
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  fileSize: string;
+  downloadUrl: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -52,6 +94,10 @@ export interface Project {
   scriptVersions?: ScriptVersion[];
   scenes?: ScriptScene[];
   notes?: string;
+  media?: ProjectMedia[];
+  activeMediaId?: string;
+  studioDraft?: VideoStudioDraft;
+  exports?: ExportRecord[];
 }
 
 export interface ContentIdea {
