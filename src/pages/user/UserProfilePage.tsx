@@ -26,14 +26,25 @@ import {
   HelpCircle,
   Copy,
   LogOut,
+  Facebook,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
-interface SocialLinks {
+export interface CustomSocialLink {
+  id: string;
+  platform: string;
+  url: string;
+}
+
+export interface SocialLinks {
   youtube: string;
   instagram: string;
   twitter: string;
+  facebook: string;
   linkedin: string;
   website: string;
+  customLinks?: CustomSocialLink[];
 }
 
 export const UserProfilePage: React.FC = () => {
@@ -59,8 +70,12 @@ export const UserProfilePage: React.FC = () => {
     youtube: authProfile?.socialLinks?.youtube || 'https://youtube.com/@scripterai',
     instagram: authProfile?.socialLinks?.instagram || 'https://instagram.com/scripter_creators',
     twitter: authProfile?.socialLinks?.twitter || 'https://x.com/scripter_ai',
+    facebook: authProfile?.socialLinks?.facebook || 'https://facebook.com/scripter.ai',
     linkedin: authProfile?.socialLinks?.linkedin || 'https://linkedin.com/in/riturajtomar',
     website: authProfile?.socialLinks?.website || 'https://scripter.app',
+    customLinks: authProfile?.socialLinks?.customLinks || [
+      { id: 'cl_1', platform: 'Telegram Channel', url: 'https://t.me/scripter_creators' }
+    ],
   });
 
   // Avatar Modal State
@@ -83,6 +98,8 @@ export const UserProfilePage: React.FC = () => {
         setSocialLinks((prev) => ({
           ...prev,
           ...authProfile.socialLinks,
+          facebook: authProfile.socialLinks?.facebook || prev.facebook,
+          customLinks: authProfile.socialLinks?.customLinks || prev.customLinks,
         }));
       }
     }
@@ -92,6 +109,32 @@ export const UserProfilePage: React.FC = () => {
     setSocialLinks((prev) => ({
       ...prev,
       [channel]: value,
+    }));
+  };
+
+  const handleAddCustomLink = () => {
+    setSocialLinks((prev) => ({
+      ...prev,
+      customLinks: [
+        ...(prev.customLinks || []),
+        { id: `link_${Date.now()}`, platform: '', url: '' },
+      ],
+    }));
+  };
+
+  const handleUpdateCustomLink = (id: string, field: 'platform' | 'url', value: string) => {
+    setSocialLinks((prev) => ({
+      ...prev,
+      customLinks: (prev.customLinks || []).map((item) =>
+        item.id === id ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const handleRemoveCustomLink = (id: string) => {
+    setSocialLinks((prev) => ({
+      ...prev,
+      customLinks: (prev.customLinks || []).filter((item) => item.id !== id),
     }));
   };
 
@@ -126,8 +169,10 @@ export const UserProfilePage: React.FC = () => {
             youtube: socialLinks.youtube.trim(),
             instagram: socialLinks.instagram.trim(),
             twitter: socialLinks.twitter.trim(),
+            facebook: socialLinks.facebook.trim(),
             linkedin: socialLinks.linkedin.trim(),
             website: socialLinks.website.trim(),
+            customLinks: (socialLinks.customLinks || []).filter((l) => l.url.trim()),
           },
         });
       }
@@ -555,6 +600,53 @@ export const UserProfilePage: React.FC = () => {
               />
             </div>
 
+            {/* Facebook */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 hover:border-blue-400 transition-colors">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <Facebook className="w-4 h-4 fill-current" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">
+                      {language === 'en' ? 'Facebook Page / Profile' : 'फेसबुक पेज / प्रोफ़ाइल'}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {language === 'en' ? 'Meta Page, Community Group or Profile' : 'मेटा पेज, कम्युनिटी या प्रोफ़ाइल'}
+                    </span>
+                  </div>
+                </div>
+                {socialLinks.facebook && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(socialLinks.facebook, 'fb')}
+                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition-colors"
+                      title="Copy URL"
+                    >
+                      {copiedLink === 'fb' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <a
+                      href={socialLinks.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-200/60 transition-colors"
+                      title="Visit Facebook"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
+              <input
+                type="url"
+                value={socialLinks.facebook}
+                onChange={(e) => handleSocialChange('facebook', e.target.value)}
+                placeholder="https://facebook.com/yourpage"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-mono"
+              />
+            </div>
+
             {/* LinkedIn */}
             <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 hover:border-blue-400 transition-colors">
               <div className="flex items-center justify-between mb-2">
@@ -640,11 +732,82 @@ export const UserProfilePage: React.FC = () => {
                 className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all font-mono"
               />
             </div>
+
+            {/* Dynamic Custom Social / Website Links */}
+            {(socialLinks.customLinks || []).map((item, index) => (
+              <div
+                key={item.id}
+                className="p-4 rounded-2xl bg-indigo-50/40 border border-indigo-200/80 hover:border-indigo-300 transition-colors space-y-2 animate-in fade-in"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                      <LinkIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900">
+                      {item.platform || (language === 'en' ? `Custom Link #${index + 1}` : `कस्टम लिंक #${index + 1}`)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {item.url && (
+                      <a
+                        href={item.url.startsWith('http') ? item.url : `https://${item.url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-100/60 transition-colors"
+                        title="Visit Link"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomLink(item.id)}
+                      className="p-1.5 text-rose-500 hover:text-rose-700 rounded-lg hover:bg-rose-100 transition-colors"
+                      title={language === 'en' ? 'Remove link' : 'हटाएं'}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    value={item.platform}
+                    onChange={(e) => handleUpdateCustomLink(item.id, 'platform', e.target.value)}
+                    placeholder={language === 'en' ? 'Platform Name (e.g. Telegram, Threads)' : 'प्लेटफ़ॉर्म (उदा. Telegram, Threads)'}
+                    className="sm:col-span-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                  />
+                  <input
+                    type="url"
+                    value={item.url}
+                    onChange={(e) => handleUpdateCustomLink(item.id, 'url', e.target.value)}
+                    placeholder="https://..."
+                    className="sm:col-span-2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-mono"
+                  />
+                </div>
+              </div>
+            ))}
+
+            {/* Add Custom Social / Website Link Button */}
+            <button
+              type="button"
+              onClick={handleAddCustomLink}
+              className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed border-blue-300 dark:border-blue-700/60 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-bold transition-all active:scale-98"
+            >
+              <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>
+                {language === 'en'
+                  ? '+ Add Custom Social / Website Link (Threads, Telegram, WhatsApp...)'
+                  : '+ कस्टम सोशल या वेबसाइट लिंक जोड़ें (Threads, Telegram, WhatsApp...)'}
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Action Button Footer with safe clearance above mobile bottom nav */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 pb-12 sm:pb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 pb-6">
           <button
             type="button"
             onClick={async () => {
@@ -664,7 +827,7 @@ export const UserProfilePage: React.FC = () => {
           <button
             type="submit"
             disabled={isSaving}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-slate-900/20 dark:shadow-blue-600/30 transition-all active:scale-98 disabled:opacity-50 w-full sm:w-auto min-h-[48px]"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-blue-600/30 transition-all active:scale-98 disabled:opacity-50 w-full sm:w-auto min-h-[48px]"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
             <span>
@@ -679,8 +842,8 @@ export const UserProfilePage: React.FC = () => {
           </button>
         </div>
 
-        {/* Extra spacing block specifically for mobile to prevent any clipping behind the fixed bottom nav bar */}
-        <div className="h-20 md:hidden pointer-events-none" aria-hidden="true" />
+        {/* Generous clearance block specifically for mobile to guarantee zero clipping behind the fixed bottom nav bar */}
+        <div className="h-28 md:hidden pointer-events-none" aria-hidden="true" />
       </form>
 
       {/* Avatar Selection Modal */}

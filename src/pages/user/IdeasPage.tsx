@@ -346,7 +346,7 @@ export const IdeasPage: React.FC = () => {
             </div>
 
             {/* Filter Pills row matching Image 1 & 2: For You, Trending, Latest News, My Industry, Saved Ideas */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-xs -mx-4 px-4 sm:mx-0 sm:px-0 max-w-[100vw] sm:max-w-full">
               {[
                 { id: 'for_you', labelEn: 'For You', labelHi: 'मेरे लिए (For You)' },
                 { id: 'trending', labelEn: 'Trending', labelHi: 'ट्रेंडिंग (Trending)' },
@@ -359,7 +359,7 @@ export const IdeasPage: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveFilterTab(tab.id as any)}
-                    className={`px-4 py-2 rounded-full font-bold transition-all shrink-0 ${
+                    className={`px-4 py-2 rounded-full font-bold transition-all shrink-0 whitespace-nowrap ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-xs'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
@@ -372,7 +372,7 @@ export const IdeasPage: React.FC = () => {
             </div>
 
             {/* Category Icons Row matching Image 1 & 2 */}
-            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-none pt-1">
+            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-none pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 max-w-[100vw] sm:max-w-full">
               {categories.map((cat) => {
                 const Icon = cat.icon;
                 const isSelected = selectedCategory === cat.id;
@@ -380,7 +380,7 @@ export const IdeasPage: React.FC = () => {
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold shrink-0 transition-all border ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-semibold shrink-0 whitespace-nowrap transition-all border ${
                       isSelected
                         ? 'bg-slate-900 text-white border-slate-900 shadow-2xs ring-1 ring-slate-900'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
@@ -671,7 +671,7 @@ export const IdeasPage: React.FC = () => {
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                             <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold">
                               {idea.category}
                             </span>

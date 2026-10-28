@@ -129,24 +129,39 @@ export const UserSidebar: React.FC<UserSidebarProps> = ({ isOpen, onClose }) => 
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header with high-contrast white capsule for logo */}
+        {/* Brand Header with high-contrast white capsule for logo & Night Mode toggle */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 bg-[#070D1E]/60 shrink-0">
           <Link to="/user/home" onClick={onClose} className="flex items-center">
-            <div className="bg-white px-2.5 py-1 rounded-xl shadow-xs border border-white/20 flex items-center justify-center">
+            <div className="bg-white px-3 py-1.5 rounded-xl shadow-xs border border-white/20 flex items-center justify-center">
               <img
                 src="/assets/aistudio/HEADER_LOGO_f8b18f40.png"
                 alt="Scripter Logo"
-                className="h-7 sm:h-8 object-contain"
+                className="h-8 sm:h-9 object-contain"
               />
             </div>
           </Link>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 lg:hidden"
-            aria-label="Close sidebar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Night Mode Icon in top header */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-slate-300 hover:text-white rounded-xl hover:bg-slate-800/80 transition-colors"
+              title={isDark ? (language === 'en' ? 'Switch to Light Mode' : 'लाइट मोड चालू करें') : (language === 'en' ? 'Switch to Dark Mode' : 'नाइट मोड चालू करें')}
+              aria-label="Toggle Night Mode"
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5 text-amber-400" />
+              ) : (
+                <Moon className="w-5 h-5 text-slate-300" />
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800/80 lg:hidden"
+              aria-label="Close sidebar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Mobile Drawer User Account Card & Controls (Only rendered inside mobile drawer) */}
@@ -217,83 +232,86 @@ export const UserSidebar: React.FC<UserSidebarProps> = ({ isOpen, onClose }) => 
             </div>
           )}
 
-          {/* Mobile Test Mode Switcher & Language Row */}
-          <div className="flex items-center gap-1.5 pt-1">
-            {isDevMode && (
-              <div className="flex-1 grid grid-cols-3 gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800">
+          {/* Clean Language Switcher Row */}
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 transition-all active:scale-98"
+            title="Toggle Language / भाषा बदलें"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                <Globe className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block leading-none">
+                  {language === 'en' ? 'Language / भाषा' : 'भाषा / Language'}
+                </span>
+                <span className="text-xs font-bold text-white leading-tight">
+                  {language === 'en' ? 'English (EN)' : 'हिन्दी (HI)'}
+                </span>
+              </div>
+            </div>
+            <span className="text-[11px] font-semibold text-blue-400 bg-blue-950/70 px-2 py-0.5 rounded-lg border border-blue-800/60">
+              {language === 'en' ? 'हिन्दी में बदलें' : 'Switch to EN'}
+            </span>
+          </button>
+
+          {/* Mobile Role Switcher (User / Admin / Master Admin) - un-cramped with full width */}
+          {isDevMode && (
+            <div className="w-full pt-0.5">
+              <div className="flex items-center justify-between mb-1 px-1">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  {language === 'en' ? 'Active Mode' : 'मोड स्विचर'}
+                </span>
+                <span className="text-[10px] text-amber-400 font-mono font-medium">Dev Switcher</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
                 <button
+                  type="button"
                   onClick={() => {
                     setRole('user');
                     onClose();
                   }}
-                  className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
-                    role === 'user' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-center transition-all ${
+                    role === 'user'
+                      ? 'bg-blue-600 text-white font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
                   User
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setRole('admin');
                     onClose();
                   }}
-                  className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
-                    role === 'admin' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-center transition-all ${
+                    role === 'admin'
+                      ? 'bg-blue-600 text-white font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
                   Admin
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setRole('master-admin');
                     onClose();
                   }}
-                  className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
-                    role === 'master-admin' ? 'bg-amber-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-center transition-all ${
+                    role === 'master-admin'
+                      ? 'bg-amber-500 text-white font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                   }`}
                 >
                   Master
                 </button>
               </div>
-            )}
-
-            {/* Language & Theme Controls: Text placed cleanly above the icons */}
-            <div className="grid grid-cols-2 gap-2 pt-1 w-full">
-              {/* Language Toggle Tile */}
-              <button
-                onClick={toggleLanguage}
-                className="p-2.5 rounded-2xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/70 text-left transition-all active:scale-98"
-                title="Toggle Language / भाषा बदलें"
-              >
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
-                  {language === 'en' ? 'Language' : 'भाषा'}
-                </span>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                  <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                  <span>{language === 'en' ? 'English (EN)' : 'हिंदी (HI)'}</span>
-                </div>
-              </button>
-
-              {/* Night Mode Toggle Tile */}
-              <button
-                onClick={toggleTheme}
-                className="p-2.5 rounded-2xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/70 text-left transition-all active:scale-98"
-                title="Toggle Dark Mode / नाइट मोड"
-              >
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
-                  {language === 'en' ? 'Dark Mode' : 'डार्क मोड'}
-                </span>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                  {isDark ? (
-                    <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  ) : (
-                    <Moon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                  )}
-                  <span>{isDark ? (language === 'en' ? 'Dark On' : 'डार्क ऑन') : (language === 'en' ? 'Light Mode' : 'लाइट मोड')}</span>
-                </div>
-              </button>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Active Profile context pill */}

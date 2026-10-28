@@ -200,11 +200,13 @@ export const ProductivityTrendsSection: React.FC<ProductivityTrendsProps> = ({
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+          <div className="flex items-baseline gap-1 min-w-0">
+            <span className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums shrink-0">
               {totalHoursSaved}h
             </span>
-            <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400">Speedup</span>
+            <span className="text-[9px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap truncate">
+              AI Speed
+            </span>
           </div>
           <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
             {language === 'en' ? 'Vs manual drafting' : 'मैन्युअल की तुलना में'}
@@ -221,9 +223,11 @@ export const ProductivityTrendsSection: React.FC<ProductivityTrendsProps> = ({
               <Award className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">18</span>
-            <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Active</span>
+          <div className="flex items-baseline gap-1 min-w-0">
+            <span className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums shrink-0">18</span>
+            <span className="text-[9px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap truncate">
+              Active
+            </span>
           </div>
           <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
             {language === 'en' ? 'Days consistent' : 'दिनों की सतत रचना'}

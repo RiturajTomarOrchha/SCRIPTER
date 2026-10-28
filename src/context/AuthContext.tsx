@@ -25,8 +25,11 @@ export interface FirebaseUserProfile {
     youtube?: string;
     instagram?: string;
     twitter?: string;
+    facebook?: string;
     linkedin?: string;
     website?: string;
+    customLinks?: Array<{ id: string; platform: string; url: string }>;
+    [key: string]: any;
   };
   role: UserRole;
   createdAt?: string;
@@ -46,7 +49,7 @@ interface AuthContextType {
     displayName?: string;
     photoURL?: string;
     bio?: string;
-    socialLinks?: Record<string, string>;
+    socialLinks?: Record<string, any>;
   }) => Promise<void>;
   signInAsDemoCreator: (customEmail?: string, customName?: string, customRole?: UserRole) => Promise<void>;
   signOutUser: () => Promise<void>;
@@ -318,7 +321,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     displayName?: string;
     photoURL?: string;
     bio?: string;
-    socialLinks?: Record<string, string>;
+    socialLinks?: Record<string, any>;
   }) => {
     setError(null);
     if (!user) {
