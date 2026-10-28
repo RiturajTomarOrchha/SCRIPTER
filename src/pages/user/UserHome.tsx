@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { getProjects, getAllIdeas } from '../../services/storage';
 import { Project, ContentIdea, ProjectStatus } from '../../types';
 import {
@@ -28,7 +29,8 @@ import {
 import { ProductivityTrendsSection } from '../../components/analytics/ProductivityTrendsSection';
 
 export const UserHome: React.FC = () => {
-  const { activeBusinessProfile, setActiveBusinessProfile, businessProfiles, creditsTotal, creditsUsed } = useRole();
+  const { activeBusinessProfile, setActiveBusinessProfile, businessProfiles, creditsTotal, creditsUsed, userProfile } = useRole();
+  const { userProfile: authProfile } = useAuth();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -40,6 +42,9 @@ export const UserHome: React.FC = () => {
 
   const creditsPercent = Math.min(100, Math.round((creditsUsed / creditsTotal) * 100));
 
+  const displayName = authProfile?.displayName || userProfile?.name || 'Content Creator';
+  const initials = displayName.split(' ').filter(Boolean).map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'SC';
+
   // Get suggested topics filtered by active business profile
   const allIdeas = getAllIdeas();
   const suggestedIdeas = allIdeas.filter(
@@ -48,193 +53,203 @@ export const UserHome: React.FC = () => {
   const displayedIdeas = suggestedIdeas.length > 0 ? suggestedIdeas : allIdeas.slice(0, 3);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-12 space-y-6">
-      {/* 1. Welcome & Business Profile Switcher Bar */}
-      <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-32 md:pb-12 space-y-6">
+      {/* 1. Welcome & Business Profile Switcher Card */}
+      <section className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-md shadow-blue-500/20 shrink-0">
-              RT
-            </div>
+          <div className="flex items-center gap-3.5">
+            {authProfile?.photoURL ? (
+              <img
+                src={authProfile.photoURL}
+                alt={displayName}
+                className="w-13 h-13 rounded-2xl object-cover ring-2 ring-slate-100 dark:ring-slate-700 shadow-md shadow-blue-500/10 shrink-0"
+              />
+            ) : (
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold text-base shadow-md shadow-blue-500/20 shrink-0">
+                {initials}
+              </div>
+            )}
             <div>
+              <p className="text-xs text-slate-400 font-medium">{language === 'en' ? 'Welcome Back,' : 'नमस्ते,'}</p>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-                  {t('welcomeGreeting')} <span className="text-blue-600">Rituraj Tomar</span>
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {displayName}
                 </h1>
-                <span className="text-lg">👋</span>
+                <span className="text-lg">👑</span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500">
-                {language === 'en'
-                  ? `Transforming your ideas into high-impact scripts & viral content for ${activeBusinessProfile.name}.`
-                  : `आइए ${activeBusinessProfile.name} के लिए आपके विचारों को प्रभावी स्क्रिप्ट और वीडियो में बदलें।`}
-              </p>
+              {/* Profile Pill Trigger */}
+              <button
+                onClick={() => setShowProfileModal(true)}
+                className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors"
+              >
+                <Briefcase className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span className="truncate max-w-[190px] sm:max-w-xs">{activeBusinessProfile.name}</span>
+                <ChevronRight className="w-3 h-3 text-slate-400" />
+              </button>
             </div>
           </div>
 
-          {/* Active Business Profile Pill with Quick Switcher Trigger */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* Quick Create Action Button on Desktop */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
-              onClick={() => setShowProfileModal(true)}
-              className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-left transition-all"
+              onClick={() => navigate('/user/script-studio')}
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors"
             >
-              <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
-                <Briefcase className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">
-                  {t('activeProfile')}
-                </p>
-                <p className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                  <span>{activeBusinessProfile.name}</span>
-                  <ChevronRight className="w-3 h-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                </p>
-              </div>
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>{language === 'en' ? 'Create New Script' : 'नई स्क्रिप्ट बनाएं'}</span>
             </button>
-          </div>
-        </div>
-
-        {/* AI Credits Tracker */}
-        <div className="mt-5 pt-4 border-t border-slate-100">
-          <div className="flex items-center justify-between text-xs mb-2">
-            <div className="flex items-center gap-2">
-              <span className="p-1 rounded-md bg-amber-100 text-amber-700">
-                <Sparkles className="w-3.5 h-3.5 fill-amber-500 text-amber-600" />
-              </span>
-              <span className="font-semibold text-slate-700">{t('aiCredits')}</span>
-              <span className="font-mono text-slate-500 tabular-nums">
-                <strong className="text-slate-900">{creditsUsed}</strong> / {creditsTotal} {t('creditsUsed')}
-              </span>
-            </div>
-            <Link
-              to="/user/credits"
-              className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
-            >
-              <span>{t('buyCredits')}</span>
-              <ChevronRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {/* Progress Meter */}
-          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-amber-400 to-amber-500 h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${creditsPercent}%` }}
-            />
-          </div>
-          <div className="flex justify-between items-center text-[11px] text-slate-400 mt-1">
-            <span>
-              {creditsTotal - creditsUsed} {t('creditsLeft')} in current cycle
-            </span>
-            <span className="font-mono">{creditsPercent}%</span>
           </div>
         </div>
       </section>
 
-      {/* 2. Primary Actions / Create Hub */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Prominent Action: Discover Ideas */}
-        <div className="md:col-span-2 relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0B132B] via-[#1C2541] to-[#2563EB] p-6 text-white shadow-md">
-          <div className="relative z-10 max-w-md space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-xs text-[11px] font-medium text-amber-300 border border-white/15">
-              <Sparkles className="w-3 h-3" />
-              <span>{language === 'en' ? 'Phase 2 Operational Engine' : 'फेज़ 2 संपूर्ण समाधान'}</span>
+      {/* 2. AI Credits Capsule Card (Exact Design from Reference Showcase 2) */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0B132B] via-[#121B35] to-[#1C2541] p-5 sm:p-6 text-white border border-amber-400/25 shadow-lg space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-400 text-base">★</span>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
+              AI Credits
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-              {language === 'en'
-                ? `Create High-Impact Content for ${activeBusinessProfile.name}`
-                : `${activeBusinessProfile.name} के लिए उच्च प्रभाव वाला कंटेंट बनाएं`}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-              {language === 'en'
-                ? `Explore researched outlines, write structured scripts in 30 seconds, and manage drafts in your library.`
-                : 'शोधित विषय खोजें, AI से 30 सेकंड में संरचित स्क्रिप्ट बनाएं, और अपने प्रोजेक्ट्स में सुरक्षित करें।'}
-            </p>
-            <div className="pt-2 flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => navigate('/user/script-studio')}
-                className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
-              >
-                <FileText className="w-4 h-4 fill-slate-950" />
-                <span>{language === 'en' ? 'Start Script Studio' : 'स्क्रिप्ट स्टूडियो शुरू करें'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => navigate('/user/ideas')}
-                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold backdrop-blur-xs border border-white/20 flex items-center gap-2 transition-colors"
-              >
-                <Lightbulb className="w-4 h-4" />
-                <span>{language === 'en' ? 'Discover Ideas' : 'आइडिया खोजें'}</span>
-              </button>
-            </div>
           </div>
-          <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 w-60 h-60 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
+
+          <Link
+            to="/user/credits"
+            className="px-3.5 py-1 rounded-full border border-amber-400/80 bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 text-xs font-bold transition-colors"
+          >
+            {t('buyCredits')}
+          </Link>
         </div>
 
-        {/* Quick Launch Card */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                {language === 'en' ? 'Quick Tools' : 'त्वरित टूल्स'}
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold">
-                Connected Flow
-              </span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mt-2">
-              {language === 'en' ? 'Content Workflow' : 'कंटेंट वर्कफ़्लो'}
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              {language === 'en'
-                ? 'Jump straight into your projects or personalize business settings.'
-                : 'अपने प्रोजेक्ट्स देखें या नई प्रोफाइल सेटिंग्स कॉन्फ़िगर करें।'}
-            </p>
+        <div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-white tabular-nums tracking-tight">
+              {creditsUsed}
+            </span>
+            <span className="text-slate-400 text-base font-semibold">/</span>
+            <span className="text-slate-300 text-lg font-semibold tabular-nums">
+              {creditsTotal}
+            </span>
+            <span className="text-xs text-slate-400 font-medium ml-1">
+              {language === 'en' ? 'credits used' : 'क्रेडिट प्रयुक्त'}
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
-            <button
-              onClick={() => navigate('/user/projects')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <FolderKanban className="w-4 h-4 text-blue-600" />
-              <span className="text-xs font-semibold">My Projects</span>
-            </button>
-            <button
-              onClick={() => navigate('/user/video-studio')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <Film className="w-4 h-4 text-amber-600" />
-              <span className="text-xs font-semibold">Video Studio</span>
-            </button>
-            <button
-              onClick={() => navigate('/user/templates')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <LayoutTemplate className="w-4 h-4 text-emerald-600" />
-              <span className="text-xs font-semibold">Templates</span>
-            </button>
-            <button
-              onClick={() => navigate('/user/brand-kit')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <Palette className="w-4 h-4 text-rose-600" />
-              <span className="text-xs font-semibold">Brand Kit</span>
-            </button>
-            <button
-              onClick={() => navigate('/user/thumbnail-studio')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <ImageIcon className="w-4 h-4 text-indigo-600" />
-              <span className="text-xs font-semibold">Thumbnails</span>
-            </button>
-            <button
-              onClick={() => navigate('/user/teleprompter')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <Video className="w-4 h-4 text-purple-600" />
-              <span className="text-xs font-semibold">Teleprompter</span>
-            </button>
+          {/* Progress Bar with Gold Glow */}
+          <div className="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden mt-2.5 p-0.5 border border-white/10">
+            <div
+              className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 h-full rounded-full transition-all duration-500 shadow-xs shadow-amber-400/50"
+              style={{ width: `${creditsPercent}%` }}
+            />
           </div>
+
+          <div className="flex justify-between items-center text-[11px] text-slate-400 mt-2">
+            <span>Next reset: Monthly Plan</span>
+            <span className="font-bold text-amber-300">
+              {creditsTotal - creditsUsed} {t('creditsLeft')}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Create New Content Hub (2x2 Grid Matching Reference Poster) */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <span>{language === 'en' ? 'Create New Content' : 'नया कंटेंट बनाएं'}</span>
+          </h2>
+          <Link
+            to="/user/script-studio"
+            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5"
+          >
+            <span>See All</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          {/* 1. New Script */}
+          <button
+            onClick={() => navigate('/user/script-studio')}
+            className="p-3.5 sm:p-4 rounded-3xl bg-amber-50/70 dark:bg-amber-950/30 hover:bg-amber-100/70 dark:hover:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/40 text-left transition-all group flex flex-col justify-between min-h-[96px] sm:min-h-[110px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                <FileText className="w-4 h-4 fill-white" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-amber-600 dark:text-amber-400 group-hover:translate-x-1 transition-transform" />
+            </div>
+            <div className="mt-2">
+              <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                {language === 'en' ? 'New Script' : 'नया स्क्रिप्ट'}
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                {language === 'en' ? 'Write with AI' : 'नया स्क्रिप्ट लिखें'}
+              </p>
+            </div>
+          </button>
+
+          {/* 2. Explore Ideas */}
+          <button
+            onClick={() => navigate('/user/ideas')}
+            className="p-3.5 sm:p-4 rounded-3xl bg-blue-50/70 dark:bg-blue-950/30 hover:bg-blue-100/70 dark:hover:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/40 text-left transition-all group flex flex-col justify-between min-h-[96px] sm:min-h-[110px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                <Lightbulb className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform" />
+            </div>
+            <div className="mt-2">
+              <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                {language === 'en' ? 'Explore Ideas' : 'आइडिया खोजें'}
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-blue-800 dark:text-blue-300 font-medium">
+                {language === 'en' ? 'Get fresh ideas' : 'नए आइडिया पाएं'}
+              </p>
+            </div>
+          </button>
+
+          {/* 3. Visual Pack */}
+          <button
+            onClick={() => navigate('/user/templates')}
+            className="p-3.5 sm:p-4 rounded-3xl bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 border border-rose-200/80 dark:border-rose-800/40 text-left transition-all group flex flex-col justify-between min-h-[96px] sm:min-h-[110px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                <Palette className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-rose-600 dark:text-rose-400 group-hover:translate-x-1 transition-transform" />
+            </div>
+            <div className="mt-2">
+              <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                {language === 'en' ? 'Visual Pack' : 'विजुअल पैक'}
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-rose-800 dark:text-rose-300 font-medium">
+                {language === 'en' ? 'Find visuals & B-roll' : 'विजुअल चुनें'}
+              </p>
+            </div>
+          </button>
+
+          {/* 4. Production (Teleprompter & Video) */}
+          <button
+            onClick={() => navigate('/user/teleprompter')}
+            className="p-3.5 sm:p-4 rounded-3xl bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/40 text-left transition-all group flex flex-col justify-between min-h-[96px] sm:min-h-[110px]"
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                <Video className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:translate-x-1 transition-transform" />
+            </div>
+            <div className="mt-2">
+              <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                {language === 'en' ? 'Production' : 'प्रोडक्शन'}
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                {language === 'en' ? 'Teleprompter & Video' : 'वीडियो बनाएं'}
+              </p>
+            </div>
+          </button>
         </div>
       </section>
 

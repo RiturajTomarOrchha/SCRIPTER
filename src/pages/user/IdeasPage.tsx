@@ -289,7 +289,7 @@ export const IdeasPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 pb-24 md:pb-12 space-y-6">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 pb-36 md:pb-12 space-y-6 w-full overflow-x-hidden">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-20 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
@@ -432,11 +432,16 @@ export const IdeasPage: React.FC = () => {
                   >
                     <div>
                       {/* Thumbnail Banner */}
-                      <div className="relative h-40 bg-slate-900 overflow-hidden">
+                      <div className="relative h-40 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 overflow-hidden">
                         <img
-                          src={idea.imageUrl || '/assets/aistudio/Master_Admin_UI___________9_Payments___Billing_Management_7414dccf.png'}
+                          src={idea.imageUrl || '/assets/aistudio/Scripter_Ideas___Research_Flow_abe747ed.png'}
                           alt={idea.title}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/assets/aistudio/Scripter_Ideas___Research_Flow_abe747ed.png';
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
@@ -541,58 +546,63 @@ export const IdeasPage: React.FC = () => {
               </span>
             </div>
 
-            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs divide-y divide-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-3.5 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-xs divide-y divide-slate-100 dark:divide-slate-800/80 overflow-hidden">
               {trendingNewsTopics.map((news) => {
                 const isSaved = savedIds.includes(news.id);
                 return (
                   <div
                     key={news.id}
                     onClick={() => handleOpenResearch(news)}
-                    className="py-3.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer hover:bg-slate-50/70 p-2 rounded-2xl transition-all"
+                    className="py-3.5 first:pt-1 last:pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/50 p-2 sm:p-2.5 rounded-2xl transition-all w-full overflow-hidden"
                   >
-                    <div className="flex items-start sm:items-center gap-3">
+                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1 w-full">
                       {/* Small Thumbnail */}
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-slate-900 shrink-0 relative">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-950 shrink-0 relative flex items-center justify-center border border-slate-700/40">
                         <img
-                          src={news.imageUrl || '/assets/aistudio/Master_Admin_UI___________4_Industry_Categories_Management_c2759e0a.png'}
+                          src={news.imageUrl || '/assets/aistudio/Scripter_Ideas___Research_Flow_abe747ed.png'}
                           alt={news.title}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/assets/aistudio/Scripter_Ideas___Research_Flow_abe747ed.png';
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
                         />
                       </div>
 
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[10px] font-bold flex items-center gap-1 border border-rose-200/50">
+                      <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
+                          <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-[10px] font-bold flex items-center gap-1 border border-rose-200/50 dark:border-rose-800/40 shrink-0">
                             <Flame className="w-3 h-3 fill-rose-600" />
                             <span>Trending</span>
                           </span>
-                          <span className="text-[10px] text-slate-500 font-medium">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium shrink-0">
                             {news.viewCount || '1.8M views'}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200/50">
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200/50 dark:border-emerald-800/40 shrink-0">
                             सत्यापित संदर्भ
                           </span>
                         </div>
 
-                        <h4 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                        <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug break-words">
                           {language === 'hi' ? news.titleHi : news.title}
                         </h4>
 
                         {news.tags && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                          <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-400 max-w-full">
                             {news.tags.map((t, i) => (
-                              <span key={i}>{t}</span>
+                              <span key={i} className="break-all">{t}</span>
                             ))}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    <div className="flex items-center gap-2 self-start sm:self-center shrink-0 w-full sm:w-auto justify-end sm:justify-start pt-1 sm:pt-0">
                       <button
                         onClick={(e) => handleToggleSave(news.id, e)}
                         className={`p-2 rounded-xl border transition-colors ${
-                          isSaved ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700'
+                          isSaved ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40' : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-700 dark:hover:text-slate-200'
                         }`}
                         title="Save Idea"
                       >

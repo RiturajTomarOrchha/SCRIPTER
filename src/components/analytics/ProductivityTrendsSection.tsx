@@ -131,102 +131,102 @@ export const ProductivityTrendsSection: React.FC<ProductivityTrendsProps> = ({
       </div>
 
       {/* KPI Highlight Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Metric 1: Total Scripts */}
         <div
           onClick={() => setActiveMetricTab('scripts')}
-          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-3 sm:p-4 rounded-2xl border transition-all cursor-pointer min-w-0 ${
             activeMetricTab === 'scripts'
-              ? 'bg-blue-50/60 border-blue-300 ring-2 ring-blue-500/20'
-              : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
+              ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 ring-2 ring-blue-500/20'
+              : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100/60'
           }`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">
-              {language === 'en' ? 'Scripts Written' : 'लिखी गई स्क्रिप्ट'}
+          <div className="flex items-center justify-between text-slate-500 mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 truncate">
+              {language === 'en' ? 'Scripts' : 'स्क्रिप्ट्स'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
               <FileText className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 tabular-nums">{totalScripts}</span>
-            <span className="text-[11px] font-bold text-emerald-600 flex items-center">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">{totalScripts}</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
               +24.8%
             </span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
-            {language === 'en' ? 'Across all business channels' : 'सभी चैनल्स पर कुल तैयार'}
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
+            {language === 'en' ? 'Across all channels' : 'सभी चैनल्स पर कुल'}
           </p>
         </div>
 
         {/* Metric 2: Project Completion Rate */}
         <div
           onClick={() => setActiveMetricTab('completion')}
-          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-3 sm:p-4 rounded-2xl border transition-all cursor-pointer min-w-0 ${
             activeMetricTab === 'completion'
-              ? 'bg-emerald-50/60 border-emerald-300 ring-2 ring-emerald-500/20'
-              : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
+              ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 ring-2 ring-emerald-500/20'
+              : 'bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100/60'
           }`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">
-              {language === 'en' ? 'Completion Rate' : 'पूर्णता दर'}
+          <div className="flex items-center justify-between text-slate-500 mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 truncate">
+              {language === 'en' ? 'Completion' : 'पूर्णता दर'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 tabular-nums">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">
               {avgCompletionRate}%
             </span>
-            <span className="text-[11px] font-bold text-emerald-600 flex items-center">
+            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
               +7.4%
             </span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
-            {language === 'en' ? 'Drafts recorded & finished' : 'ड्राफ्ट से पूर्ण वीडियो अनुपात'}
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
+            {language === 'en' ? 'Drafts to finish' : 'ड्राफ्ट से पूर्ण वीडियो'}
           </p>
         </div>
 
         {/* Metric 3: Production Hours Saved */}
-        <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">
-              {language === 'en' ? 'Production Time Saved' : 'बचाया गया समय'}
+        <div className="p-3 sm:p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 truncate">
+              {language === 'en' ? 'Time Saved' : 'बचाया समय'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0">
               <Clock className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 tabular-nums">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">
               {totalHoursSaved}h
             </span>
-            <span className="text-[11px] font-bold text-amber-600">AI Speedup</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400">Speedup</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
-            {language === 'en' ? 'Vs manual drafting & outline' : 'मैन्युअल ड्राफ्टिंग की तुलना में'}
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
+            {language === 'en' ? 'Vs manual drafting' : 'मैन्युअल की तुलना में'}
           </p>
         </div>
 
         {/* Metric 4: Creator Consistency Streak */}
-        <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider">
-              {language === 'en' ? 'Writing Streak' : 'सतत स्ट्रीक'}
+        <div className="p-3 sm:p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700 min-w-0">
+          <div className="flex items-center justify-between text-slate-500 mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 truncate">
+              {language === 'en' ? 'Streak' : 'स्ट्रीक'}
             </span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 flex items-center justify-center shrink-0">
               <Award className="w-3.5 h-3.5" />
             </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-slate-900 tabular-nums">18 Days</span>
-            <span className="text-[11px] font-bold text-indigo-600">Active</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums">18</span>
+            <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Active</span>
           </div>
-          <p className="text-[10px] text-slate-400 mt-1">
-            {language === 'en' ? 'Consistent studio publishing' : 'नियमित प्रकाशन प्रवाह'}
+          <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
+            {language === 'en' ? 'Days consistent' : 'दिनों की सतत रचना'}
           </p>
         </div>
       </div>

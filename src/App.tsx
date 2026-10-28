@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { RoleProvider, useRole } from './context/RoleContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AdminSidebar } from './components/AdminSidebar';
@@ -63,19 +64,20 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isAdminArea = !isAuthPage && (role === 'admin' || role === 'master-admin' || location.pathname.startsWith('/admin') || location.pathname.startsWith('/master-admin'));
   const isFullscreenTeleprompter = location.pathname === '/user/teleprompter' && location.search.includes('fullscreen=true');
+  const isTeleprompterPage = location.pathname.startsWith('/user/teleprompter') || location.pathname.startsWith('/user/video-recording');
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 selection:bg-blue-100 selection:text-blue-900">
-      {/* Shared Header across all perspectives */}
-      {!isFullscreenTeleprompter && (
+    <div className={`${isAuthPage ? 'h-screen h-[100dvh] overflow-hidden' : 'min-h-screen'} flex flex-col bg-[#F8FAFC] dark:bg-[#070D1E] text-slate-900 dark:text-slate-100 selection:bg-blue-100 selection:text-blue-900 transition-colors`}>
+      {/* Shared Header across all perspectives (hidden on AuthPage and Fullscreen Teleprompter) */}
+      {!isFullscreenTeleprompter && !isAuthPage && (
         <Header
-          showSidebarToggle={!isAuthPage}
+          showSidebarToggle={true}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         />
       )}
 
       {/* Main viewport with responsive sidebar for Admin / Master Admin and Creator User */}
-      <div className="flex-1 flex flex-row">
+      <div className={`flex-1 flex flex-row ${isAuthPage ? 'h-full overflow-hidden' : ''}`}>
         {!isAuthPage && (isAdminArea ? (
           <AdminSidebar
             isOpen={isSidebarOpen}
@@ -90,31 +92,48 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           )
         ))}
 
-        <main className={`flex-1 transition-all duration-300 w-full ${!isAuthPage && isAdminArea ? 'lg:pl-72' : !isAuthPage && !isFullscreenTeleprompter ? 'lg:pl-64' : ''}`}>
+        <main className={`flex-1 transition-all duration-300 w-full ${isAuthPage ? 'h-full overflow-hidden' : !isAdminArea && !isFullscreenTeleprompter ? 'lg:pl-64' : isAdminArea ? 'lg:pl-72' : ''}`}>
           {children}
         </main>
       </div>
 
-      {/* User Mobile Bottom Navigation (only shown for user role on mobile when not in fullscreen teleprompter) */}
-      {!isAuthPage && !isAdminArea && !isFullscreenTeleprompter && <MobileBottomNav />}
+      {/* User Mobile Bottom Navigation (hidden on auth, admin, and teleprompter/recording for immersion) */}
+      {!isAuthPage && !isAdminArea && !isTeleprompterPage && <MobileBottomNav />}
     </div>
   );
+};
+
+/**
+ * Smart Root Router: Directs new/unauthenticated users to the Primary Welcome/Login Screen,
+ * and authenticated creators directly to their User Dashboard.
+ */
+const RootRoute: React.FC = () => {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#070D1E] flex items-center justify-center text-white">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  return isAuthenticated ? <Navigate to="/user/home" replace /> : <Navigate to="/login" replace />;
 };
 
 export default function App() {
   return (
     <BrowserRouter>
-      <LanguageProvider>
-        <AuthProvider>
-          <RoleProvider>
-            <AppShell>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <RoleProvider>
+              <AppShell>
               <Routes>
-                {/* Authentication Routes */}
+                {/* Authentication & Welcome Routes */}
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/register" element={<AuthPage />} />
 
-                {/* Default redirect to User Home on root */}
-                <Route path="/" element={<Navigate to="/user/home" replace />} />
+                {/* Root Route: Shows Primary Welcome Screen if logged out, or Dashboard if logged in */}
+                <Route path="/" element={<RootRoute />} />
 
                 {/* User Experience Routes (Phase 2 Connected) */}
                 <Route path="/user/home" element={<UserHome />} />
@@ -141,10 +160,6 @@ export default function App() {
                 <Route path="/user/billing" element={<BillingPaymentsPage />} />
                 <Route path="/user/payments" element={<BillingPaymentsPage />} />
                 <Route path="/user/help" element={<HelpSupportPage />} />
-              <Route path="/user/plans" element={<SubscriptionPlansPage />} />
-              <Route path="/user/billing" element={<BillingPaymentsPage />} />
-              <Route path="/user/payments" element={<BillingPaymentsPage />} />
-              <Route path="/user/help" element={<HelpSupportPage />} />
 
               {/* Admin Routes (RBAC Protected: Admin or Master Admin) */}
               <Route path="/admin/dashboard" element={<RoleGuard requiredRole="admin"><AdminHome /></RoleGuard>} />
@@ -185,10 +200,11 @@ export default function App() {
               {/* Universal 404 Fallback */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-          </AppShell>
-        </RoleProvider>
-      </AuthProvider>
-    </LanguageProvider>
+            </AppShell>
+          </RoleProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   </BrowserRouter>
   );
 }

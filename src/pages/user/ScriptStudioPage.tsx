@@ -574,16 +574,16 @@ export const ScriptStudioPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3 text-xs">
           {/* Content Format */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-500">
+            <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               {language === 'en' ? 'Format' : 'कंटेंट फॉर्मेट'}
             </label>
             <select
               value={selectedFormat}
               onChange={(e) => setSelectedFormat(e.target.value)}
-              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value="Reels / Short">Short Video (Reels)</option>
               <option value="Story">Story / Status</option>
@@ -593,13 +593,13 @@ export const ScriptStudioPage: React.FC = () => {
 
           {/* Language */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-500">
+            <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               {language === 'en' ? 'Language' : 'भाषा'}
             </label>
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value as any)}
-              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value="hi">हिंदी (Hindi)</option>
               <option value="en">English</option>
@@ -609,13 +609,13 @@ export const ScriptStudioPage: React.FC = () => {
 
           {/* Length */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-500">
+            <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               {language === 'en' ? 'Length' : 'लंबाई'}
             </label>
             <select
               value={videoLength}
               onChange={(e) => setVideoLength(e.target.value as any)}
-              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value="30s">30 सेकंड (Shorts)</option>
               <option value="60s">~ 60 सेकंड (Reels)</option>
@@ -626,13 +626,13 @@ export const ScriptStudioPage: React.FC = () => {
 
           {/* Tone / Style */}
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-slate-500">
+            <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               {language === 'en' ? 'Tone / Style' : 'टोन / शैली'}
             </label>
             <select
               value={tone}
               onChange={(e) => setTone(e.target.value)}
-              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value="सरल और संवादात्मक">सरल और संवादात्मक (Friendly)</option>
               <option value="शांत और प्रभावी">शांत और प्रभावी (Calm)</option>
@@ -644,13 +644,13 @@ export const ScriptStudioPage: React.FC = () => {
 
           {/* Platform */}
           <div className="space-y-1 col-span-2 sm:col-span-1">
-            <label className="text-[11px] font-semibold text-slate-500">
+            <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
               {language === 'en' ? 'Platform' : 'प्लेटफॉर्म'}
             </label>
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
-              className="w-full p-2 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
               <option value="Instagram Reels">Instagram Reels</option>
               <option value="YouTube Shorts">YouTube Shorts</option>
@@ -661,10 +661,10 @@ export const ScriptStudioPage: React.FC = () => {
         </div>
 
         {/* Primary AI Generation Trigger Button */}
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-            <span>
+        <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span className="line-clamp-1">
               {resolvedResearch
                 ? (language === 'en' ? 'Grounded in verified research facts & citations.' : 'सत्यापित शोध संदर्भों के आधार पर तैयार होगी।')
                 : (language === 'en' ? 'Ready to generate high-retention structured script.' : 'उच्च गुणवत्ता वाली संरचित स्क्रिप्ट तैयार करने के लिए तैयार।')}
@@ -674,9 +674,9 @@ export const ScriptStudioPage: React.FC = () => {
           <button
             onClick={handleGenerateScript}
             disabled={isGenerating}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all disabled:opacity-60"
+            className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all disabled:opacity-60"
           >
-            <Sparkles className="w-4 h-4 fill-white" />
+            <Sparkles className="w-4 h-4 fill-white shrink-0" />
             <span>
               {isGenerating
                 ? (language === 'en' ? 'Generating Script...' : 'AI से स्क्रिप्ट बन रही है...')
@@ -1073,34 +1073,34 @@ export const ScriptStudioPage: React.FC = () => {
       </div>
 
       {/* 5. Bottom Sticky Action Bar matching Image 1 & 2 */}
-      <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-xl flex flex-wrap items-center justify-between gap-3">
-        {/* Left Utilities */}
-        <div className="flex items-center gap-2">
+      <div className="sticky bottom-20 sm:bottom-4 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Utilities: 4 equal grid columns on mobile, row on tablet/desktop */}
+        <div className="grid grid-cols-4 sm:flex sm:items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
           <button
             onClick={handleClearScript}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="min-h-[42px] px-2 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1 transition-colors"
             title="Clear script fields"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>{language === 'en' ? 'Clear' : 'क्लियर'}</span>
+            <span className="truncate">{language === 'en' ? 'Clear' : 'क्लियर'}</span>
           </button>
 
           <button
             onClick={handleCopyScript}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="min-h-[42px] px-2 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1 transition-colors"
             title="Copy entire script to clipboard"
           >
             <Copy className="w-3.5 h-3.5" />
-            <span>{language === 'en' ? 'Copy All' : 'कॉपी करें'}</span>
+            <span className="truncate">{language === 'en' ? 'Copy All' : 'कॉपी'}</span>
           </button>
 
           <button
             onClick={() => setIsVersionDrawerOpen(true)}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            className="min-h-[42px] px-2 sm:px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1 transition-colors"
             title="View revision history"
           >
             <History className="w-3.5 h-3.5" />
-            <span>{versions.length} {language === 'en' ? 'Versions' : 'वर्जन'}</span>
+            <span className="truncate">{versions.length} {language === 'en' ? 'Vers' : 'वर्जन'}</span>
           </button>
 
           <button
@@ -1119,20 +1119,20 @@ export const ScriptStudioPage: React.FC = () => {
                 creatorName: userProfile?.name,
               })
             }
-            className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200/80 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+            className="min-h-[42px] px-2 sm:px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-800 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/50 text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1 transition-colors shadow-2xs"
             title="Download branded production-ready PDF"
           >
-            <Download className="w-3.5 h-3.5 text-rose-600" />
-            <span>{language === 'en' ? 'Export PDF' : 'PDF एक्सपोर्ट'}</span>
+            <Download className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+            <span className="truncate">{language === 'en' ? 'PDF' : 'PDF'}</span>
           </button>
         </div>
 
         {/* Primary Right Action: Teleprompter Handoff */}
         <button
           onClick={handleOpenTeleprompter}
-          className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
+          className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/25 transition-all"
         >
-          <Video className="w-4 h-4 fill-white" />
+          <Video className="w-4 h-4 fill-white shrink-0" />
           <span>{language === 'en' ? 'Send to Teleprompter →' : '🚀 टेलीप्रॉम्प्टर में खोलें'}</span>
         </button>
       </div>

@@ -43,6 +43,7 @@ import {
   ChevronRight,
   Check,
   Trash2,
+  FlipHorizontal,
 } from 'lucide-react';
 
 interface TeleprompterPageProps {
@@ -624,10 +625,10 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
       {/* 1. TOP HEADER TOOLBAR */}
       <div className="bg-[#0D1527] rounded-3xl p-3 sm:p-4 border border-slate-800 shadow-md mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Left: Back button to Script Studio & Project/Script Selector */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
           <button
             onClick={handleReturnToScriptStudio}
-            className="px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-700"
+            className="min-h-[40px] px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-700 shrink-0"
             title="Return to Script Studio (Preserves Script)"
           >
             <ArrowLeft className="w-4 h-4 text-blue-400" />
@@ -635,21 +636,21 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
           </button>
 
           {/* Project & Script Title Display */}
-          <div>
+          <div className="min-w-0 flex-1 md:flex-initial">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
-                <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-sm">
+              <h1 className="text-xs sm:text-base font-bold text-white tracking-tight flex items-center gap-2 truncate">
+                <span className="truncate max-w-[150px] sm:max-w-xs md:max-w-sm">
                   {selectedProject?.title || navState.title || 'सोलर पैनल से बिजली बिल कैसे कम करें?'}
                 </span>
               </h1>
               {selectedProject?.scriptVersions && selectedProject.scriptVersions.length > 0 && (
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50 shrink-0">
                   v{selectedProject.scriptVersions[selectedVersionIdx]?.version || 1}
                 </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+            <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
               <span>{scriptWords} {language === 'en' ? 'words' : 'शब्द'}</span>
               <span>•</span>
               <span className="text-amber-400 font-mono font-semibold">~{estimatedReadingSeconds}s {language === 'en' ? 'read' : 'वाचन'}</span>
@@ -657,7 +658,7 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
                 <>
                   <span>•</span>
                   <span className="text-amber-300 font-medium bg-amber-950/60 px-1.5 py-0.5 rounded text-[10px] border border-amber-800/40">
-                    {language === 'en' ? 'Unsaved edits' : 'असुरक्षित बदलाव'}
+                    {language === 'en' ? 'Unsaved' : 'असेव्ड'}
                   </span>
                 </>
               )}
@@ -666,15 +667,15 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
         </div>
 
         {/* Center / Right: 3 Mode Tabs [Setup | Teleprompter | Record] & Action Icons */}
-        <div className="flex items-center gap-2 self-end md:self-auto">
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full md:w-auto overflow-x-auto pb-1 sm:pb-0">
           {/* Main 3 Workflow Modes Switcher */}
-          <div className="bg-[#0B101D] p-1 rounded-2xl flex items-center gap-1 border border-slate-800">
+          <div className="bg-[#0B101D] p-1 rounded-2xl flex items-center gap-1 border border-slate-800 shrink-0">
             {/* 1. Setup Mode */}
             <button
               onClick={() => {
                 setActiveMode('setup');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeMode === 'setup'
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
@@ -690,7 +691,7 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
                 setActiveMode('prompter');
                 stopCameraStreams();
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeMode === 'prompter'
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
@@ -705,7 +706,7 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
               onClick={() => {
                 setActiveMode('record');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeMode === 'record'
                   ? 'bg-red-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
@@ -716,25 +717,27 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
             </button>
           </div>
 
-          {/* Settings Trigger */}
-          <button
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className={`p-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${
-              isSettingsOpen ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-            }`}
-            title="Prompter & Camera Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Settings Trigger */}
+            <button
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className={`min-h-[38px] min-w-[38px] p-2 rounded-xl text-xs font-bold border transition-colors flex items-center justify-center ${
+                isSettingsOpen ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+              }`}
+              title="Prompter & Camera Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
 
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
-            title="Toggle Fullscreen"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="min-h-[38px] min-w-[38px] p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors flex items-center justify-center"
+              title="Toggle Fullscreen"
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1171,14 +1174,14 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
             )}
           </div>
 
-          {/* BOTTOM DOCK CONTROLS (Exact Layout from Google AI Studio Poster Image 1 & 2 Panel 3) */}
-          <div className="relative z-20 bg-[#0A101D] border-t border-slate-800 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+          {/* BOTTOM DOCK CONTROLS (Exact Layout from Google AI Studio Poster & Screen 8) */}
+          <div className="relative z-20 bg-[#0A101D] border-t border-slate-800 p-3 sm:p-5 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
             {/* 1. Text Size (A- / A+) */}
             <div className="flex flex-col items-center gap-1">
               <div className="flex items-center gap-1 bg-[#131D33] p-1 rounded-2xl border border-slate-700">
                 <button
                   onClick={() => setFontSize((prev) => Math.max(18, prev - 2))}
-                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center transition-colors"
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-xs flex items-center justify-center transition-colors"
                   title="Decrease Font Size"
                 >
                   A-
@@ -1188,13 +1191,13 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
                 </span>
                 <button
                   onClick={() => setFontSize((prev) => Math.min(48, prev + 2))}
-                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center transition-colors"
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-xs flex items-center justify-center transition-colors"
                   title="Increase Font Size"
                 >
                   A+
                 </button>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400">
                 {language === 'en' ? 'Text Size' : 'टेक्स्ट साइज'}
               </span>
             </div>
@@ -1204,7 +1207,7 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
               <div className="flex items-center gap-1 bg-[#131D33] p-1 rounded-2xl border border-slate-700">
                 <button
                   onClick={() => setSpeedMultiplier((prev) => Math.max(0.5, parseFloat((prev - 0.2).toFixed(1))))}
-                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm flex items-center justify-center transition-colors"
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-sm flex items-center justify-center transition-colors"
                   title="Decrease Speed"
                 >
                   -
@@ -1214,65 +1217,84 @@ export const TeleprompterPage: React.FC<TeleprompterPageProps> = ({ defaultMode 
                 </span>
                 <button
                   onClick={() => setSpeedMultiplier((prev) => Math.min(3.0, parseFloat((prev + 0.2).toFixed(1))))}
-                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm flex items-center justify-center transition-colors"
+                  className="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-sm flex items-center justify-center transition-colors"
                   title="Increase Speed"
                 >
                   +
                 </button>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">
-                {language === 'en' ? 'Scroll Speed' : 'स्क्रोल स्पीड'}
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400">
+                {language === 'en' ? 'Speed' : 'स्पीड'}
               </span>
             </div>
 
-            {/* 3. Center Glowing Play / Pause Circle */}
+            {/* 3. Center Glowing Golden Play / Pause Circle (Matching Reference Showcase) */}
             <div className="flex flex-col items-center">
               <button
                 onClick={() => setIsScrolling(!isScrolling)}
-                className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 ${
+                className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all shadow-xl active:scale-95 ${
                   isScrolling
-                    ? 'bg-amber-400 text-slate-950 shadow-amber-400/40 ring-4 ring-amber-400/20'
-                    : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/40 ring-4 ring-blue-600/20'
+                    ? 'bg-amber-400 text-slate-950 shadow-amber-400/50 ring-4 ring-amber-400/25'
+                    : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-amber-500/40 ring-4 ring-amber-400/20'
                 }`}
                 title={isScrolling ? 'Pause Teleprompter' : 'Play Teleprompter'}
               >
                 {isScrolling ? (
-                  <Pause className="w-7 h-7 fill-current" />
+                  <Pause className="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
                 ) : (
-                  <Play className="w-7 h-7 fill-current translate-x-0.5" />
+                  <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-current translate-x-0.5" />
                 )}
               </button>
-              <span className="text-[11px] font-bold text-slate-300 mt-1">
+              <span className="text-[10px] sm:text-[11px] font-bold text-amber-300 mt-1">
                 {isScrolling ? (language === 'en' ? 'Pause' : 'रोकें') : (language === 'en' ? 'Play' : 'शुरू करें')}
               </span>
             </div>
 
-            {/* 4. Reset Button */}
-            <div className="flex flex-col items-center gap-1">
-              <button
-                onClick={handleResetScroll}
-                className="w-12 h-11 rounded-2xl bg-[#131D33] hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center transition-colors"
-                title="Reset to Top"
-              >
-                <RotateCcw className="w-5 h-5 text-slate-300" />
-              </button>
-              <span className="text-[11px] font-semibold text-slate-400">
-                {language === 'en' ? 'Reset' : 'रीसेट'}
-              </span>
+            {/* 4. Mirror Toggle & Reset Group */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  onClick={() => setMirrorMode(!mirrorMode)}
+                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl border flex items-center justify-center transition-colors ${
+                    mirrorMode
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-xs'
+                      : 'bg-[#131D33] hover:bg-slate-700 text-slate-300 border-slate-700'
+                  }`}
+                  title="Toggle Mirror Reflection"
+                >
+                  <FlipHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400">
+                  {language === 'en' ? 'Mirror' : 'मिरर'}
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  onClick={handleResetScroll}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#131D33] hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center transition-colors active:scale-95"
+                  title="Reset to Top"
+                >
+                  <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
+                </button>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400">
+                  {language === 'en' ? 'Reset' : 'रीसेट'}
+                </span>
+              </div>
             </div>
 
             {/* 5. Switch to Video Recording Action Button */}
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-center sm:items-end w-full sm:w-auto">
               <button
                 onClick={() => {
                   setActiveMode('record');
                 }}
-                className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-red-600/30 transition-all"
+                className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 active:scale-98 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-600/30 transition-all"
               >
                 <Camera className="w-4 h-4" />
                 <span>{language === 'en' ? 'Start Recording →' : '🎥 वीडियो रिकॉर्ड करें'}</span>
               </button>
-              <span className="text-[10px] text-slate-400 mt-1">
+              <span className="text-[10px] text-slate-400 mt-1 hidden sm:block">
                 {language === 'en' ? 'Camera & Prompter Overlay' : 'कैमरा और ओवरले प्रॉम्प्टर'}
               </span>
             </div>

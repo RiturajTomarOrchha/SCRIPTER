@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -24,6 +25,7 @@ import {
   Link as LinkIcon,
   HelpCircle,
   Copy,
+  LogOut,
 } from 'lucide-react';
 
 interface SocialLinks {
@@ -35,9 +37,10 @@ interface SocialLinks {
 }
 
 export const UserProfilePage: React.FC = () => {
-  const { user, userProfile: authProfile, updateAuthProfile, isAuthenticated } = useAuth();
+  const { user, userProfile: authProfile, updateAuthProfile, isAuthenticated, signOutUser } = useAuth();
   const { userProfile: localProfile, updateUserProfile, subscription, activeBusinessProfile } = useRole();
   const { language } = useLanguage();
+  const navigate = useNavigate();
 
   // Form State
   const [displayName, setDisplayName] = useState(
@@ -178,7 +181,7 @@ export const UserProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-4 pt-6 pb-52 md:pb-24 space-y-6">
       {/* Top Banner / Breadcrumb */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -196,23 +199,42 @@ export const UserProfilePage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSaveProfile}
-          disabled={isSaving}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
-        >
-          {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
-          <span>
-            {isSaving
-              ? language === 'en'
-                ? 'Saving...'
-                : 'सुरक्षित हो रहा है...'
-              : language === 'en'
-              ? 'Save Profile'
-              : 'प्रोफ़ाइल सुरक्षित करें'}
-          </span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await signOutUser();
+              } catch (err) {
+                console.error(err);
+              }
+              navigate('/login');
+            }}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 bg-rose-50/70 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-xs font-bold transition-all active:scale-95"
+            title="Sign Out of account"
+          >
+            <LogOut className="w-3.5 h-3.5 text-rose-500" />
+            <span>{language === 'en' ? 'Sign Out' : 'लॉग आउट'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSaveProfile}
+            disabled={isSaving}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
+            <span>
+              {isSaving
+                ? language === 'en'
+                  ? 'Saving...'
+                  : 'सुरक्षित हो रहा है...'
+                : language === 'en'
+                ? 'Save Profile'
+                : 'प्रोफ़ाइल सुरक्षित करें'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Notifications / Alerts */}
@@ -621,12 +643,28 @@ export const UserProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Button Footer */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        {/* Action Button Footer with safe clearance above mobile bottom nav */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 pb-12 sm:pb-6">
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await signOutUser();
+              } catch (err) {
+                console.error(err);
+              }
+              navigate('/login');
+            }}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-rose-300 dark:border-rose-800/80 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 text-sm font-bold transition-all active:scale-98 min-h-[48px]"
+          >
+            <LogOut className="w-4 h-4 text-rose-500" />
+            <span>{language === 'en' ? 'Sign Out / Log Out' : 'साइन आउट / लॉग आउट'}</span>
+          </button>
+
           <button
             type="submit"
             disabled={isSaving}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm font-bold shadow-lg shadow-slate-900/20 dark:shadow-blue-600/30 transition-all active:scale-98 disabled:opacity-50 w-full sm:w-auto min-h-[48px]"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4" />}
             <span>
@@ -640,6 +678,9 @@ export const UserProfilePage: React.FC = () => {
             </span>
           </button>
         </div>
+
+        {/* Extra spacing block specifically for mobile to prevent any clipping behind the fixed bottom nav bar */}
+        <div className="h-20 md:hidden pointer-events-none" aria-hidden="true" />
       </form>
 
       {/* Avatar Selection Modal */}

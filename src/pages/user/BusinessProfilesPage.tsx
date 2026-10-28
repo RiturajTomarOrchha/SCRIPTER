@@ -188,10 +188,10 @@ export const BusinessProfilesPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
                   <button
                     onClick={() => handleStartEdit(prof)}
-                    className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors"
+                    className="min-h-[44px] min-w-[44px] p-2.5 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center"
                     title="Profile Settings"
                   >
                     <Settings className="w-4 h-4" />
@@ -200,14 +200,14 @@ export const BusinessProfilesPage: React.FC = () => {
                   {isActive ? (
                     <button
                       onClick={() => navigate('/user/home')}
-                      className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors"
+                      className="min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                     >
                       {language === 'en' ? 'Open Home' : 'होम देखें'}
                     </button>
                   ) : (
                     <button
                       onClick={() => setActiveBusinessProfile(prof)}
-                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors"
+                      className="min-h-[44px] px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-bold shadow-xs transition-colors"
                     >
                       {language === 'en' ? 'Switch to this' : 'यह प्रोफाइल चुनें'}
                     </button>

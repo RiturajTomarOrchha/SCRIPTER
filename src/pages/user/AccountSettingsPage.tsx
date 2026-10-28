@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useRole } from '../../context/RoleContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   getUserPreferences,
   saveUserPreferences,
@@ -48,6 +49,7 @@ import {
 
 export const AccountSettingsPage: React.FC = () => {
   const { language, setLanguage } = useLanguage();
+  const { signOutUser } = useAuth();
   const {
     userProfile,
     updateUserProfile,
@@ -237,16 +239,21 @@ export const AccountSettingsPage: React.FC = () => {
   };
 
   // Handle Sign Out
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setIsSignOutModalOpen(false);
+    try {
+      await signOutUser();
+    } catch (err) {
+      console.error('Error signing out:', err);
+    }
     showToast(language === 'en' ? 'Signed out successfully' : 'लॉग आउट सफल रहा');
     setTimeout(() => {
-      navigate('/user/home');
-    }, 800);
+      navigate('/login');
+    }, 400);
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-24 lg:pb-12 text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#070D1E] pb-48 lg:pb-12 text-slate-900 dark:text-slate-100 selection:bg-blue-100 selection:text-blue-900 transition-colors">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-4 z-50 bg-[#0B132B] text-white text-xs sm:text-sm font-semibold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 border border-slate-700 animate-in fade-in slide-in-from-top-2">

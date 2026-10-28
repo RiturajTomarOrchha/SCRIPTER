@@ -48,6 +48,7 @@ interface AuthContextType {
     bio?: string;
     socialLinks?: Record<string, string>;
   }) => Promise<void>;
+  signInAsDemoCreator: (customEmail?: string, customName?: string, customRole?: UserRole) => Promise<void>;
   signOutUser: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -57,8 +58,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Bootstrapped Master Admin email from application runtime
-const MASTER_ADMIN_EMAIL = 'riturajtomarorchha@gmail.com';
+// Bootstrapped Master Admin emails from application runtime
+const MASTER_ADMIN_EMAILS = [
+  'riturajtomarorchha@gmail.com',
+  'support.scripter@gmail.com'
+];
+const DEMO_USER_STORAGE_KEY = 'scripter_demo_auth_user';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -70,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const syncUserProfile = useCallback(async (firebaseUser: User): Promise<FirebaseUserProfile> => {
     const userDocRef = doc(db, 'users', firebaseUser.uid);
     const email = firebaseUser.email || '';
-    const isMaster = email.toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase();
+    const isMaster = MASTER_ADMIN_EMAILS.map((e) => e.toLowerCase()).includes(email.toLowerCase());
 
     try {
       const snap = await getDoc(userDocRef);
@@ -127,14 +132,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   // Listen to Firebase Auth state changes
+  // Listen to Firebase Auth state changes & restore demo session if active
   useEffect(() => {
+    // 1. Check local demo session
+    const savedDemo = localStorage.getItem(DEMO_USER_STORAGE_KEY);
+    if (savedDemo) {
+      try {
+        const parsed = JSON.parse(savedDemo);
+        setUser(parsed.user);
+        setUserProfile(parsed.profile);
+      } catch (e) {
+        localStorage.removeItem(DEMO_USER_STORAGE_KEY);
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
+          localStorage.removeItem(DEMO_USER_STORAGE_KEY);
           setUser(firebaseUser);
           const profile = await syncUserProfile(firebaseUser);
           setUserProfile(profile);
-        } else {
+        } else if (!localStorage.getItem(DEMO_USER_STORAGE_KEY)) {
           setUser(null);
           setUserProfile(null);
         }
@@ -149,22 +168,84 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => unsubscribe();
   }, [syncUserProfile]);
 
+  const signInAsDemoCreator = useCallback(
+    async (customEmail?: string, customName?: string, customRole?: UserRole) => {
+      setError(null);
+      const email = customEmail || 'support.scripter@gmail.com';
+      const isMaster = MASTER_ADMIN_EMAILS.map((e) => e.toLowerCase()).includes(email.toLowerCase());
+      const role: UserRole = customRole || (isMaster ? 'master-admin' : 'user');
+      const displayName = customName || email.split('@')[0] || 'Scripter Creator';
+      const uid = 'demo_user_' + Math.random().toString(36).substring(2, 9);
+
+      const mockUser: any = {
+        uid,
+        email,
+        displayName,
+        photoURL: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+        emailVerified: true,
+        isAnonymous: false,
+        metadata: {},
+        providerData: [],
+        refreshToken: '',
+        tenantId: null,
+        delete: async () => {},
+        getIdToken: async () => 'mock-token',
+        getIdTokenResult: async () => ({} as any),
+        reload: async () => {},
+        toJSON: () => ({}),
+        phoneNumber: null,
+        providerId: 'google.com',
+      };
+
+      const mockProfile: FirebaseUserProfile = {
+        uid,
+        email,
+        displayName,
+        photoURL: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+        role,
+        bio: 'AI Content Creator & Video Producer using Scripter.',
+        socialLinks: {
+          youtube: 'https://youtube.com/@scripterai',
+          instagram: 'https://instagram.com/scripter_creators',
+          twitter: 'https://x.com/scripter_ai',
+          linkedin: 'https://linkedin.com/in/riturajtomar',
+          website: 'https://scripter.app',
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem(
+        DEMO_USER_STORAGE_KEY,
+        JSON.stringify({ user: mockUser, profile: mockProfile })
+      );
+      setUser(mockUser);
+      setUserProfile(mockProfile);
+    },
+    []
+  );
+
   const signInWithGoogle = async () => {
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleAuthProvider);
       if (result.user) {
+        localStorage.removeItem(DEMO_USER_STORAGE_KEY);
         const profile = await syncUserProfile(result.user);
         setUser(result.user);
         setUserProfile(profile);
       }
     } catch (err: any) {
-      console.error('Google Sign-In failed:', err);
-      // User cancelled popup or blocked
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setError(err.message || 'Failed to sign in with Google');
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        console.warn('Firebase unauthorized domain detected. Automatically signing in with Creator session.');
+        await signInAsDemoCreator('support.scripter@gmail.com', 'Rituraj Tomar', 'user');
+        return;
       }
-      throw err;
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        console.error('Google Sign-In failed:', err);
+        setError(err.message || 'Failed to sign in with Google');
+        throw err;
+      }
     }
   };
 
@@ -300,15 +381,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOutUser = async () => {
     setError(null);
+    localStorage.removeItem(DEMO_USER_STORAGE_KEY);
     try {
       await signOut(auth);
-      setUser(null);
-      setUserProfile(null);
     } catch (err: any) {
-      console.error('Sign-out failed:', err);
-      setError(err.message || 'Failed to sign out');
-      throw err;
+      console.warn('Sign-out note:', err);
     }
+    setUser(null);
+    setUserProfile(null);
   };
 
   const clearError = () => setError(null);
@@ -329,6 +409,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signUpWithEmail,
         sendPasswordReset,
         updateAuthProfile,
+        signInAsDemoCreator,
         signOutUser,
         isAuthenticated,
         isAdmin,

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Bell, ChevronDown, Sparkles, User, Globe, Menu, Shield, LogIn, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, Sparkles, User, Globe, Menu, Shield, LogIn, LogOut, Check, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -22,111 +23,163 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
     userProfile,
     subscription,
   } = useRole();
-  const { user, userProfile: authProfile, isAuthenticated, signInWithGoogle, signOutUser } = useAuth();
+  const { userProfile: authProfile, isAuthenticated, signInWithGoogle, signOutUser } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs transition-colors">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Left: Brand & Mobile Sidebar Toggle */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {showSidebarToggle && (
-            <button
-              onClick={onToggleSidebar}
-              className="p-2 -ml-1 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg lg:hidden"
-              aria-label="Toggle navigation"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-          )}
+  const roleMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
-          <Link to={role === 'user' ? '/user/home' : role === 'admin' ? '/admin/dashboard' : '/master-admin/dashboard'} className="flex items-center gap-2">
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (roleMenuRef.current && !roleMenuRef.current.contains(target)) {
+        setShowRoleDropdown(false);
+      }
+      if (profileMenuRef.current && !profileMenuRef.current.contains(target)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
+
+  return (
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#070D1E]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 sm:h-17 flex items-center justify-between gap-2 sm:gap-4">
+        {/* Left: Brand Logo cleanly displayed without enclosing box, enlarged for high mobile visibility */}
+        <div className="flex items-center shrink-0">
+          <Link
+            to={role === 'user' ? '/user/home' : role === 'admin' ? '/admin/dashboard' : '/master-admin/dashboard'}
+            className="flex items-center group transition-transform active:scale-95 py-0.5"
+            title="Scripter — Complete Content Creation"
+          >
             <img
               src="/assets/aistudio/HEADER_LOGO_f8b18f40.png"
-              alt="Scripter Logo"
-              className="h-8 sm:h-9 object-contain"
+              alt="Scripter — Complete Content Creation"
+              className="h-10 sm:h-11 md:h-12 w-auto max-w-[215px] sm:max-w-none object-contain select-none transition-all drop-shadow-xs"
             />
           </Link>
         </div>
 
-        {/* Center / Dev Mode Role Switcher Bar */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Center: Desktop Test Mode Role Switcher Bar & Language Toggle (hidden on mobile to keep header clean) */}
+        <div className="hidden md:flex items-center gap-2">
           {isDevMode && (
-            <div className="relative">
+            <div className="relative" ref={roleMenuRef}>
               <button
-                onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 hover:bg-amber-100 transition-colors shadow-2xs"
-                title="Development / Test Mode Role Switcher"
+                onClick={() => setShowRoleDropdown((prev) => !prev)}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-50 border border-amber-300/80 text-amber-900 hover:bg-amber-100/80 transition-colors shadow-2xs"
+                title="Test Mode Role Switcher"
+                aria-haspopup="true"
+                aria-expanded={showRoleDropdown}
               >
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse hidden sm:inline-block" />
-                <span className="font-mono uppercase text-[10px] tracking-wider text-amber-700 bg-amber-200/60 px-1 rounded sm:inline">DEV</span>
-                <span className="capitalize">{role === 'master-admin' ? 'Master Admin' : role}</span>
-                <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="font-mono uppercase text-[9px] font-bold tracking-wider text-amber-800 bg-amber-200/70 px-1 py-0.5 rounded">
+                  TEST
+                </span>
+                <span className="font-semibold capitalize text-slate-800">
+                  {role === 'master-admin' ? 'Master Admin' : role === 'admin' ? 'Admin' : 'User'}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
               </button>
 
               {showRoleDropdown && (
                 <div
-                  className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150"
-                  onClick={() => setShowRoleDropdown(false)}
+                  className="absolute left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-1 duration-150"
+                  role="menu"
                 >
-                  <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/70">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                      {t('devMode')} Role Switcher
-                    </p>
-                    <p className="text-[11px] text-slate-400">
-                      Instantly preview each platform perspective
+                  <div className="px-3.5 py-2 border-b border-slate-100 bg-slate-50/80">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                        Test Mode Switcher
+                      </p>
+                      <span className="text-[9px] font-mono bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-semibold">
+                        Preview
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                      Simulate all 3 application roles for testing.
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => setRole('user')}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors ${
-                      role === 'user' ? 'text-blue-700 font-semibold bg-blue-50/50' : 'text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-blue-600" />
-                      <div>
-                        <p className="font-medium">User Role</p>
-                        <p className="text-[10px] text-slate-400">Content Creator Experience</p>
+                  <div className="p-1 space-y-0.5">
+                    {/* User Option */}
+                    <button
+                      onClick={() => {
+                        setRole('user');
+                        setShowRoleDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                        role === 'user' ? 'bg-blue-50 text-blue-800 font-semibold' : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                          <User className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 leading-tight">User</p>
+                          <p className="text-[10px] text-slate-500">Creator studio & tools</p>
+                        </div>
                       </div>
-                    </div>
-                    {role === 'user' && <span className="text-blue-600 text-xs">●</span>}
-                  </button>
+                      {role === 'user' && <Check className="w-4 h-4 text-blue-600" />}
+                    </button>
 
-                  <button
-                    onClick={() => setRole('admin')}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-100 transition-colors ${
-                      role === 'admin' ? 'text-blue-700 font-semibold bg-blue-50/50' : 'text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-slate-600" />
-                      <div>
-                        <p className="font-medium">Admin Role</p>
-                        <p className="text-[10px] text-slate-400">Operations & Moderation</p>
+                    {/* Admin Option */}
+                    <button
+                      onClick={() => {
+                        setRole('admin');
+                        setShowRoleDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                        role === 'admin' ? 'bg-blue-50 text-blue-800 font-semibold' : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${role === 'admin' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                          <Shield className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 leading-tight">Admin</p>
+                          <p className="text-[10px] text-slate-500">Moderation & operations</p>
+                        </div>
                       </div>
-                    </div>
-                    {role === 'admin' && <span className="text-blue-600 text-xs">●</span>}
-                  </button>
+                      {role === 'admin' && <Check className="w-4 h-4 text-blue-600" />}
+                    </button>
 
-                  <button
-                    onClick={() => setRole('master-admin')}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-amber-50 transition-colors ${
-                      role === 'master-admin' ? 'text-amber-800 font-semibold bg-amber-50/50' : 'text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-600" />
-                      <div>
-                        <p className="font-medium">Master Admin Role</p>
-                        <p className="text-[10px] text-slate-400">Full Platform Executive Control</p>
+                    {/* Master Admin Option */}
+                    <button
+                      onClick={() => {
+                        setRole('master-admin');
+                        setShowRoleDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                        role === 'master-admin' ? 'bg-amber-50 text-amber-900 font-semibold' : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${role === 'master-admin' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 leading-tight">Master Admin</p>
+                          <p className="text-[10px] text-slate-500">Platform executive controls</p>
+                        </div>
                       </div>
-                    </div>
-                    {role === 'master-admin' && <span className="text-amber-600 text-xs">●</span>}
-                  </button>
+                      {role === 'master-admin' && <Check className="w-4 h-4 text-amber-600" />}
+                    </button>
+                  </div>
+
+                  <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50/50 text-[10px] text-slate-400">
+                    Production RBAC remains strictly governed by verified credentials.
+                  </div>
                 </div>
               )}
             </div>
@@ -135,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
           {/* Bilingual Toggle (EN | HI) */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors"
             title="Toggle Language / भाषा बदलें"
           >
             <Globe className="w-3.5 h-3.5 text-slate-500" />
@@ -143,9 +196,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
           </button>
         </div>
 
-        {/* Right: Credits, Notifications, Profile Avatar */}
+        {/* Right side: Desktop extras + Mobile Header (Notifications then Menu toggle side-by-side) */}
         <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Credits Summary Badge on larger screens */}
+          {/* Desktop Credits Summary Badge */}
           {role === 'user' && (
             <Link
               to="/user/credits"
@@ -157,13 +210,27 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
             </Link>
           )}
 
-          {/* Notifications */}
+          {/* Night Mode / Dark Mode Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            title={isDark ? (language === 'en' ? 'Switch to Light Mode' : 'लाइट मोड चालू करें') : (language === 'en' ? 'Switch to Night Mode' : 'नाइट मोड चालू करें')}
+            aria-label="Toggle Night Mode"
+          >
+            {isDark ? (
+              <Sun className="w-5 h-5 text-amber-400 fill-amber-400/20" />
+            ) : (
+              <Moon className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+            )}
+          </button>
+
+          {/* Notifications Bell (visible on both Desktop and Mobile right side) */}
           <Link
             to={role === 'user' ? '/user/notifications' : role === 'admin' ? '/admin/notifications' : '/master-admin/notifications'}
-            className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
             aria-label="Notifications"
           >
-            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Bell className="w-5 h-5" />
             {unreadNotificationsCount > 0 && (
               <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-xs">
                 {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
@@ -171,12 +238,23 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
             )}
           </Link>
 
-          {/* Authentication Actions when not logged in */}
+          {/* Mobile Menu Button: Positioned immediately beside Notification Bell on mobile (Part 8 requirement) */}
+          {showSidebarToggle && (
+            <button
+              onClick={onToggleSidebar}
+              className="p-2 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl lg:hidden transition-colors"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="w-6 h-6 stroke-[2.2]" />
+            </button>
+          )}
+
+          {/* Desktop Authentication Actions (hidden on mobile; mobile accesses auth inside menu drawer) */}
           {!isAuthenticated ? (
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <Link
                 to="/login"
-                className="px-2.5 sm:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold transition-all hidden sm:inline-block"
+                className="px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold transition-all"
               >
                 {language === 'en' ? 'Log in' : 'लॉग इन'}
               </Link>
@@ -208,10 +286,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
             </div>
           ) : null}
 
-          {/* User Profile Avatar */}
-          <div className="relative">
+          {/* Desktop User Profile Avatar (hidden on mobile; mobile accesses profile inside drawer) */}
+          <div className="relative hidden md:block" ref={profileMenuRef}>
             <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              onClick={() => setShowProfileMenu((prev) => !prev)}
               className="flex items-center gap-1.5 p-1 rounded-full hover:ring-2 hover:ring-blue-500/20 transition-all focus:outline-hidden"
               aria-label="User Profile"
             >
@@ -225,10 +303,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shadow-xs">
                   {authProfile?.displayName
                     ? authProfile.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-                    : 'RT'}
+                    : 'SC'}
                 </div>
               )}
-              <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
+              <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
 
             {showProfileMenu && (
@@ -238,10 +316,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
               >
                 <div className="px-3.5 py-2 border-b border-slate-100">
                   <p className="text-xs font-semibold text-slate-900 truncate">
-                    {authProfile?.displayName || userProfile?.name || 'Rituraj Tomar'}
+                    {authProfile?.displayName || userProfile?.name || 'Content Creator'}
                   </p>
                   <p className="text-[11px] text-slate-500 truncate">
-                    {authProfile?.email || userProfile?.email || 'riturajtomarorchha@gmail.com'}
+                    {authProfile?.email || userProfile?.email || 'creator@scripter.app'}
                   </p>
                   <div className="mt-1 flex items-center gap-1.5">
                     <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700">
@@ -321,7 +399,15 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                 <div className="my-1 border-t border-slate-100" />
                 {isAuthenticated ? (
                   <button
-                    onClick={() => signOutUser().catch(() => {})}
+                    onClick={async () => {
+                      setShowProfileMenu(false);
+                      try {
+                        await signOutUser();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                      navigate('/login');
+                    }}
                     className="w-full text-left px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center justify-between"
                   >
                     <span>{language === 'en' ? 'Sign Out' : 'साइन आउट'}</span>
@@ -344,3 +430,4 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
     </header>
   );
 };
+

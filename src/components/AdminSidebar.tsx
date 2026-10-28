@@ -27,7 +27,10 @@ import {
   X,
   Sparkles,
   Shield,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -59,6 +62,7 @@ const iconMap: Record<string, React.ElementType> = {
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const { role, setRole } = useRole();
   const { language } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
     <>
@@ -84,11 +88,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
             className="flex items-center gap-3"
             onClick={onClose}
           >
-            <img
-              src="/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png"
-              alt="Scripter"
-              className="w-9 h-9 object-contain rounded-lg"
-            />
+            <div className="p-1 bg-white rounded-xl shadow-xs border border-white/20 shrink-0 flex items-center justify-center">
+              <img
+                src="/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png"
+                alt="Scripter"
+                className="w-8 h-8 object-contain rounded-lg"
+              />
+            </div>
             <div>
               <span className="font-bold text-white tracking-tight text-lg leading-tight block">
                 Scripter
@@ -116,6 +122,60 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Mobile-only Test Mode Switcher in Admin Sidebar */}
+        <div className="lg:hidden p-3 border-b border-slate-800/80 bg-slate-900/60">
+          <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mb-1.5 px-1">
+            Test Mode Switcher
+          </p>
+          <div className="grid grid-cols-3 gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => {
+                setRole('user');
+                onClose();
+              }}
+              className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
+                role === 'user' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              User
+            </button>
+            <button
+              onClick={() => {
+                setRole('admin');
+                onClose();
+              }}
+              className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
+                role === 'admin' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Admin
+            </button>
+            <button
+              onClick={() => {
+                setRole('master-admin');
+                onClose();
+              }}
+              className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
+                role === 'master-admin' ? 'bg-amber-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Master
+            </button>
+          </div>
+
+          <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+            <span className="text-[10px] text-slate-400">Night Mode / नाइट मोड</span>
+            <button
+              onClick={toggleTheme}
+              className="px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 shrink-0"
+              title="Toggle Night Mode"
+            >
+              {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-300" />}
+              <span>{isDark ? (language === 'en' ? 'Light' : 'लाइट') : (language === 'en' ? 'Dark' : 'डार्क')}</span>
+            </button>
+          </div>
         </div>
 
         {/* Navigation list */}
