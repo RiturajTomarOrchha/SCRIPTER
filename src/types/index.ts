@@ -250,6 +250,9 @@ export interface UserProfile {
   billingAddress?: string;
   gstin?: string;
   stateOfSupply?: string;
+  location?: string;
+  twoFactorEnabled?: boolean;
+  memberSince?: string;
   createdAt?: string;
 }
 

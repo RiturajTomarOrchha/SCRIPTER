@@ -35,6 +35,9 @@ export const INITIAL_USER_PROFILE: UserProfile = {
   billingAddress: 'Ward No. 4, Tikamgarh Road, Orchha, Madhya Pradesh - 472246',
   stateOfSupply: 'Madhya Pradesh (23)',
   gstin: '23AAAAA0000A1Z5',
+  location: 'Orchha, Madhya Pradesh, India',
+  memberSince: '12 Mar 2024',
+  twoFactorEnabled: false,
   createdAt: '2024-01-15T10:00:00Z',
 };
 
