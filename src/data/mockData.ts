@@ -1,4 +1,4 @@
-import { BusinessProfile, PlatformMetrics, Project, UserProfile, ContentIdea } from '../types';
+import { BusinessProfile, PlatformMetrics, Project, UserProfile, ContentIdea, BrandKit, ContentTemplate, SocialExportPreset } from '../types';
 
 export const INITIAL_USER_PROFILE: UserProfile = {
   id: 'usr_001',
@@ -503,3 +503,394 @@ export const DEMO_CONTENT_IDEAS: ContentIdea[] = [
     businessProfileId: 'bp_realestate'
   }
 ];
+
+export const DEMO_BRAND_KITS: BrandKit[] = [
+  {
+    id: 'bk_health',
+    businessProfileId: 'bp_health',
+    brandName: 'AyurVeda Clinic & Wellness',
+    logoUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+    primaryColor: '#059669', // Emerald
+    secondaryColor: '#0284C7', // Sky
+    accentColor: '#F59E0B', // Amber
+    backgroundColor: '#F8FAFC',
+    textColor: '#0F172A',
+    fontFamily: 'Plus Jakarta Sans',
+    watermarkEnabled: true,
+    watermarkPosition: 'top-right',
+    tagline: 'Natural Healing & Daily Preventive Care',
+    updatedAt: '2026-10-27T10:00:00'
+  },
+  {
+    id: 'bk_media',
+    businessProfileId: 'bp_media',
+    brandName: 'Orchha Today News',
+    logoUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+    primaryColor: '#DC2626', // Red
+    secondaryColor: '#1E293B', // Slate
+    accentColor: '#FBBF24', // Amber
+    backgroundColor: '#0B132B',
+    textColor: '#FFFFFF',
+    fontFamily: 'Poppins',
+    watermarkEnabled: true,
+    watermarkPosition: 'top-right',
+    tagline: 'Fast, Authentic & Verified Digital Journalism',
+    updatedAt: '2026-10-27T11:00:00'
+  },
+  {
+    id: 'bk_education',
+    businessProfileId: 'bp_education',
+    brandName: 'Apex Study Academy',
+    logoUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+    primaryColor: '#2563EB', // Blue
+    secondaryColor: '#4F46E5', // Indigo
+    accentColor: '#10B981', // Emerald
+    backgroundColor: '#F8FAFC',
+    textColor: '#1E293B',
+    fontFamily: 'Inter',
+    watermarkEnabled: true,
+    watermarkPosition: 'bottom-right',
+    tagline: 'Concept Clarity & Exam Excellence',
+    updatedAt: '2026-10-27T11:30:00'
+  },
+  {
+    id: 'bk_tech',
+    businessProfileId: 'bp_tech',
+    brandName: 'FutureStack Labs',
+    logoUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+    primaryColor: '#7C3AED', // Purple
+    secondaryColor: '#2563EB', // Blue
+    accentColor: '#06B6D4', // Cyan
+    backgroundColor: '#0F172A',
+    textColor: '#F8FAFC',
+    fontFamily: 'Plus Jakarta Sans',
+    watermarkEnabled: true,
+    watermarkPosition: 'top-right',
+    tagline: 'Modern Web, AI Architecture & Dev Tools',
+    updatedAt: '2026-10-27T12:00:00'
+  },
+  {
+    id: 'bk_food',
+    businessProfileId: 'bp_food',
+    brandName: 'Zaika Desi Kitchen',
+    logoUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+    primaryColor: '#EA580C', // Orange
+    secondaryColor: '#D97706', // Amber
+    accentColor: '#16A34A', // Green
+    backgroundColor: '#FFFBEB',
+    textColor: '#451A03',
+    fontFamily: 'Plus Jakarta Sans',
+    watermarkEnabled: true,
+    watermarkPosition: 'top-left',
+    tagline: 'Ghar Ka Swaad, 30 Second Recipes',
+    updatedAt: '2026-10-27T12:30:00'
+  },
+  {
+    id: 'bk_realestate',
+    businessProfileId: 'bp_realestate',
+    brandName: 'Imperial Real Estate & Homes',
+    logoUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+    primaryColor: '#1E3A8A', // Deep Navy
+    secondaryColor: '#B45309', // Warm Bronze
+    accentColor: '#059669', // Emerald
+    backgroundColor: '#F8FAFC',
+    textColor: '#0F172A',
+    fontFamily: 'Plus Jakarta Sans',
+    watermarkEnabled: true,
+    watermarkPosition: 'top-right',
+    tagline: 'Premium Living Spaces & RERA Verified Investments',
+    updatedAt: '2026-10-27T13:00:00'
+  }
+];
+
+export const DEMO_TEMPLATES: ContentTemplate[] = [
+  {
+    id: 'tpl_health_01',
+    title: 'Daily Preventive Health Checklist Reel',
+    titleHi: 'दैनिक स्वास्थ्य सुरक्षा चेकलिस्ट रील',
+    category: 'Preventive Health',
+    industry: 'Healthcare & Wellness',
+    format: 'reel',
+    aspectRatio: '9:16',
+    duration: '30-45s',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png',
+    previewVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    isPremium: false,
+    targetAudience: 'Health Seekers, Working Professionals & Families',
+    description: 'Fast-paced, high-retention reel template tailored for doctors and wellness creators to deliver 3 actionable health tips.',
+    descriptionHi: 'डॉक्टरों और स्वास्थ्य विशेषज्ञों के लिए 3 सरल और असरदार घरेलू नुस्खे बताने वाला सिद्ध रील टेम्पलेट।',
+    scriptOutline: [
+      'Hook (0-5s): Stop scrolling if you wake up feeling tired every morning!',
+      '3 Points (5-30s): Morning warm water, 20m outdoor sunlight walk, nutrient-rich breakfast.',
+      'Closing (30-45s): Follow for daily medical-approved lifestyle tips.'
+    ],
+    visualAssetsCount: 4,
+    visualScenes: [
+      {
+        sceneNumber: 1,
+        timeRange: '0-5s',
+        description: 'Tired person waking up in morning light',
+        descriptionHi: 'सुबह थकान महसूस करता हुआ व्यक्ति',
+        imageUrl: '/assets/aistudio/Master_Admin_UI___________1_Dashboard_65597d51.png',
+        selected: true
+      },
+      {
+        sceneNumber: 2,
+        timeRange: '5-20s',
+        description: 'Fresh warm water with lemon and seeds',
+        descriptionHi: 'गुनगुना पानी और प्राकृतिक सामग्री',
+        imageUrl: '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png',
+        selected: true
+      },
+      {
+        sceneNumber: 3,
+        timeRange: '20-35s',
+        description: 'Outdoor walking in park with sunrise',
+        descriptionHi: 'पार्क में सुबह की धूप में टहलना',
+        imageUrl: '/assets/aistudio/Master_Admin_UI___________5_Template_Library_Management_086512f2.png',
+        selected: true
+      },
+      {
+        sceneNumber: 4,
+        timeRange: '35-45s',
+        description: 'Doctor smiling with follow button badge',
+        descriptionHi: 'डॉक्टर का सकारात्मक संदेश व फॉलो बैज',
+        imageUrl: '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png',
+        selected: true
+      }
+    ],
+    recommendedTitleStyle: 'Viral Yellow on Dark Backdrop',
+    tags: ['Health', 'Preventive Care', 'Wellness', 'Shorts', 'Reels']
+  },
+  {
+    id: 'tpl_health_02',
+    title: 'Clinical Case Explainer & Disease Prevention',
+    titleHi: 'रोग निवारण एवं चिकित्सीय परामर्श गाइड',
+    category: 'Clinical Advice',
+    industry: 'Healthcare & Wellness',
+    format: 'long',
+    aspectRatio: '16:9',
+    duration: '3-5 min',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________5_Template_Library_Management_086512f2.png',
+    isPremium: true,
+    targetAudience: 'Patients looking for in-depth medical explanations',
+    description: 'Structured landscape video template featuring multi-section breakdown, symptom chart overlays, and medical disclaimer.',
+    descriptionHi: 'यूट्यूब एवं व्याख्यात्मक वीडियो के लिए विस्तृत मेडिकल गाइड टेम्पलेट।',
+    scriptOutline: [
+      'Intro & Statistics: Why 1 in 4 adults ignores early symptoms.',
+      'Section 1: The physiological mechanism explained simply.',
+      'Section 2: Diet, medications, and common mistakes.',
+      'Summary & Disclaimer: When to consult your primary physician.'
+    ],
+    visualAssetsCount: 6,
+    visualScenes: [],
+    recommendedTitleStyle: 'Clean White with Blue Accent Badge',
+    tags: ['Medicine', 'YouTube', 'Healthcare', 'Explainer']
+  },
+  {
+    id: 'tpl_edu_01',
+    title: 'Exam Study Hacks & High-Focus Pomodoro',
+    titleHi: 'एग्जाम टॉपर्स की 3 गुप्त अध्ययन तकनीक',
+    category: 'Study Skills & Exams',
+    industry: 'Education & Training',
+    format: 'reel',
+    aspectRatio: '9:16',
+    duration: '30-45s',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png',
+    previewVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    isPremium: false,
+    targetAudience: 'Students preparing for competitive examinations',
+    description: 'High-energy educational reel template with bold text callouts and timer countdowns for maximum student retention.',
+    descriptionHi: 'छात्रों के लिए आकर्षक और प्रेरणादायक अध्ययन टिप्स रील टेम्पलेट।',
+    scriptOutline: [
+      'Hook (0-5s): Do not study for 8 hours without knowing this 1 rule!',
+      'Points (5-30s): 50-10 Pomodoro, active recall questions, no screen in breaks.',
+      'Closing (30-45s): Save this before your next revision session!'
+    ],
+    visualAssetsCount: 4,
+    visualScenes: [],
+    recommendedTitleStyle: 'Modern Electric Blue with Yellow Marker',
+    tags: ['Education', 'Exams', 'Students', 'Pomodoro']
+  },
+  {
+    id: 'tpl_media_01',
+    title: 'Breaking News & Fact-Check Fast Digest',
+    titleHi: 'तेज खबरें एवं फैक्ट-चेक बुलेटिन',
+    category: 'Current Affairs, News, Reels',
+    industry: 'News & Media',
+    format: 'reel',
+    aspectRatio: '9:16',
+    duration: '30-60s',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________1_Dashboard_65597d51.png',
+    isPremium: false,
+    targetAudience: 'General digital audience seeking verified news fast',
+    description: 'Dynamic newsroom template with ticker tape bottom bar, headline overlays, and rapid video transitions.',
+    descriptionHi: 'डिजिटल न्यूज़ क्रिएटर्स के लिए तेज़ और प्रामाणिक न्यूज़ बुलेटिन टेम्पलेट।',
+    scriptOutline: [
+      'Breaking Alert (0-5s): 3 big updates you need to know today.',
+      'Bullet Points (5-45s): Story 1 key fact, Story 2 government policy, Story 3 public reaction.',
+      'Verification (45-60s): Follow our channel for real-time fact checks.'
+    ],
+    visualAssetsCount: 5,
+    visualScenes: [],
+    recommendedTitleStyle: 'Breaking Red Headline with Bold White Text',
+    tags: ['News', 'Fact Check', 'Journalism', 'Current Affairs']
+  },
+  {
+    id: 'tpl_tech_01',
+    title: 'SaaS & AI Tool Spotlight in 45 Seconds',
+    titleHi: 'नया AI टूल रिव्यू और प्रैक्टिकल उपयोग',
+    category: 'Software, IT Services, Startups',
+    industry: 'Tech & Software',
+    format: 'reel',
+    aspectRatio: '9:16',
+    duration: '30-45s',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________5_Template_Library_Management_086512f2.png',
+    isPremium: false,
+    targetAudience: 'Developers, Tech Enthusiasts & Productivity Seekers',
+    description: 'Sleek dark-mode template with screen recording frame mockup and feature bullet points.',
+    descriptionHi: 'टेक रिव्यू एवं सॉफ्टवेयर फीचर्स दिखाने के लिए डार्क-थीम टेम्पलेट।',
+    scriptOutline: [
+      'Hook (0-5s): This free tool saved me 10 hours of work this week!',
+      'Features (5-35s): Live demo of UI, key shortcut, and workflow speedup.',
+      'Closing (35-45s): Link in bio to try it out for free.'
+    ],
+    visualAssetsCount: 4,
+    visualScenes: [],
+    recommendedTitleStyle: 'Cyber Purple & Neon Cyan Accents',
+    tags: ['Tech', 'AI', 'Software', 'Productivity']
+  },
+  {
+    id: 'tpl_realestate_01',
+    title: 'Luxury Property Tour & Buyer Walkthrough',
+    titleHi: 'प्रीमियम प्रॉपर्टी टूर एवं खरीद गाइड',
+    category: 'Agents, Builders, Architecture',
+    industry: 'Real Estate',
+    format: 'reel',
+    aspectRatio: '9:16',
+    duration: '45-60s',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png',
+    isPremium: true,
+    targetAudience: 'Home Buyers, NRI Investors & Architecture Lovers',
+    description: 'Sophisticated architectural showcase template with floorplan callouts, carpet area specs, and verified pricing.',
+    descriptionHi: 'प्रॉपर्टी व रियल एस्टेट ब्रोकर्स के लिए लक्ज़री वॉकथ्रू टेम्पलेट।',
+    scriptOutline: [
+      'Hook (0-5s): Inside this 3BHK luxury apartment in city center!',
+      'Tour (5-45s): Master bedroom view, designer Italian kitchen, clubhouse amenities.',
+      'Pricing (45-60s): RERA certified. Book your private walkthrough today.'
+    ],
+    visualAssetsCount: 5,
+    visualScenes: [],
+    recommendedTitleStyle: 'Royal Gold & Deep Navy',
+    tags: ['Real Estate', 'Luxury', 'Interior', 'Home Tour']
+  },
+  {
+    id: 'tpl_food_01',
+    title: 'Quick 30-Second Recipe Reel',
+    titleHi: '30 सेकंड में आसान रेसिपी वीडियो',
+    category: 'Restaurants, Cafes, Recipes',
+    industry: 'Hospitality',
+    format: 'reel',
+    aspectRatio: '9:16',
+    duration: '30s',
+    thumbnailUrl: '/assets/aistudio/Master_Admin_UI___________6_Visual_Assets_Management_bfd1be4e.png',
+    isPremium: false,
+    targetAudience: 'Home Cooks, Foodies & College Students',
+    description: 'Mouthwatering culinary template with top-down kitchen camera framing and ingredient timing badges.',
+    descriptionHi: 'स्वादिष्ट और आसान कुकिंग वीडियो के लिए रेसिपी रील टेम्पलेट।',
+    scriptOutline: [
+      'Hook (0-4s): Craving a restaurant-style snack in 10 minutes?',
+      'Steps (4-24s): Sautéing aromatics, secret spices, flame finish.',
+      'CTA (24-30s): Save for tonight dinner and follow for more recipes!'
+    ],
+    visualAssetsCount: 4,
+    visualScenes: [],
+    recommendedTitleStyle: 'Warm Terracotta with Sunny Yellow',
+    tags: ['Food', 'Recipe', 'Cooking', 'Kitchen']
+  }
+];
+
+export const SOCIAL_EXPORT_PRESETS: SocialExportPreset[] = [
+  {
+    id: 'preset_ig_reel',
+    name: 'Instagram Reel / Stories',
+    platform: 'Instagram',
+    type: 'reel',
+    aspectRatio: '9:16',
+    resolution: '1080x1920 (Full HD)',
+    recommendedFps: 30,
+    recommendedFormat: 'mp4',
+    description: 'Optimized vertical framing for Instagram algorithm, high bitrate, and clear center-safe area for captions.',
+    badge: 'Popular'
+  },
+  {
+    id: 'preset_yt_shorts',
+    name: 'YouTube Shorts',
+    platform: 'YouTube',
+    type: 'reel',
+    aspectRatio: '9:16',
+    resolution: '1080x1920 (Full HD)',
+    recommendedFps: 60,
+    recommendedFormat: 'mp4',
+    description: 'Crisp 60fps vertical format with bottom UI clearance for channel subscribe badge and sound link.',
+    badge: 'High Quality'
+  },
+  {
+    id: 'preset_yt_video',
+    name: 'YouTube Standard Video',
+    platform: 'YouTube',
+    type: 'video',
+    aspectRatio: '16:9',
+    resolution: '1920x1080 (1080p)',
+    recommendedFps: 30,
+    recommendedFormat: 'mp4',
+    description: 'Standard cinematic widescreen layout suitable for tutorials, podcasts, and explainer content.',
+    badge: 'Standard'
+  },
+  {
+    id: 'preset_ig_square',
+    name: 'Instagram Feed Square',
+    platform: 'Instagram',
+    type: 'post',
+    aspectRatio: '1:1',
+    resolution: '1080x1080',
+    recommendedFps: 30,
+    recommendedFormat: 'mp4',
+    description: 'Classic 1:1 square canvas ideal for carousel graphics, quick video tips, and product spotlights.'
+  },
+  {
+    id: 'preset_social_portrait',
+    name: 'LinkedIn & Facebook Portrait',
+    platform: 'LinkedIn',
+    type: 'post',
+    aspectRatio: '4:5',
+    resolution: '1080x1350',
+    recommendedFps: 30,
+    recommendedFormat: 'mp4',
+    description: 'Maximum feed vertical real-estate on mobile newsfeeds without requiring fullscreen expansion.'
+  },
+  {
+    id: 'preset_yt_thumb',
+    name: 'YouTube Thumbnail Graphic',
+    platform: 'YouTube',
+    type: 'thumbnail',
+    aspectRatio: '16:9',
+    resolution: '1280x720 (HD PNG)',
+    recommendedFps: 0,
+    recommendedFormat: 'png',
+    description: 'High-contrast thumbnail preset with vibrant text, bold subject cutout space, and readable mobile sizing.',
+    badge: 'CTR Boost'
+  },
+  {
+    id: 'preset_podcast_audio',
+    name: 'Podcast / Audio Snippet',
+    platform: 'General',
+    type: 'audio',
+    aspectRatio: '1:1',
+    resolution: '320 kbps Stereo',
+    recommendedFps: 0,
+    recommendedFormat: 'mp3',
+    description: 'Clean compressed voice audio track for Spotify, Telegram, or WhatsApp voice broadcasts.'
+  }
+];
+

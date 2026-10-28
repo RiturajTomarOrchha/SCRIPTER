@@ -21,6 +21,9 @@ import {
   TrendingUp,
   FolderKanban,
   Film,
+  Palette,
+  LayoutTemplate,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export const UserHome: React.FC = () => {
@@ -187,20 +190,13 @@ export const UserHome: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
             <button
               onClick={() => navigate('/user/projects')}
               className="p-2.5 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
             >
               <FolderKanban className="w-4 h-4 text-blue-600" />
               <span className="text-xs font-semibold">My Projects</span>
-            </button>
-            <button
-              onClick={() => navigate('/user/teleprompter')}
-              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
-            >
-              <Video className="w-4 h-4 text-purple-600" />
-              <span className="text-xs font-semibold">Teleprompter</span>
             </button>
             <button
               onClick={() => navigate('/user/video-studio')}
@@ -210,11 +206,32 @@ export const UserHome: React.FC = () => {
               <span className="text-xs font-semibold">Video Studio</span>
             </button>
             <button
-              onClick={() => navigate('/user/business-profiles')}
+              onClick={() => navigate('/user/templates')}
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
+            >
+              <LayoutTemplate className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs font-semibold">Templates</span>
+            </button>
+            <button
+              onClick={() => navigate('/user/brand-kit')}
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-rose-50 text-slate-700 hover:text-rose-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
+            >
+              <Palette className="w-4 h-4 text-rose-600" />
+              <span className="text-xs font-semibold">Brand Kit</span>
+            </button>
+            <button
+              onClick={() => navigate('/user/thumbnail-studio')}
               className="p-2.5 rounded-2xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
             >
-              <Briefcase className="w-4 h-4 text-indigo-600" />
-              <span className="text-xs font-semibold">Profiles</span>
+              <ImageIcon className="w-4 h-4 text-indigo-600" />
+              <span className="text-xs font-semibold">Thumbnails</span>
+            </button>
+            <button
+              onClick={() => navigate('/user/teleprompter')}
+              className="p-2.5 rounded-2xl bg-slate-50 hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-left transition-colors border border-slate-100 flex flex-col gap-1"
+            >
+              <Video className="w-4 h-4 text-purple-600" />
+              <span className="text-xs font-semibold">Teleprompter</span>
             </button>
           </div>
         </div>

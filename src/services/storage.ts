@@ -1,5 +1,5 @@
-import { BusinessProfile, ContentIdea, Project } from '../types';
-import { DEMO_BUSINESS_PROFILES, DEMO_CONTENT_IDEAS, DEMO_PROJECTS } from '../data/mockData';
+import { BusinessProfile, ContentIdea, Project, BrandKit, ContentTemplate, GraphicThumbnail, SocialCaptionSet, SocialExportPreset } from '../types';
+import { DEMO_BUSINESS_PROFILES, DEMO_CONTENT_IDEAS, DEMO_PROJECTS, DEMO_BRAND_KITS, DEMO_TEMPLATES, SOCIAL_EXPORT_PRESETS } from '../data/mockData';
 
 const STORAGE_KEYS = {
   PROJECTS: 'scripter_projects_v2',
@@ -7,6 +7,9 @@ const STORAGE_KEYS = {
   PROFILES: 'scripter_business_profiles_v2',
   ACTIVE_PROFILE_ID: 'scripter_active_profile_id_v2',
   DRAFT_SCRIPT: 'scripter_active_script_draft',
+  BRAND_KITS: 'scripter_brand_kits_v1',
+  TEMPLATES: 'scripter_templates_v1',
+  THUMBNAILS: 'scripter_thumbnails_v1',
 };
 
 // Safe localStorage helper
@@ -90,6 +93,10 @@ export const saveProject = (projectData: Partial<Project> & { title: string }): 
     activeMediaId: projectData.activeMediaId,
     studioDraft: projectData.studioDraft,
     exports: projectData.exports || [],
+    thumbnails: projectData.thumbnails || [],
+    captions: projectData.captions || [],
+    appliedTemplateId: projectData.appliedTemplateId,
+    appliedBrandKitId: projectData.appliedBrandKitId,
   };
 
   const updatedProjects = [newProject, ...projects];
@@ -343,4 +350,184 @@ export const getStoredActiveProfileId = (): string => {
 
 export const setStoredActiveProfileId = (id: string): void => {
   saveToStorage(STORAGE_KEYS.ACTIVE_PROFILE_ID, id);
+};
+
+/**
+ * Phase 4: Brand Kit API
+ */
+export const getStoredBrandKits = (): BrandKit[] => {
+  const stored = getFromStorage<BrandKit[]>(STORAGE_KEYS.BRAND_KITS, []);
+  if (stored.length === 0) {
+    saveToStorage(STORAGE_KEYS.BRAND_KITS, DEMO_BRAND_KITS);
+    return DEMO_BRAND_KITS;
+  }
+  return stored;
+};
+
+export const getBrandKitForProfile = (profileId: string): BrandKit => {
+  const kits = getStoredBrandKits();
+  const match = kits.find((k) => k.businessProfileId === profileId);
+  if (match) return match;
+
+  // Fallback brand kit
+  return {
+    id: `bk_${profileId}`,
+    businessProfileId: profileId,
+    brandName: 'Scripter Brand',
+    primaryColor: '#2563EB',
+    secondaryColor: '#1E293B',
+    accentColor: '#F59E0B',
+    backgroundColor: '#F8FAFC',
+    textColor: '#0F172A',
+    fontFamily: 'Plus Jakarta Sans',
+    watermarkEnabled: true,
+    watermarkPosition: 'top-right',
+    tagline: 'High-Impact Content Creation',
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+export const saveBrandKit = (brandKitData: Partial<BrandKit> & { businessProfileId: string }): BrandKit => {
+  const kits = getStoredBrandKits();
+  const index = kits.findIndex((k) => k.businessProfileId === brandKitData.businessProfileId);
+
+  const now = new Date().toISOString();
+  if (index !== -1) {
+    const updated: BrandKit = {
+      ...kits[index],
+      ...brandKitData,
+      updatedAt: now,
+    };
+    kits[index] = updated;
+    saveToStorage(STORAGE_KEYS.BRAND_KITS, kits);
+    return updated;
+  }
+
+  const newKit: BrandKit = {
+    id: `bk_${Date.now()}`,
+    businessProfileId: brandKitData.businessProfileId,
+    brandName: brandKitData.brandName || 'My Brand Kit',
+    logoUrl: brandKitData.logoUrl,
+    primaryColor: brandKitData.primaryColor || '#2563EB',
+    secondaryColor: brandKitData.secondaryColor || '#1E293B',
+    accentColor: brandKitData.accentColor || '#F59E0B',
+    backgroundColor: brandKitData.backgroundColor || '#F8FAFC',
+    textColor: brandKitData.textColor || '#0F172A',
+    fontFamily: brandKitData.fontFamily || 'Plus Jakarta Sans',
+    watermarkEnabled: brandKitData.watermarkEnabled ?? true,
+    watermarkPosition: brandKitData.watermarkPosition || 'top-right',
+    tagline: brandKitData.tagline || '',
+    updatedAt: now,
+  };
+
+  const updatedList = [...kits, newKit];
+  saveToStorage(STORAGE_KEYS.BRAND_KITS, updatedList);
+  return newKit;
+};
+
+/**
+ * Phase 4: Templates API
+ */
+export const getTemplates = (): ContentTemplate[] => {
+  const stored = getFromStorage<ContentTemplate[]>(STORAGE_KEYS.TEMPLATES, []);
+  if (stored.length === 0) {
+    saveToStorage(STORAGE_KEYS.TEMPLATES, DEMO_TEMPLATES);
+    return DEMO_TEMPLATES;
+  }
+  return stored;
+};
+
+export const getTemplateById = (id: string): ContentTemplate | undefined => {
+  const templates = getTemplates();
+  return templates.find((t) => t.id === id);
+};
+
+/**
+ * Phase 4: Thumbnails & Graphics API
+ */
+export const saveProjectThumbnail = (
+  projectId: string,
+  thumbnailData: Omit<GraphicThumbnail, 'id' | 'createdAt' | 'updatedAt'>
+): { project: Project; thumbnail: GraphicThumbnail } | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const now = new Date().toISOString();
+  const newThumbnail: GraphicThumbnail = {
+    ...thumbnailData,
+    id: `thumb_${Date.now()}`,
+    projectId,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const existingThumbs = projects[index].thumbnails || [];
+  const updatedProject: Project = {
+    ...projects[index],
+    thumbnails: [newThumbnail, ...existingThumbs],
+    updatedAt: now,
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return { project: updatedProject, thumbnail: newThumbnail };
+};
+
+export const deleteProjectThumbnail = (projectId: string, thumbnailId: string): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const filtered = (projects[index].thumbnails || []).filter((t) => t.id !== thumbnailId);
+  const updatedProject: Project = {
+    ...projects[index],
+    thumbnails: filtered,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updatedProject;
+};
+
+/**
+ * Phase 4: Social Captions API
+ */
+export const saveProjectCaptions = (
+  projectId: string,
+  captionData: Omit<SocialCaptionSet, 'id' | 'createdAt'>
+): { project: Project; captions: SocialCaptionSet } | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const now = new Date().toISOString();
+  const newCaptions: SocialCaptionSet = {
+    ...captionData,
+    id: `cap_${Date.now()}`,
+    projectId,
+    createdAt: now,
+  };
+
+  const existingCaptions = projects[index].captions || [];
+  const updatedProject: Project = {
+    ...projects[index],
+    captions: [newCaptions, ...existingCaptions],
+    updatedAt: now,
+    timeAgo: 'Just now',
+  };
+
+  projects[index] = updatedProject;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return { project: updatedProject, captions: newCaptions };
+};
+
+/**
+ * Phase 4: Social Export Presets API
+ */
+export const getExportPresets = (): SocialExportPreset[] => {
+  return SOCIAL_EXPORT_PRESETS;
 };

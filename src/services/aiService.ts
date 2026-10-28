@@ -184,3 +184,137 @@ Format your response as a valid JSON object matching:
     return generateFallbackScript(params);
   }
 };
+
+/**
+ * Phase 4: AI Social Captions & Hashtags Generator
+ */
+export interface CaptionGenerationParams {
+  topic: string;
+  scriptSnippet?: string;
+  platform: 'instagram' | 'youtube' | 'facebook' | 'linkedin' | 'twitter';
+  tone?: string;
+  language: 'hi' | 'en' | 'hinglish';
+  businessProfile?: BusinessProfile;
+}
+
+export interface GeneratedCaptionResult {
+  caption: string;
+  hashtags: string[];
+  callToAction: string;
+  shortDescription: string;
+  isLiveAi: boolean;
+  providerNote: string;
+}
+
+const generateFallbackCaptions = (params: CaptionGenerationParams): GeneratedCaptionResult => {
+  const { topic, platform, language, businessProfile } = params;
+  const isHindi = language === 'hi' || language === 'hinglish';
+  const brand = businessProfile?.name || 'Scripter Creator';
+
+  let caption = '';
+  let hashtags: string[] = [];
+  let callToAction = '';
+  let shortDescription = '';
+
+  if (platform === 'instagram') {
+    caption = isHindi
+      ? `🚨 ${topic} — क्या आप भी इस आम गलती को दोहरा रहे हैं?\n\nआज के वीडियो में हमने 3 आसान और असरदार कदम साझा किए हैं जिन्हें अपनाकर आप तुरंत सकारात्मक बदलाव देख सकते हैं।\n\n📌 1. सही समय पर शुरुआत\n📌 2. दैनिक निरंतरता और अनुशासन\n📌 3. सही मार्गदर्शन\n\nवीडियो को बाद के लिए SAVE कर लें और अपने दोस्तों से SHARE करें! 👇`
+      : `🚨 Stop scrolling if you deal with ${topic}!\n\nHere are 3 game-changing habits you can start implementing today for maximum impact.\n\n✨ Step 1: Morning foundation & hydration\n✨ Step 2: Consistent 20-minute daily routine\n✨ Step 3: Prioritize recovery & sleep\n\n💾 SAVE this post for your daily reference & SHARE with someone who needs this! 👇`;
+
+    hashtags = [
+      '#ContentCreator', '#ViralReels', '#TrendingReels', '#DailyTips',
+      '#Inspiration', '#SelfImprovement', '#HindiReels', '#LearnOnInstagram',
+      '#HealthyHabits', '#CreatorEconomy', '#ScripterAI'
+    ];
+    callToAction = isHindi ? 'फॉलो करें और कमेंट में बताएं आपका अनुभव!' : 'Double tap if this helped & follow for daily insights!';
+    shortDescription = isHindi ? `${topic} के 3 आसान उपाय` : `3 essential steps to master ${topic}`;
+  } else if (platform === 'youtube') {
+    caption = isHindi
+      ? `इस वीडियो में हमने विस्तार से समझाया है कि ${topic} को कैसे आसानी से समझें और अपनी जीवनशैली में अपनाएं।\n\n⏱️ टाइमस्टैम्प्स:\n0:00 - मुख्य समस्या (Hook)\n0:15 - पहला उपाय\n0:35 - दूसरा उपाय\n0:50 - निष्कर्ष एवं सलाह\n\nचैनल को SUBSCRIBE करें और घंटी 🔔 दबाना न भूलें!`
+      : `In this video, we break down actionable steps to conquer ${topic} with practical routines.\n\n⏱️ Timestamps:\n0:00 - The Core Problem\n0:15 - Step 1: Foundation\n0:35 - Step 2: Daily Execution\n0:50 - Key Takeaway\n\nSubscribe to the channel for more evidence-based creator guides!`;
+
+    hashtags = ['#Shorts', '#YouTubeShorts', '#Tutorial', '#HindiExplainers', '#TrendingVideo'];
+    callToAction = isHindi ? 'चैनल को सब्सक्राइब करें और वीडियो को लाइक करें!' : 'Hit Subscribe and turn on bell notifications!';
+    shortDescription = `${topic} — Complete Video Guide`;
+  } else if (platform === 'linkedin') {
+    caption = `How top professionals approach ${topic} in 2026.\n\nMost people focus on short-term hacks. But high performers know that sustainable progress boils down to 3 fundamentals:\n\n1. Systems over motivation.\n2. Daily disciplined execution.\n3. Transparent feedback loops.\n\nWhat is your primary focus this quarter? Let us connect in the comments.`;
+    hashtags = ['#Productivity', '#Leadership', '#GrowthMindset', '#ProfessionalDevelopment'];
+    callToAction = 'Join the conversation in the comments below.';
+    shortDescription = `Executive perspective on ${topic}`;
+  } else {
+    caption = isHindi
+      ? `⚡ ${topic} के बारे में ये 3 बातें आपको जरूर पता होनी चाहिए! सेव करें और दोस्तों से साझा करें।`
+      : `⚡ 3 things you must know about ${topic}. Save this thread!`;
+    hashtags = ['#Tips', '#Trending', '#QuickGuide'];
+    callToAction = 'Retweet & bookmark!';
+    shortDescription = `Quick guide on ${topic}`;
+  }
+
+  return {
+    caption,
+    hashtags,
+    callToAction,
+    shortDescription,
+    isLiveAi: false,
+    providerNote: 'Generated in Scripter Domain Mode (Demo / Fallback)',
+  };
+};
+
+export const generateSocialCaptions = async (
+  params: CaptionGenerationParams
+): Promise<GeneratedCaptionResult> => {
+  const apiKey = getApiKey();
+
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
+    return generateFallbackCaptions(params);
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = `You are a social media copywriter specialized in viral short-form video captions.
+Topic: ${params.topic}
+Platform: ${params.platform}
+Language: ${params.language === 'hi' ? 'Hindi (Devanagari script)' : params.language === 'hinglish' ? 'Hinglish' : 'English'}
+Industry: ${params.businessProfile?.name || 'Creator'}
+Tone: ${params.tone || 'Engaging & Viral'}
+Script Context: ${params.scriptSnippet || 'None'}
+
+Generate a platform-optimized social media post with:
+1. "caption": full formatted caption text with emojis and clean line breaks
+2. "hashtags": array of 10-15 relevant hashtags
+3. "callToAction": compelling 1-line CTA
+4. "shortDescription": concise 1-sentence SEO summary
+
+Respond ONLY with valid JSON matching:
+{
+  "caption": "string",
+  "hashtags": ["#tag1", "#tag2"],
+  "callToAction": "string",
+  "shortDescription": "string"
+}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      },
+    });
+
+    const text = response.text?.trim() || '';
+    const parsed = JSON.parse(text);
+
+    return {
+      caption: parsed.caption,
+      hashtags: parsed.hashtags || [],
+      callToAction: parsed.callToAction || '',
+      shortDescription: parsed.shortDescription || '',
+      isLiveAi: true,
+      providerNote: 'Generated live with Gemini 2.5 Flash',
+    };
+  } catch (error) {
+    console.warn('Gemini caption generation failed, using domain fallback:', error);
+    return generateFallbackCaptions(params);
+  }
+};
+

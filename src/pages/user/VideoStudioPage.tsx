@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useRole } from '../../context/RoleContext';
-import { Project, ProjectMedia, VideoStudioDraft } from '../../types';
+import { Project, ProjectMedia, VideoStudioDraft, SocialExportPreset } from '../../types';
 import {
   getProjects,
   saveProject,
@@ -10,6 +10,7 @@ import {
   attachMediaToProject,
   deleteProjectMedia,
   addProjectExport,
+  getExportPresets,
 } from '../../services/storage';
 import {
   Play,
@@ -44,7 +45,8 @@ import {
   Facebook,
   Linkedin,
   Send,
-  X
+  X,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export const VideoStudioPage: React.FC = () => {
@@ -131,6 +133,19 @@ export const VideoStudioPage: React.FC = () => {
   const [exportStatusText, setExportStatusText] = useState<string>('Preparing video assets...');
   const [exportedVideoUrl, setExportedVideoUrl] = useState<string | null>(null);
   const [shareSuccessMessage, setShareSuccessMessage] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('preset_reels');
+  const exportPresets = getExportPresets();
+
+  const handleSelectPreset = (preset: SocialExportPreset) => {
+    setSelectedPresetId(preset.id);
+    if (preset.resolution.includes('1080')) setExportQuality('1080p');
+    else if (preset.resolution.includes('720')) setExportQuality('720p');
+    if (preset.recommendedFormat === 'mp3') setExportFormat('mp3');
+    else setExportFormat('mp4');
+    if (['9:16', '16:9', '1:1', '4:5'].includes(preset.aspectRatio)) {
+      setAspectRatio(preset.aspectRatio as any);
+    }
+  };
 
   // File Upload input ref
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -1057,6 +1072,65 @@ export const VideoStudioPage: React.FC = () => {
                     onChange={(e) => setExportTitle(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:bg-white"
                   />
+                </div>
+
+                {/* Social Media Export Preset (Poster 4 Screen 4) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-semibold text-slate-700">Social Media Preset</label>
+                    <span className="text-[10px] text-slate-400">Platform format standards</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {exportPresets.slice(0, 4).map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleSelectPreset(p)}
+                        className={`p-2 rounded-xl text-left border transition-all ${
+                          selectedPresetId === p.id
+                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/20'
+                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <p className="font-bold text-slate-900 text-[11px] truncate">{p.name}</p>
+                        <p className="text-[10px] text-slate-500 font-mono">{p.aspectRatio} · {p.resolution}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Thumbnail Section (Poster 4 Screen 4) */}
+                <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-800">Thumbnail & Cover</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsExportModalOpen(false);
+                        navigate('/user/thumbnail-studio', { state: { projectId: selectedProject?.id } });
+                      }}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      <ImageIcon className="w-3.5 h-3.5" />
+                      <span>{selectedProject?.thumbnails?.length ? 'Edit in Thumbnail Studio' : 'Create Thumbnail'}</span>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-16 h-10 rounded-lg bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center">
+                      <img
+                        src={selectedProject?.thumbnails?.[0]?.imageUrl || activeMedia?.thumbnailUrl || '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png'}
+                        alt="Thumbnail"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {selectedProject?.thumbnails?.[0] ? (
+                        <p className="font-semibold text-slate-800 truncate">{selectedProject.thumbnails[0].headline}</p>
+                      ) : (
+                        <p>No custom thumbnail attached. Using default video frame.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Resolution & Quality */}

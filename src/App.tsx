@@ -12,6 +12,9 @@ import { ProjectsPage } from './pages/user/ProjectsPage';
 import { BusinessProfilesPage } from './pages/user/BusinessProfilesPage';
 import { TeleprompterPage } from './pages/user/TeleprompterPage';
 import { VideoStudioPage } from './pages/user/VideoStudioPage';
+import { TemplatesPage } from './pages/user/TemplatesPage';
+import { BrandKitPage } from './pages/user/BrandKitPage';
+import { ThumbnailStudioPage } from './pages/user/ThumbnailStudioPage';
 import { AdminHome } from './pages/admin/AdminHome';
 import { MasterAdminHome } from './pages/master-admin/MasterAdminHome';
 import { ComingSoonPage } from './pages/shared/ComingSoonPage';
@@ -78,8 +81,10 @@ export default function App() {
               <Route path="/user/video-recording" element={<TeleprompterPage defaultMode="record" />} />
               <Route path="/user/video-studio" element={<VideoStudioPage />} />
               <Route path="/user/export" element={<VideoStudioPage />} />
-              <Route path="/user/library" element={<ComingSoonPage featureName="Saved Content & Library" category="Asset Management" />} />
-              <Route path="/user/templates" element={<ComingSoonPage featureName="Templates & Visual Packs" category="Creative Assets" />} />
+              <Route path="/user/library" element={<ProjectsPage />} />
+              <Route path="/user/templates" element={<TemplatesPage />} />
+              <Route path="/user/brand-kit" element={<BrandKitPage />} />
+              <Route path="/user/thumbnail-studio" element={<ThumbnailStudioPage />} />
               <Route path="/user/notifications" element={<ComingSoonPage featureName="Notifications & Alerts" category="Activity" />} />
               <Route path="/user/credits" element={<ComingSoonPage featureName="AI Credits & Usage" category="Billing & Usage" />} />
               <Route path="/user/subscription" element={<ComingSoonPage featureName="Subscription & Plans" category="Billing" />} />

@@ -197,6 +197,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                   {t('navBusinessProfiles')}
                 </Link>
                 <Link
+                  to="/user/brand-kit"
+                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900 font-medium text-amber-700"
+                >
+                  ✨ {language === 'en' ? 'Brand Kit & Logo' : 'ब्रांड किट और लोगो'}
+                </Link>
+                <Link
+                  to="/user/templates"
+                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  {language === 'en' ? 'Templates & Packs' : 'टेम्पलेट्स और विजुअल पैक'}
+                </Link>
+                <Link
+                  to="/user/thumbnail-studio"
+                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  {language === 'en' ? 'Thumbnail & Graphics' : 'थंबनेल और ग्राफिक्स'}
+                </Link>
+                <Link
                   to="/user/subscription"
                   className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                 >

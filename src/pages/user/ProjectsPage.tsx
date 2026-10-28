@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Project, ProjectStatus } from '../../types';
-import { getProjects, deleteProject, duplicateProject, saveProject } from '../../services/storage';
+import { getProjects, deleteProject, duplicateProject, saveProject, deleteProjectThumbnail } from '../../services/storage';
 import {
   FolderKanban,
   Search,
@@ -25,6 +25,10 @@ import {
   Sparkles,
   Film,
   Play,
+  Image as ImageIcon,
+  Hash,
+  Download,
+  Check,
 } from 'lucide-react';
 
 export const ProjectsPage: React.FC = () => {
@@ -36,8 +40,21 @@ export const ProjectsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [activeProjectTab, setActiveProjectTab] = useState<'script' | 'visuals' | 'media' | 'notes'>('script');
+  const [activeProjectTab, setActiveProjectTab] = useState<'script' | 'visuals' | 'media' | 'thumbnails' | 'captions' | 'notes'>('script');
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleDeleteThumbnail = (thumbId: string) => {
+    if (!selectedProject) return;
+    deleteProjectThumbnail(selectedProject.id, thumbId);
+    reloadProjects();
+  };
 
   // Delete modal state
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -385,11 +402,11 @@ export const ProjectsPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Tabs: Script | Visuals | Notes */}
-              <div className="flex items-center gap-2 mt-4 border-b border-slate-100 pb-2">
+              {/* Tabs: Script | Visuals | Media | Thumbnails | Captions | Notes */}
+              <div className="flex items-center gap-1.5 mt-4 border-b border-slate-100 pb-2 overflow-x-auto text-nowrap">
                 <button
                   onClick={() => setActiveProjectTab('script')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                     activeProjectTab === 'script'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -399,7 +416,7 @@ export const ProjectsPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveProjectTab('visuals')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                     activeProjectTab === 'visuals'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -409,7 +426,7 @@ export const ProjectsPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setActiveProjectTab('media')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                     activeProjectTab === 'media'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -418,8 +435,28 @@ export const ProjectsPage: React.FC = () => {
                   Media & Takes ({selectedProject.media?.length || 0})
                 </button>
                 <button
+                  onClick={() => setActiveProjectTab('thumbnails')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeProjectTab === 'thumbnails'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Thumbnails ({selectedProject.thumbnails?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveProjectTab('captions')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeProjectTab === 'captions'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Captions & Social ({selectedProject.captions ? '1' : '0'})
+                </button>
+                <button
                   onClick={() => setActiveProjectTab('notes')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                     activeProjectTab === 'notes'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -576,6 +613,208 @@ export const ProjectsPage: React.FC = () => {
                   </div>
                 )}
 
+                {activeProjectTab === 'thumbnails' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Project Thumbnails & Covers</span>
+                      <button
+                        onClick={() => {
+                          const proj = selectedProject;
+                          setSelectedProject(null);
+                          navigate('/user/thumbnail-studio', { state: { projectId: proj.id } });
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Create Thumbnail</span>
+                      </button>
+                    </div>
+
+                    {selectedProject.thumbnails && selectedProject.thumbnails.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedProject.thumbnails.map((t) => (
+                          <div
+                            key={t.id}
+                            className="p-3 bg-slate-50 rounded-2xl border border-slate-200/90 flex flex-col justify-between space-y-2 group"
+                          >
+                            <div className="relative rounded-xl overflow-hidden bg-slate-900 aspect-video flex items-center justify-center">
+                              <img
+                                src={t.exportedImageUrl || t.imageUrl || t.backgroundImageUrl || '/assets/aistudio/Square_Scripter_Logo_d7bb9aeb.png'}
+                                alt={t.headline}
+                                className="w-full h-full object-contain"
+                              />
+                              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[10px] font-mono font-bold text-white">
+                                {t.aspectRatio}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 text-xs line-clamp-1">{t.headline}</p>
+                              {t.subtitle && (
+                                <p className="text-[11px] text-slate-500 line-clamp-1">{t.subtitle}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                              <a
+                                href={t.exportedImageUrl || t.imageUrl || '#'}
+                                download={`thumbnail_${t.id}.png`}
+                                className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Download PNG</span>
+                              </a>
+                              <button
+                                onClick={() => handleDeleteThumbnail(t.id)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Delete Thumbnail"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <ImageIcon className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
+                        <p className="text-xs font-semibold text-slate-700">No thumbnails created yet</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Create pixel-perfect YouTube thumbnails and Instagram Reel covers using your Brand Kit.
+                        </p>
+                        <button
+                          onClick={() => {
+                            const proj = selectedProject;
+                            setSelectedProject(null);
+                            navigate('/user/thumbnail-studio', { state: { projectId: proj.id } });
+                          }}
+                          className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
+                        >
+                          Open Thumbnail Studio
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeProjectTab === 'captions' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">Social Media Captions & Hashtags</span>
+                      <button
+                        onClick={() => {
+                          const proj = selectedProject;
+                          setSelectedProject(null);
+                          navigate('/user/thumbnail-studio', { state: { projectId: proj.id } });
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1 transition-colors"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Generate / Edit in Studio</span>
+                      </button>
+                    </div>
+
+                    {selectedProject.captions && selectedProject.captions.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedProject.captions.map((capSet) => (
+                          <div
+                            key={capSet.id}
+                            className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2.5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900 text-xs uppercase tracking-wider">
+                                  {capSet.platform}
+                                </span>
+                                <span className="px-2 py-0.5 rounded-full bg-blue-100/70 text-blue-700 text-[10px] font-semibold">
+                                  {capSet.tone} · {capSet.language.toUpperCase()}
+                                </span>
+                                {capSet.isLiveAi && (
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-medium">
+                                    AI Powered
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleCopyText(capSet.caption, capSet.id)}
+                                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-blue-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                              >
+                                {copiedKey === capSet.id ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    <span className="text-emerald-700">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy Caption</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
+                            <p className="text-slate-800 leading-relaxed whitespace-pre-wrap">{capSet.caption}</p>
+
+                            {capSet.callToAction && (
+                              <p className="text-slate-600 italic">
+                                <strong>Call to Action:</strong> {capSet.callToAction}
+                              </p>
+                            )}
+
+                            {capSet.hashtags && capSet.hashtags.length > 0 && (
+                              <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                                    <Hash className="w-3 h-3 text-indigo-600" />
+                                    <span>Hashtags ({capSet.hashtags.length})</span>
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      handleCopyText(
+                                        capSet.hashtags.map((h: string) => `#${h}`).join(' '),
+                                        `hash_${capSet.id}`
+                                      )
+                                    }
+                                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800"
+                                  >
+                                    {copiedKey === `hash_${capSet.id}` ? 'Copied All!' : 'Copy Hashtags'}
+                                  </button>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {capSet.hashtags.map((tag: string, idx: number) => (
+                                    <span
+                                      key={idx}
+                                      className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-[10px] font-mono"
+                                    >
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <Sparkles className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
+                        <p className="text-xs font-semibold text-slate-700">No AI captions generated yet</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Generate viral captions, targeted hashtags, and CTAs tailored for YouTube, Instagram, and LinkedIn.
+                        </p>
+                        <button
+                          onClick={() => {
+                            const proj = selectedProject;
+                            setSelectedProject(null);
+                            navigate('/user/thumbnail-studio', { state: { projectId: proj.id } });
+                          }}
+                          className="mt-3 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors"
+                        >
+                          Generate AI Captions in Studio
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {activeProjectTab === 'notes' && (
                   <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-700 space-y-2">
                     <p>
@@ -636,6 +875,17 @@ export const ProjectsPage: React.FC = () => {
                 >
                   <Video className="w-3.5 h-3.5" />
                   <span>Teleprompter</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const proj = selectedProject;
+                    setSelectedProject(null);
+                    navigate('/user/thumbnail-studio', { state: { projectId: proj.id } });
+                  }}
+                  className="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>Thumbnails</span>
                 </button>
                 <button
                   onClick={() => {

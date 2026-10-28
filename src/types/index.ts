@@ -77,6 +77,99 @@ export interface ExportRecord {
   downloadUrl: string;
 }
 
+export interface BrandKit {
+  id: string;
+  businessProfileId: string;
+  brandName: string;
+  logoUrl?: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  fontFamily: string;
+  watermarkEnabled: boolean;
+  watermarkPosition: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  tagline?: string;
+  updatedAt: string;
+}
+
+export interface ContentTemplate {
+  id: string;
+  title: string;
+  titleHi: string;
+  category: string;
+  industry: string;
+  format: 'short' | 'long' | 'reel' | 'post';
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  duration: string;
+  thumbnailUrl: string;
+  previewVideoUrl?: string;
+  isPremium?: boolean;
+  targetAudience: string;
+  description: string;
+  descriptionHi: string;
+  scriptOutline: string[];
+  visualAssetsCount: number;
+  visualScenes: ScriptScene[];
+  recommendedTitleStyle?: string;
+  tags: string[];
+}
+
+export interface GraphicThumbnail {
+  id: string;
+  projectId?: string;
+  title: string;
+  headline: string;
+  subtitle?: string;
+  aspectRatio: '16:9' | '9:16' | '1:1' | '4:5';
+  templateId?: string;
+  backgroundImageUrl?: string;
+  backgroundColor: string;
+  textColor: string;
+  accentColor: string;
+  fontFamily: string;
+  fontSize: number;
+  textAlignment: 'left' | 'center' | 'right';
+  position: 'top' | 'center' | 'bottom';
+  showBrandLogo: boolean;
+  brandLogoUrl?: string;
+  showBadge: boolean;
+  badgeText?: string;
+  exportedImageUrl?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SocialCaptionSet {
+  id: string;
+  projectId?: string;
+  platform: 'instagram' | 'youtube' | 'facebook' | 'linkedin' | 'twitter';
+  tone: string;
+  language: 'hi' | 'en' | 'hinglish';
+  caption: string;
+  hashtags: string[];
+  callToAction: string;
+  shortDescription: string;
+  isLiveAi: boolean;
+  providerNote: string;
+  createdAt: string;
+}
+
+export interface SocialExportPreset {
+  id: string;
+  name: string;
+  platform: 'Instagram' | 'YouTube' | 'Facebook' | 'LinkedIn' | 'TikTok' | 'General';
+  type: 'reel' | 'video' | 'post' | 'thumbnail' | 'audio';
+  aspectRatio: '9:16' | '16:9' | '1:1' | '4:5';
+  resolution: string;
+  recommendedFps: number;
+  recommendedFormat: 'mp4' | 'png' | 'mp3';
+  description: string;
+  badge?: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -98,6 +191,10 @@ export interface Project {
   activeMediaId?: string;
   studioDraft?: VideoStudioDraft;
   exports?: ExportRecord[];
+  thumbnails?: GraphicThumbnail[];
+  captions?: SocialCaptionSet[];
+  appliedTemplateId?: string;
+  appliedBrandKitId?: string;
 }
 
 export interface ContentIdea {
