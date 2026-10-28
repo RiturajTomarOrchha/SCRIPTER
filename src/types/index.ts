@@ -33,6 +33,11 @@ export interface ScriptVersion {
   hook: string;
   mainContent: string[];
   closing: string;
+  milestoneName?: string;
+  milestoneType?: 'manual' | 'ai_generate' | 'ai_transform' | 'voice' | 'template' | 'news';
+  wordCount?: number;
+  charCount?: number;
+  notes?: string;
 }
 
 export interface ProjectMedia {

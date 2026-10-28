@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information synchronized with Firebase Auth and application role settings.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Unique user ID matching auth.uid",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Primary user email address",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name",
+          "maxLength": 120
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Profile picture URL",
+          "maxLength": 1024
+        },
+        "bio": {
+          "type": "string",
+          "description": "Creator bio or channel tagline",
+          "maxLength": 500
+        },
+        "socialLinks": {
+          "type": "object",
+          "description": "Linked creator social accounts (youtube, instagram, twitter, linkedin, website)"
+        },
+        "role": {
+          "type": "string",
+          "description": "Assigned access role in Scripter platform",
+          "enum": ["user", "admin", "master-admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp when account was registered"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp when profile was last modified"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Authorization record verifying admin or master-admin privilege.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Admin user unique UID matching auth.uid",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Admin verified email",
+          "maxLength": 256
+        },
+        "role": {
+          "type": "string",
+          "description": "Admin clearance tier",
+          "enum": ["admin", "master-admin"]
+        },
+        "assignedAt": {
+          "type": "string",
+          "description": "Timestamp when admin role was granted"
+        }
+      },
+      "required": ["uid", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores individual user profile and preference state."
+    },
+    "/admins/{adminId}": {
+      "schema": "AdminRecord",
+      "description": "Trusted registry of admin users used to enforce RBAC."
+    }
+  }
+}

@@ -537,3 +537,64 @@ export const generateTopicResearchWithAi = async (
 
   return generateFallbackResearch(params);
 };
+
+export interface NewsSearchResult {
+  searchQuery: string;
+  headline?: string;
+  summary?: string;
+  content?: string;
+  keyDevelopments?: string[];
+  creatorAngles?: string[];
+  recommendedHooks?: string[];
+  sources: Array<{ title: string; url: string }>;
+  webSearchQueries?: string[];
+  providerNote?: string;
+  isLiveAi?: boolean;
+}
+
+/**
+ * Searches real-time news and current event intelligence using Google Search via Gemini 3.8 Flash
+ */
+export const searchNewsWithGoogle = async (params: {
+  topic?: string;
+  industry?: string;
+  language?: string;
+  query?: string;
+}): Promise<NewsSearchResult> => {
+  try {
+    const res = await fetch('/api/search-news', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Server returned HTTP ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err: any) {
+    console.warn('searchNewsWithGoogle fallback:', err?.message);
+    const query = params.query || params.topic || 'Industry trends';
+    return {
+      searchQuery: query,
+      headline: `Trending Insights: ${query}`,
+      summary: `Real-time search temporarily unreachable. Current creator interest shows strong viral demand for ${query} breakdowns with concrete tips.`,
+      keyDevelopments: [
+        'Audiences prefer concise, high-density 30-60 second breakdowns.',
+        'Hooking viewers with a verified stat or recent announcement boosts 5s retention.',
+        'Actionable checklists are outperforming generic commentary across Instagram and YouTube.',
+      ],
+      creatorAngles: ['Breaking News Explainer', '3 Key Takeaways', 'How-to Guide'],
+      recommendedHooks: [
+        `Did you know this happened with ${query}?`,
+        `Here are the 3 biggest updates on ${query} you need to know.`,
+      ],
+      sources: [
+        { title: 'Google News Search', url: `https://news.google.com/search?q=${encodeURIComponent(query)}` },
+      ],
+      providerNote: 'Offline research intelligence mode',
+    };
+  }
+};
+

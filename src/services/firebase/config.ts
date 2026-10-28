@@ -1,10 +1,91 @@
-/**
- * Scripter Firebase Configuration & Service Layer
- * 
- * Provides safe initialization for Firebase Authentication & Cloud Firestore.
- * If credentials are not present in environment variables, the app runs gracefully
- * in clearly labeled Development / Demo mode.
- */
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail,
+  User,
+} from 'firebase/auth';
+import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import firebaseConfig from '@/firebase-applet-config.json';
+
+// Safe singleton Firebase App initialization
+export const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+
+// Authentication instance
+export const auth = getAuth(firebaseApp);
+
+// Cloud Firestore with explicit database ID from provisioned configuration
+export const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+
+// Google Auth Provider setup for popup login
+export const googleAuthProvider = new GoogleAuthProvider();
+googleAuthProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Test connection on application boot as required by Firebase guidelines
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.warn('Firestore offline check:', error.message);
+    }
+  }
+}
+
+testConnection();
+
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map((provider) => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || [],
+    },
+    operationType,
+    path,
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 export interface FirebaseStatus {
   isConfigured: boolean;
@@ -14,48 +95,18 @@ export interface FirebaseStatus {
   mode: 'production' | 'demo';
 }
 
-const firebaseEnv = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-// Check if actual configuration has been provided (not placeholders)
-export const isFirebaseConfigured = (): boolean => {
-  return Boolean(
-    firebaseEnv.apiKey &&
-    firebaseEnv.apiKey !== 'YOUR_FIREBASE_API_KEY' &&
-    firebaseEnv.projectId &&
-    firebaseEnv.projectId !== 'YOUR_PROJECT_ID'
-  );
-};
+export const isFirebaseConfigured = (): boolean => Boolean(firebaseConfig.projectId && firebaseConfig.apiKey);
 
 export const getFirebaseStatus = (): FirebaseStatus => {
-  const configured = isFirebaseConfigured();
-  if (configured) {
-    return {
-      isConfigured: true,
-      statusText: 'Firebase Initialized & Connected',
-      projectId: firebaseEnv.projectId,
-      authProvider: 'Google',
-      mode: 'production',
-    };
-  }
-
   return {
-    isConfigured: false,
-    statusText: 'Demo Mode (No Firebase Credentials in .env)',
+    isConfigured: isFirebaseConfigured(),
+    statusText: 'Firebase Initialized & Connected',
+    projectId: firebaseConfig.projectId,
     authProvider: 'Google',
-    mode: 'demo',
+    mode: 'production',
   };
 };
 
-/**
- * Extensible structure for future Firebase Auth user representation
- */
 export interface AuthUser {
   uid: string;
   email: string | null;
@@ -64,3 +115,14 @@ export interface AuthUser {
   isAnonymous: boolean;
   role: 'user' | 'admin' | 'master-admin';
 }
+
+export {
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail,
+  type User,
+};

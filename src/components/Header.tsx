@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRole } from '../context/RoleContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Bell, ChevronDown, Sparkles, User, Globe, Menu, Shield } from 'lucide-react';
+import { Bell, ChevronDown, Sparkles, User, Globe, Menu, Shield, LogIn, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
     userProfile,
     subscription,
   } = useRole();
+  const { user, userProfile: authProfile, isAuthenticated, signInWithGoogle, signOutUser } = useAuth();
   const { language, toggleLanguage, t } = useLanguage();
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -169,6 +171,43 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
             )}
           </Link>
 
+          {/* Authentication Actions when not logged in */}
+          {!isAuthenticated ? (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Link
+                to="/login"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold transition-all hidden sm:inline-block"
+              >
+                {language === 'en' ? 'Log in' : 'लॉग इन'}
+              </Link>
+              <button
+                onClick={() => signInWithGoogle().catch(() => {})}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-all"
+                title="Instant Google Sign In"
+              >
+                <svg className="w-3.5 h-3.5 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                  />
+                </svg>
+                <span>{language === 'en' ? 'Google' : 'गूगल'}</span>
+              </button>
+            </div>
+          ) : null}
+
           {/* User Profile Avatar */}
           <div className="relative">
             <button
@@ -176,9 +215,19 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
               className="flex items-center gap-1.5 p-1 rounded-full hover:ring-2 hover:ring-blue-500/20 transition-all focus:outline-hidden"
               aria-label="User Profile"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shadow-xs">
-                RT
-              </div>
+              {authProfile?.photoURL ? (
+                <img
+                  src={authProfile.photoURL}
+                  alt={authProfile.displayName}
+                  className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold text-xs flex items-center justify-center shadow-xs">
+                  {authProfile?.displayName
+                    ? authProfile.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+                    : 'RT'}
+                </div>
+              )}
               <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
             </button>
 
@@ -188,14 +237,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                 onClick={() => setShowProfileMenu(false)}
               >
                 <div className="px-3.5 py-2 border-b border-slate-100">
-                  <p className="text-xs font-semibold text-slate-900">{userProfile?.name || 'Rituraj Tomar'}</p>
-                  <p className="text-[11px] text-slate-500 truncate">{userProfile?.email || 'riturajtomarorchha@gmail.com'}</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">
+                    {authProfile?.displayName || userProfile?.name || 'Rituraj Tomar'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 truncate">
+                    {authProfile?.email || userProfile?.email || 'riturajtomarorchha@gmail.com'}
+                  </p>
                   <div className="mt-1 flex items-center gap-1.5">
                     <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700">
                       {subscription?.planName || 'Pro Plan'}
                     </span>
                     <span className="text-[10px] text-slate-400">· {activeBusinessProfile.name}</span>
                   </div>
+                  {isAuthenticated && (
+                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-emerald-600 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Firebase Verified
+                    </span>
+                  )}
                 </div>
 
                 <Link
@@ -259,6 +318,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                 >
                   {t('navHelpDocs')}
                 </Link>
+                <div className="my-1 border-t border-slate-100" />
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => signOutUser().catch(() => {})}
+                    className="w-full text-left px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center justify-between"
+                  >
+                    <span>{language === 'en' ? 'Sign Out' : 'साइन आउट'}</span>
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => signInWithGoogle().catch(() => {})}
+                    className="w-full text-left px-3.5 py-2 text-xs text-blue-600 hover:bg-blue-50 flex items-center justify-between font-medium"
+                  >
+                    <span>{language === 'en' ? 'Sign In with Google' : 'Google से साइन इन करें'}</span>
+                    <LogIn className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             )}
           </div>

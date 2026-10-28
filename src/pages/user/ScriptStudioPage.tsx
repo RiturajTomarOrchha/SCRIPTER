@@ -51,12 +51,19 @@ import {
   Hash,
   MessageSquare,
   Flame,
+  Mic,
+  Download,
 } from 'lucide-react';
+import { VoiceDictationBar } from '../../components/studio/VoiceDictationBar';
+import { exportScriptToPdf } from '../../services/pdfExportService';
+import { VersionHistoryModal } from '../../components/studio/VersionHistoryModal';
+import { TemplatePreviewModal } from '../../components/studio/TemplatePreviewModal';
+import { ContentTemplate } from '../../types';
 
 export const ScriptStudioPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { activeBusinessProfile, useCredits, deductCredits, creditsInfo } = useRole();
+  const { activeBusinessProfile, useCredits, deductCredits, creditsInfo, userProfile } = useRole();
   const { language } = useLanguage();
 
   // Navigation state parameters (passed from Ideas, Research, Projects, or Teleprompter)
@@ -158,6 +165,20 @@ export const ScriptStudioPage: React.FC = () => {
   const [transformLoading, setTransformLoading] = useState<string | null>(null);
   const [customPromptOpen, setCustomPromptOpen] = useState<boolean>(false);
   const [customInstruction, setCustomInstruction] = useState<string>('');
+
+  const [isVoiceDictationOpen, setIsVoiceDictationOpen] = useState<boolean>(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
+
+  // Append transcribed text from Web Speech API to target section
+  const handleAppendFromVoice = (section: 'hook' | 'body' | 'cta', text: string) => {
+    if (section === 'hook') {
+      setHook((prev) => (prev ? `${prev} ${text}` : text));
+    } else if (section === 'body') {
+      setMainBody((prev) => (prev ? `${prev} ${text}` : text));
+    } else if (section === 'cta') {
+      setClosingCta((prev) => (prev ? `${prev} ${text}` : text));
+    }
+  };
 
   // Version History State
   const [isVersionDrawerOpen, setIsVersionDrawerOpen] = useState<boolean>(false);
@@ -730,6 +751,28 @@ export const ScriptStudioPage: React.FC = () => {
           <Sliders className="w-3.5 h-3.5" />
           <span>{language === 'en' ? 'Custom AI Edit' : 'कस्टम AI निर्देश'}</span>
         </button>
+
+        <button
+          onClick={() => setIsVoiceDictationOpen((prev) => !prev)}
+          className={`px-3.5 py-1.5 rounded-xl font-semibold transition-all shrink-0 flex items-center gap-1.5 ${
+            isVoiceDictationOpen
+              ? 'bg-rose-600 text-white shadow-xs'
+              : 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
+          }`}
+          title="Dictate spoken script with Web Speech API"
+        >
+          <Mic className={`w-3.5 h-3.5 ${isVoiceDictationOpen ? 'animate-pulse' : ''}`} />
+          <span>{language === 'en' ? 'Voice Dictate' : 'वॉइस डिक्टेट'}</span>
+        </button>
+
+        <button
+          onClick={() => setIsTemplateModalOpen(true)}
+          className="px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-semibold transition-all shrink-0 flex items-center gap-1.5"
+          title="Browse Viral Templates & Outlines"
+        >
+          <Layers className="w-3.5 h-3.5 text-purple-600" />
+          <span>{language === 'en' ? 'Templates' : 'टेम्पलेट्स'}</span>
+        </button>
       </div>
 
       {/* 4. MAIN WORKSPACE: 2 Columns (Left: Script Editor, Right: AI Tools & Preview) matching Image 1 & 2 */}
@@ -815,6 +858,15 @@ export const ScriptStudioPage: React.FC = () => {
           ) : (
             /* Structured Script Sections: Hook (0-5s), Main Content (5-50s), CTA (50-60s) */
             <div className="space-y-4">
+              {/* Hands-Free Voice Dictation Bar (Web Speech API) */}
+              {isVoiceDictationOpen && (
+                <VoiceDictationBar
+                  selectedLanguage={selectedLanguage}
+                  onAppendText={handleAppendFromVoice}
+                  onClose={() => setIsVoiceDictationOpen(false)}
+                />
+              )}
+
               {/* Word count header indicator matching Image 2 Panel 3 */}
               <div className="flex items-center justify-between text-xs font-semibold px-2">
                 <span className="text-slate-500">
@@ -834,17 +886,28 @@ export const ScriptStudioPage: React.FC = () => {
                       {language === 'en' ? '[Hook - 0-5 Seconds]' : '[Hook - 0-5 सेकंड]'}
                     </h3>
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(hook);
-                      setCopiedToast(true);
-                      setTimeout(() => setCopiedToast(false), 2000);
-                    }}
-                    className="text-xs text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsVoiceDictationOpen(true)}
+                      className="text-xs text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg font-semibold flex items-center gap-1 transition-colors"
+                      title="Speak to dictate hook"
+                    >
+                      <Mic className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Voice' : 'आवाज'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(hook);
+                        setCopiedToast(true);
+                        setTimeout(() => setCopiedToast(false), 2000);
+                      }}
+                      className="text-xs text-amber-700 hover:text-amber-900 font-semibold flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <textarea
@@ -865,17 +928,28 @@ export const ScriptStudioPage: React.FC = () => {
                       {language === 'en' ? '[Main Content - 5-50 Seconds]' : '[मुख्य भाग - 5-50 सेकंड]'}
                     </h3>
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(mainBody);
-                      setCopiedToast(true);
-                      setTimeout(() => setCopiedToast(false), 2000);
-                    }}
-                    className="text-xs text-blue-700 hover:text-blue-900 font-semibold flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsVoiceDictationOpen(true)}
+                      className="text-xs text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg font-semibold flex items-center gap-1 transition-colors"
+                      title="Speak to dictate core body"
+                    >
+                      <Mic className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Voice' : 'आवाज'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(mainBody);
+                        setCopiedToast(true);
+                        setTimeout(() => setCopiedToast(false), 2000);
+                      }}
+                      className="text-xs text-blue-700 hover:text-blue-900 font-semibold flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <textarea
@@ -896,17 +970,28 @@ export const ScriptStudioPage: React.FC = () => {
                       {language === 'en' ? '[Closing & CTA - 50-60 Seconds]' : '[समापन और CTA - 50-60 सेकंड]'}
                     </h3>
                   </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(closingCta);
-                      setCopiedToast(true);
-                      setTimeout(() => setCopiedToast(false), 2000);
-                    }}
-                    className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" />
-                    <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsVoiceDictationOpen(true)}
+                      className="text-xs text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg font-semibold flex items-center gap-1 transition-colors"
+                      title="Speak to dictate CTA"
+                    >
+                      <Mic className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Voice' : 'आवाज'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(closingCta);
+                        setCopiedToast(true);
+                        setTimeout(() => setCopiedToast(false), 2000);
+                      }}
+                      className="text-xs text-emerald-700 hover:text-emerald-900 font-semibold flex items-center gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{language === 'en' ? 'Copy' : 'कॉपी'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <textarea
@@ -1016,6 +1101,29 @@ export const ScriptStudioPage: React.FC = () => {
           >
             <History className="w-3.5 h-3.5" />
             <span>{versions.length} {language === 'en' ? 'Versions' : 'वर्जन'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              exportScriptToPdf({
+                title: topic,
+                hook,
+                mainBody,
+                closingCta,
+                language: selectedLanguage,
+                videoLength,
+                tone,
+                targetAudience,
+                businessProfileName: activeBusinessProfile?.name,
+                creatorName: userProfile?.name,
+              })
+            }
+            className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200/80 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+            title="Download branded production-ready PDF"
+          >
+            <Download className="w-3.5 h-3.5 text-rose-600" />
+            <span>{language === 'en' ? 'Export PDF' : 'PDF एक्सपोर्ट'}</span>
           </button>
         </div>
 
@@ -1263,6 +1371,36 @@ export const ScriptStudioPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Template Preview & Inspector Modal */}
+      <TemplatePreviewModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        currentIndustry={activeBusinessProfile.industry}
+        hasExistingScriptContent={Boolean(hook || mainBody || closingCta)}
+        onApplyTemplate={(tpl: ContentTemplate) => {
+          recordVersion(hook, mainBody, closingCta);
+          const outline = tpl.scriptOutline || [];
+          let newHook = tpl.title;
+          let newBody = tpl.description;
+          let newCta = 'Follow for more daily tips!';
+
+          if (outline.length >= 3) {
+            newHook = outline[0];
+            newBody = outline.slice(1, -1).join('\n\n');
+            newCta = outline[outline.length - 1];
+          } else if (outline.length === 2) {
+            newHook = outline[0];
+            newBody = outline[1];
+            newCta = tpl.description;
+          }
+
+          setHook(newHook);
+          setMainBody(newBody);
+          setClosingCta(newCta);
+          setToastMessage(language === 'en' ? `Applied "${tpl.title}" template` : `"${tpl.title}" टेम्पलेट लागू किया गया`);
+        }}
+      />
     </div>
   );
 };

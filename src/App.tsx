@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { RoleProvider, useRole } from './context/RoleContext';
+import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -21,6 +22,7 @@ import { CreditsUsagePage } from './pages/user/CreditsUsagePage';
 import { SubscriptionPlansPage } from './pages/user/SubscriptionPlansPage';
 import { BillingPaymentsPage } from './pages/user/BillingPaymentsPage';
 import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
+import { UserProfilePage } from './pages/user/UserProfilePage';
 import { HelpSupportPage } from './pages/user/HelpSupportPage';
 import { AdminHome } from './pages/admin/AdminHome';
 import { MasterAdminHome } from './pages/master-admin/MasterAdminHome';
@@ -48,6 +50,7 @@ import { MasterAdminContentSettingsPage } from './pages/master-admin/MasterAdmin
 
 import { ComingSoonPage } from './pages/shared/ComingSoonPage';
 import { NotFoundPage } from './pages/shared/NotFoundPage';
+import { AuthPage } from './pages/auth/AuthPage';
 
 /**
  * Shell Layout dynamically adapting between User experience and Admin consoles
@@ -57,7 +60,8 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const isAdminArea = role === 'admin' || role === 'master-admin' || location.pathname.startsWith('/admin') || location.pathname.startsWith('/master-admin');
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAdminArea = !isAuthPage && (role === 'admin' || role === 'master-admin' || location.pathname.startsWith('/admin') || location.pathname.startsWith('/master-admin'));
   const isFullscreenTeleprompter = location.pathname === '/user/teleprompter' && location.search.includes('fullscreen=true');
 
   return (
@@ -65,14 +69,14 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Shared Header across all perspectives */}
       {!isFullscreenTeleprompter && (
         <Header
-          showSidebarToggle={true}
+          showSidebarToggle={!isAuthPage}
           onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         />
       )}
 
       {/* Main viewport with responsive sidebar for Admin / Master Admin and Creator User */}
       <div className="flex-1 flex flex-row">
-        {isAdminArea ? (
+        {!isAuthPage && (isAdminArea ? (
           <AdminSidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
@@ -84,15 +88,15 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               onClose={() => setIsSidebarOpen(false)}
             />
           )
-        )}
+        ))}
 
-        <main className={`flex-1 transition-all duration-300 w-full ${isAdminArea ? 'lg:pl-72' : !isFullscreenTeleprompter ? 'lg:pl-64' : ''}`}>
+        <main className={`flex-1 transition-all duration-300 w-full ${!isAuthPage && isAdminArea ? 'lg:pl-72' : !isAuthPage && !isFullscreenTeleprompter ? 'lg:pl-64' : ''}`}>
           {children}
         </main>
       </div>
 
       {/* User Mobile Bottom Navigation (only shown for user role on mobile when not in fullscreen teleprompter) */}
-      {!isAdminArea && !isFullscreenTeleprompter && <MobileBottomNav />}
+      {!isAuthPage && !isAdminArea && !isFullscreenTeleprompter && <MobileBottomNav />}
     </div>
   );
 };
@@ -101,33 +105,42 @@ export default function App() {
   return (
     <BrowserRouter>
       <LanguageProvider>
-        <RoleProvider>
-          <AppShell>
-            <Routes>
-              {/* Default redirect to User Home on root */}
-              <Route path="/" element={<Navigate to="/user/home" replace />} />
+        <AuthProvider>
+          <RoleProvider>
+            <AppShell>
+              <Routes>
+                {/* Authentication Routes */}
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/register" element={<AuthPage />} />
 
-              {/* User Experience Routes (Phase 2 Connected) */}
-              <Route path="/user/home" element={<UserHome />} />
-              <Route path="/user/ideas" element={<IdeasPage />} />
-              <Route path="/user/research" element={<IdeasPage />} />
-              <Route path="/user/create" element={<ScriptStudioPage />} />
-              <Route path="/user/script-studio" element={<ScriptStudioPage />} />
-              <Route path="/user/projects" element={<ProjectsPage />} />
-              <Route path="/user/business-profiles" element={<BusinessProfilesPage />} />
-              <Route path="/user/profile" element={<AccountSettingsPage />} />
-              <Route path="/user/settings" element={<AccountSettingsPage />} />
-              <Route path="/user/teleprompter" element={<TeleprompterPage defaultMode="prompter" />} />
-              <Route path="/user/video-recording" element={<TeleprompterPage defaultMode="record" />} />
-              <Route path="/user/video-studio" element={<VideoStudioPage />} />
-              <Route path="/user/export" element={<VideoStudioPage />} />
-              <Route path="/user/library" element={<ProjectsPage />} />
-              <Route path="/user/templates" element={<TemplatesPage />} />
-              <Route path="/user/brand-kit" element={<BrandKitPage />} />
-              <Route path="/user/thumbnail-studio" element={<ThumbnailStudioPage />} />
-              <Route path="/user/notifications" element={<NotificationsPage />} />
-              <Route path="/user/credits" element={<CreditsUsagePage />} />
-              <Route path="/user/subscription" element={<SubscriptionPlansPage />} />
+                {/* Default redirect to User Home on root */}
+                <Route path="/" element={<Navigate to="/user/home" replace />} />
+
+                {/* User Experience Routes (Phase 2 Connected) */}
+                <Route path="/user/home" element={<UserHome />} />
+                <Route path="/user/ideas" element={<IdeasPage />} />
+                <Route path="/user/research" element={<IdeasPage />} />
+                <Route path="/user/create" element={<ScriptStudioPage />} />
+                <Route path="/user/script-studio" element={<ScriptStudioPage />} />
+                <Route path="/user/projects" element={<ProjectsPage />} />
+                <Route path="/user/business-profiles" element={<BusinessProfilesPage />} />
+                <Route path="/user/profile" element={<UserProfilePage />} />
+                <Route path="/user/settings" element={<AccountSettingsPage />} />
+                <Route path="/user/teleprompter" element={<TeleprompterPage defaultMode="prompter" />} />
+                <Route path="/user/video-recording" element={<TeleprompterPage defaultMode="record" />} />
+                <Route path="/user/video-studio" element={<VideoStudioPage />} />
+                <Route path="/user/export" element={<VideoStudioPage />} />
+                <Route path="/user/library" element={<ProjectsPage />} />
+                <Route path="/user/templates" element={<TemplatesPage />} />
+                <Route path="/user/brand-kit" element={<BrandKitPage />} />
+                <Route path="/user/thumbnail-studio" element={<ThumbnailStudioPage />} />
+                <Route path="/user/notifications" element={<NotificationsPage />} />
+                <Route path="/user/credits" element={<CreditsUsagePage />} />
+                <Route path="/user/subscription" element={<SubscriptionPlansPage />} />
+                <Route path="/user/plans" element={<SubscriptionPlansPage />} />
+                <Route path="/user/billing" element={<BillingPaymentsPage />} />
+                <Route path="/user/payments" element={<BillingPaymentsPage />} />
+                <Route path="/user/help" element={<HelpSupportPage />} />
               <Route path="/user/plans" element={<SubscriptionPlansPage />} />
               <Route path="/user/billing" element={<BillingPaymentsPage />} />
               <Route path="/user/payments" element={<BillingPaymentsPage />} />
@@ -174,7 +187,8 @@ export default function App() {
             </Routes>
           </AppShell>
         </RoleProvider>
-      </LanguageProvider>
-    </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
+  </BrowserRouter>
   );
 }

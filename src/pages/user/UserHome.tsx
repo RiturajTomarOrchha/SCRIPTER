@@ -25,6 +25,7 @@ import {
   LayoutTemplate,
   Image as ImageIcon,
 } from 'lucide-react';
+import { ProductivityTrendsSection } from '../../components/analytics/ProductivityTrendsSection';
 
 export const UserHome: React.FC = () => {
   const { activeBusinessProfile, setActiveBusinessProfile, businessProfiles, creditsTotal, creditsUsed } = useRole();
@@ -237,7 +238,10 @@ export const UserHome: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Tailored Recommendations for Active Profile (Poster 3 Screen 5) */}
+      {/* 3. 30-Day Productivity Trends & Recharts Analytics Summary */}
+      <ProductivityTrendsSection projects={projects} />
+
+      {/* 4. Tailored Recommendations for Active Profile (Poster 3 Screen 5) */}
       <section className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
