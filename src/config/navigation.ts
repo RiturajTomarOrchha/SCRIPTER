@@ -2,21 +2,21 @@ import { NavItem } from '../types';
 
 export const USER_BOTTOM_NAV_ITEMS: NavItem[] = [
   { id: 'home', labelEn: 'Home', labelHi: 'होम', path: '/user/home', icon: 'Home' },
-  { id: 'ideas', labelEn: 'Ideas', labelHi: 'आइडिया', path: '/user/ideas', icon: 'Lightbulb', isUpcoming: true },
-  { id: 'create', labelEn: 'Create', labelHi: 'बनाएं', path: '/user/create', icon: 'Plus', isUpcoming: true },
-  { id: 'projects', labelEn: 'Projects', labelHi: 'प्रोजेक्ट्स', path: '/user/projects', icon: 'FolderKanban', isUpcoming: true },
-  { id: 'profile', labelEn: 'Profile', labelHi: 'प्रोफ़ाइल', path: '/user/profile', icon: 'User', isUpcoming: true },
+  { id: 'ideas', labelEn: 'Ideas', labelHi: 'आइडिया', path: '/user/ideas', icon: 'Lightbulb' },
+  { id: 'create', labelEn: 'Create', labelHi: 'बनाएं', path: '/user/create', icon: 'Plus' },
+  { id: 'projects', labelEn: 'Projects', labelHi: 'प्रोजेक्ट्स', path: '/user/projects', icon: 'FolderKanban' },
+  { id: 'profile', labelEn: 'Profile', labelHi: 'प्रोफ़ाइल', path: '/user/profile', icon: 'User' },
 ];
 
 export const USER_ALL_DESTINATIONS: NavItem[] = [
   { id: 'home', labelEn: 'Home', labelHi: 'होम', path: '/user/home', icon: 'Home' },
-  { id: 'ideas', labelEn: 'Ideas & Trending Topics', labelHi: 'आइडिया और ट्रेंडिंग टॉपिक्स', path: '/user/ideas', icon: 'Lightbulb', isUpcoming: true },
-  { id: 'research', labelEn: 'Research & Outlines', labelHi: 'रिसर्च और आउटलाइन्स', path: '/user/research', icon: 'Search', isUpcoming: true },
-  { id: 'script-studio', labelEn: 'Script Studio', labelHi: 'स्क्रिप्ट स्टूडियो', path: '/user/script-studio', icon: 'FileText', isUpcoming: true },
-  { id: 'teleprompter', labelEn: 'Teleprompter', labelHi: 'टेलीप्रॉम्प्टर', path: '/user/teleprompter', icon: 'Mic', isUpcoming: true },
-  { id: 'video-recording', labelEn: 'Video Recording', labelHi: 'वीडियो रिकॉर्डिंग', path: '/user/video-recording', icon: 'Video', isUpcoming: true },
-  { id: 'video-studio', labelEn: 'Video Studio / Editor', labelHi: 'वीडियो स्टूडियो / एडिटर', path: '/user/video-studio', icon: 'Film', isUpcoming: true },
-  { id: 'projects', labelEn: 'Projects', labelHi: 'प्रोजेक्ट्स', path: '/user/projects', icon: 'FolderKanban', isUpcoming: true },
+  { id: 'ideas', labelEn: 'Ideas & Trending Topics', labelHi: 'आइडिया और ट्रेंडिंग टॉपिक्स', path: '/user/ideas', icon: 'Lightbulb' },
+  { id: 'research', labelEn: 'Research & Outlines', labelHi: 'रिसर्च और आउटलाइन्स', path: '/user/research', icon: 'Search' },
+  { id: 'script-studio', labelEn: 'Script Studio', labelHi: 'स्क्रिप्ट स्टूडियो', path: '/user/script-studio', icon: 'FileText' },
+  { id: 'teleprompter', labelEn: 'Teleprompter', labelHi: 'टेलीप्रॉम्प्टर', path: '/user/teleprompter', icon: 'Mic' },
+  { id: 'video-recording', labelEn: 'Video Recording', labelHi: 'वीडियो रिकॉर्डिंग', path: '/user/video-recording', icon: 'Video' },
+  { id: 'video-studio', labelEn: 'Video Studio / Editor', labelHi: 'वीडियो स्टूडियो / एडिटर', path: '/user/video-studio', icon: 'Film' },
+  { id: 'projects', labelEn: 'Projects', labelHi: 'प्रोजेक्ट्स', path: '/user/projects', icon: 'FolderKanban' },
   { id: 'library', labelEn: 'Saved Content / Library', labelHi: 'लाइब्रेरी और सेव्ड कंटेंट', path: '/user/library', icon: 'BookmarkCheck', isUpcoming: true },
   { id: 'templates', labelEn: 'Templates & Visual Packs', labelHi: 'टेम्पलेट्स और विज़ुअल पैक', path: '/user/templates', icon: 'Layers', isUpcoming: true },
   { id: 'business-profiles', labelEn: 'Business Profiles', labelHi: 'बिज़नेस प्रोफ़ाइल', path: '/user/business-profiles', icon: 'Briefcase', isUpcoming: true },

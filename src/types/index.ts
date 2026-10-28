@@ -59,6 +59,10 @@ export interface VideoStudioDraft {
   subtitleStyle: 'classic' | 'highlight' | 'karaoke';
   showLogoWatermark: boolean;
   watermarkText?: string;
+  showHeadlineOverlay?: boolean;
+  headlineText?: string;
+  headlinePosition?: 'top' | 'center' | 'bottom';
+  customCaptions?: Array<{ id: string; startTime: number; endTime: number; text: string }>;
   backgroundMusic: boolean;
   musicVolume: number;
   selectedClipIndex: number;
