@@ -180,6 +180,70 @@ export const deleteProject = (id: string): boolean => {
   return false;
 };
 
+export const updateProjectStatus = (projectId: string, status: import('../types').ProjectStatus): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const updated: Project = {
+    ...projects[index],
+    status,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+  projects[index] = updated;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updated;
+};
+
+export const renameProject = (projectId: string, title: string, titleHi?: string): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const updated: Project = {
+    ...projects[index],
+    title,
+    titleHi: titleHi !== undefined ? titleHi : projects[index].titleHi,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+  projects[index] = updated;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updated;
+};
+
+export const restoreProjectScriptVersion = (projectId: string, versionNumber: number): Project | undefined => {
+  const projects = getProjects();
+  const index = projects.findIndex((p) => p.id === projectId);
+  if (index === -1) return undefined;
+
+  const project = projects[index];
+  const targetVer = project.scriptVersions?.find((v) => v.version === versionNumber);
+  if (!targetVer) return undefined;
+
+  const nextVerNum = (project.scriptVersions?.length || 0) + 1;
+  const restoredVersion: import('../types').ScriptVersion = {
+    version: nextVerNum,
+    updatedAt: new Date().toISOString(),
+    hook: targetVer.hook,
+    mainContent: [...targetVer.mainContent],
+    closing: targetVer.closing,
+  };
+
+  const updatedVersions = [restoredVersion, ...(project.scriptVersions || [])];
+  const updated: Project = {
+    ...project,
+    scriptSnippet: targetVer.hook,
+    scriptVersions: updatedVersions,
+    updatedAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+  projects[index] = updated;
+  saveToStorage(STORAGE_KEYS.PROJECTS, projects);
+  return updated;
+};
+
 /**
  * Phase 3 Media & Studio Persistence
  */
@@ -675,6 +739,10 @@ export const getCreditLedger = (): CreditLedgerEntry[] => {
   return stored;
 };
 
+// Deduplication cache for rapid concurrent clicks
+let lastDeductionTimestamp = 0;
+let lastDeductionSignature = '';
+
 export const recordCreditUsage = (
   amount: number, // positive number representing cost (e.g. 10)
   operationType: CreditOperationType,
@@ -682,6 +750,19 @@ export const recordCreditUsage = (
   projectId?: string | { businessProfileName?: string },
   projectTitle?: string
 ): { success: boolean; remaining: number; error?: string } => {
+  const now = Date.now();
+  const sig = `${operationType}_${description}_${amount}`;
+  if (sig === lastDeductionSignature && now - lastDeductionTimestamp < 800) {
+    // Duplicate call within 800ms window; return current balance without charging again
+    const currentBalance = getCreditBalanceInfo();
+    return {
+      success: true,
+      remaining: currentBalance.remainingCredits,
+    };
+  }
+  lastDeductionTimestamp = now;
+  lastDeductionSignature = sig;
+
   const balance = getCreditBalanceInfo();
 
   if (balance.remainingCredits < amount) {

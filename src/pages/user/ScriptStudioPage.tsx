@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -8,7 +8,7 @@ import {
   GeneratedScriptResult,
   isGeminiConfigured,
 } from '../../services/aiService';
-import { saveProject, addNotification, getProjects } from '../../services/storage';
+import { saveProject, addNotification, getProjects, getProjectById } from '../../services/storage';
 import { ScriptScene, ScriptVersion, Project, TopicResearchContext, ContentIdea } from '../../types';
 import { DEMO_CONTENT_IDEAS } from '../../data/mockData';
 import {
@@ -178,11 +178,89 @@ export const ScriptStudioPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isInsufficientCreditModalOpen, setIsInsufficientCreditModalOpen] = useState(false);
 
+  // Autosave State
+  type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error';
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+  const [lastSavedTime, setLastSavedTime] = useState<string>('Just now');
+  const isInitialMount = useRef(true);
+
+  // Load existing project data if projectId is supplied without direct scriptText
+  useEffect(() => {
+    if (navState.projectId) {
+      const proj = getProjectById(navState.projectId);
+      if (proj) {
+        if (!navState.prefilledTopic && proj.title) {
+          setTopic(proj.title);
+        }
+        if (!navState.scriptText && proj.scriptVersions && proj.scriptVersions.length > 0) {
+          const latest = proj.scriptVersions[0];
+          setHook(latest.hook || proj.scriptSnippet || '');
+          setMainBody(latest.mainContent?.join('\n\n') || '');
+          setClosingCta(latest.closing || '');
+          setVersions(proj.scriptVersions);
+        } else if (!navState.scriptText && proj.scriptSnippet) {
+          setHook(proj.scriptSnippet);
+        }
+      }
+    }
+  }, [navState.projectId]);
+
   // Calculate stats
   const fullScriptText = `${hook}\n\n${mainBody}\n\n${closingCta}`;
   const totalChars = fullScriptText.length;
   const wordCount = fullScriptText.trim().split(/\s+/).filter(Boolean).length;
   const estimatedSeconds = Math.round((wordCount / 130) * 60);
+
+  // Debounced Autosave (1500ms)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    setSaveStatus('unsaved');
+    const timer = setTimeout(() => {
+      try {
+        setSaveStatus('saving');
+        const proj = saveProject({
+          id: savedProjectId || undefined,
+          title: topic,
+          titleHi: selectedLanguage === 'hi' ? topic : undefined,
+          industry: activeBusinessProfile.industry,
+          category: activeBusinessProfile.category,
+          status: 'in_progress',
+          format: videoLength === '30s' ? 'short' : 'reel',
+          duration: `${estimatedSeconds}s`,
+          scriptSnippet: hook,
+          businessProfileId: activeBusinessProfile.id,
+          scriptVersions: versions,
+          notes: `Tone: ${tone} · Length: ${videoLength}`,
+        });
+        if (!savedProjectId && proj.id) {
+          setSavedProjectId(proj.id);
+        }
+        setSaveStatus('saved');
+        setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      } catch (err) {
+        console.error('Autosave error:', err);
+        setSaveStatus('error');
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [hook, mainBody, closingCta, topic, versions, tone, videoLength, selectedFormat]);
+
+  // Guard against navigating away with unsaved state
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (saveStatus === 'unsaved' || saveStatus === 'saving') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveStatus]);
 
   // If outline was passed from an idea on mount, set it up
   useEffect(() => {
@@ -249,8 +327,7 @@ export const ScriptStudioPage: React.FC = () => {
       setClosingCta(result.closing);
       recordVersion(result.hook, result.mainContent.join('\n\n'), result.closing);
 
-      // Deduct 1 credit atomically
-      useCredits(1);
+      // Deduct 1 credit atomically with ledger entry
       deductCredits(1, 'script_generation', `AI Script for: "${topic}"`, {
         businessProfileName: activeBusinessProfile.name,
       });
@@ -265,6 +342,11 @@ export const ScriptStudioPage: React.FC = () => {
 
   // Quick Transformation Handlers
   const handleTransform = async (action: 'rewrite' | 'expand' | 'shorten' | 'add_hook' | 'add_cta' | 'custom') => {
+    if (creditsInfo.totalAvailable < 1) {
+      setIsInsufficientCreditModalOpen(true);
+      return;
+    }
+
     setTransformLoading(action);
     try {
       const res = await transformScriptWithAi({
@@ -284,6 +366,11 @@ export const ScriptStudioPage: React.FC = () => {
       recordVersion(res.hook, res.mainContent.join('\n\n'), res.closing);
       setCustomPromptOpen(false);
       setCustomInstruction('');
+
+      deductCredits(1, 'script_generation', `Script transformation (${action}): "${topic}"`, {
+        businessProfileName: activeBusinessProfile.name,
+      });
+
       setToastMessage(language === 'en' ? `Transformation applied: ${action}` : 'बदलाव लागू किया गया!');
     } catch (err) {
       console.error(err);
@@ -315,6 +402,7 @@ export const ScriptStudioPage: React.FC = () => {
 
   // Save to Project
   const handleSaveProject = () => {
+    setSaveStatus('saving');
     const project = saveProject({
       id: savedProjectId || undefined,
       title: topic,
@@ -331,6 +419,8 @@ export const ScriptStudioPage: React.FC = () => {
     });
 
     setSavedProjectId(project.id);
+    setSaveStatus('saved');
+    setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     setSaveSuccessToast(true);
     setTimeout(() => setSaveSuccessToast(false), 2500);
     return project;
@@ -399,8 +489,37 @@ export const ScriptStudioPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right side Topic Actions: Research Context Pill, Save Draft */}
-        <div className="flex items-center gap-2 self-end md:self-auto">
+        {/* Right side Topic Actions: Autosave Badge, Research Context Pill, Save Draft */}
+        <div className="flex flex-wrap items-center gap-2 self-end md:self-auto">
+          {/* Autosave Status Indicator */}
+          {saveStatus === 'saving' && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/60 animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+              <span>{language === 'en' ? 'Autosaving...' : 'ऑटो-सेव...'}</span>
+            </span>
+          )}
+          {saveStatus === 'saved' && (
+            <span
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200/60"
+              title={`Saved at ${lastSavedTime}`}
+            >
+              <Check className="w-3 h-3 text-emerald-600 stroke-[2.5]" />
+              <span>{language === 'en' ? 'Saved' : 'सुरक्षित'}</span>
+            </span>
+          )}
+          {saveStatus === 'unsaved' && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-200/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span>{language === 'en' ? 'Unsaved' : 'असेव्ड'}</span>
+            </span>
+          )}
+          {saveStatus === 'error' && (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold border border-red-200/60">
+              <AlertCircle className="w-3 h-3 text-red-600" />
+              <span>{language === 'en' ? 'Save Failed' : 'सेव असफल'}</span>
+            </span>
+          )}
+
           {resolvedResearch && (
             <button
               onClick={() => setIsResearchDrawerOpen(true)}
@@ -1120,8 +1239,10 @@ export const ScriptStudioPage: React.FC = () => {
                   <button
                     onClick={() => {
                       setHook(ver.hook);
-                      setMainBody(ver.mainContent.join('\n\n'));
+                      const restoredBody = ver.mainContent.join('\n\n');
+                      setMainBody(restoredBody);
                       setClosingCta(ver.closing);
+                      recordVersion(ver.hook, restoredBody, ver.closing);
                       setIsVersionDrawerOpen(false);
                       setToastMessage(language === 'en' ? `Restored v${ver.version}` : `वर्जन ${ver.version} रीस्टोर किया गया`);
                     }}

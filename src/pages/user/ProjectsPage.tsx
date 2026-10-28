@@ -2,8 +2,17 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Project, ProjectStatus } from '../../types';
-import { getProjects, deleteProject, duplicateProject, saveProject, deleteProjectThumbnail } from '../../services/storage';
+import { Project, ProjectStatus, ExportRecord } from '../../types';
+import {
+  getProjects,
+  deleteProject,
+  duplicateProject,
+  saveProject,
+  deleteProjectThumbnail,
+  updateProjectStatus,
+  renameProject,
+  restoreProjectScriptVersion,
+} from '../../services/storage';
 import {
   FolderKanban,
   Search,
@@ -29,25 +38,87 @@ import {
   Hash,
   Download,
   Check,
+  Share2,
+  Send,
+  Youtube,
+  Instagram,
+  Facebook,
+  Linkedin,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 
 export const ProjectsPage: React.FC = () => {
-  const { activeBusinessProfile } = useRole();
+  const { activeBusinessProfile, businessProfiles } = useRole();
   const { language } = useLanguage();
   const navigate = useNavigate();
 
   const [projectsList, setProjectsList] = useState<Project[]>(() => getProjects());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
+  const [profileFilter, setProfileFilter] = useState<'all' | string>('all');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [activeProjectTab, setActiveProjectTab] = useState<'script' | 'visuals' | 'media' | 'thumbnails' | 'captions' | 'notes'>('script');
+  const [activeProjectTab, setActiveProjectTab] = useState<'script' | 'visuals' | 'media' | 'exports' | 'thumbnails' | 'captions' | 'notes'>('script');
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [shareToast, setShareToast] = useState<string | null>(null);
+
+  // Rename modal state
+  const [renameModalProject, setRenameModalProject] = useState<Project | null>(null);
+  const [renameTitle, setRenameTitle] = useState('');
+  const [renameTitleHi, setRenameTitleHi] = useState('');
 
   const handleCopyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleShareIntent = (
+    platform: 'instagram' | 'youtube' | 'linkedin' | 'twitter' | 'whatsapp' | 'facebook' | 'copy',
+    exportItem?: ExportRecord
+  ) => {
+    const title = exportItem?.title || selectedProject?.title || 'Scripter Content Video';
+    const url = exportItem?.downloadUrl && exportItem.downloadUrl.startsWith('http')
+      ? exportItem.downloadUrl
+      : window.location.origin;
+
+    if (platform === 'copy') {
+      navigator.clipboard.writeText(`${title} - ${url}`);
+      setShareToast(language === 'en' ? 'Video link copied to clipboard!' : 'वीडियो लिंक कॉपी हो गया!');
+      setTimeout(() => setShareToast(null), 2500);
+      return;
+    }
+
+    if (platform === 'whatsapp') {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`${title}: ${url}`)}`, '_blank');
+      return;
+    }
+
+    if (platform === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, '_blank');
+      return;
+    }
+
+    if (platform === 'linkedin') {
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+      return;
+    }
+
+    if (platform === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+      return;
+    }
+
+    if (platform === 'instagram' || platform === 'youtube') {
+      navigator.clipboard.writeText(title);
+      setShareToast(
+        language === 'en'
+          ? `Title copied! Download the video and upload to ${platform === 'instagram' ? 'Instagram Reels' : 'YouTube Shorts'}.`
+          : `शीर्षक कॉपी हुआ! वीडियो डाउनलोड करके ${platform === 'instagram' ? 'Instagram Reels' : 'YouTube Shorts'} पर अपलोड करें।`
+      );
+      setTimeout(() => setShareToast(null), 3500);
+    }
   };
 
   const handleDeleteThumbnail = (thumbId: string) => {
@@ -71,9 +142,16 @@ export const ProjectsPage: React.FC = () => {
 
   const filteredProjects = useMemo(() => {
     return projectsList.filter((proj) => {
+      // Profile filter
+      if (profileFilter !== 'all') {
+        if (proj.businessProfileId && proj.businessProfileId !== profileFilter) {
+          return false;
+        }
+      }
       // Status filter
       if (statusFilter !== 'all') {
         if (statusFilter === 'draft' && proj.status !== 'draft') return false;
+        if (statusFilter === 'in_progress' && proj.status !== 'in_progress') return false;
         if (statusFilter === 'completed' && proj.status !== 'completed') return false;
         if (statusFilter === 'archived' && proj.status !== 'archived') return false;
       }
@@ -84,11 +162,12 @@ export const ProjectsPage: React.FC = () => {
           proj.title.toLowerCase().includes(q) ||
           (proj.titleHi && proj.titleHi.toLowerCase().includes(q));
         const matchCategory = proj.category.toLowerCase().includes(q);
-        return matchTitle || matchCategory;
+        const matchIndustry = proj.industry?.toLowerCase().includes(q);
+        return matchTitle || matchCategory || matchIndustry;
       }
       return true;
     });
-  }, [projectsList, statusFilter, searchQuery]);
+  }, [projectsList, statusFilter, profileFilter, searchQuery]);
 
   const handleDelete = () => {
     if (!projectToDelete) return;
@@ -116,11 +195,97 @@ export const ProjectsPage: React.FC = () => {
   const handleEditInStudio = (proj: Project) => {
     navigate('/user/script-studio', {
       state: {
+        projectId: proj.id,
         prefilledTopic: proj.title,
         industry: proj.industry,
         category: proj.category,
       },
     });
+  };
+
+  const getProjectProgressStage = (proj: Project) => {
+    const hasExports = Boolean(proj.exports && proj.exports.length > 0);
+    const hasMedia = Boolean(proj.media && proj.media.length > 0);
+    const hasScript = Boolean(proj.scriptSnippet || (proj.scriptVersions && proj.scriptVersions.length > 0));
+
+    if (hasExports) {
+      return {
+        stage: 'exported',
+        step: 4,
+        stepLabel: language === 'en' ? 'Step 4/4: Ready to Share' : 'चरण 4/4: शेयर करने के लिए तैयार',
+        labelEn: 'View / Share Video',
+        labelHi: 'वीडियो देखें / शेयर करें',
+        icon: Share2,
+        btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs',
+        action: () => {
+          setSelectedProject(proj);
+          setActiveProjectTab('exports');
+        },
+      };
+    }
+
+    if (hasMedia) {
+      return {
+        stage: 'media',
+        step: 3,
+        stepLabel: language === 'en' ? 'Step 3/4: Ready to Edit' : 'चरण 3/4: एडिटिंग के लिए तैयार',
+        labelEn: 'Edit in Video Studio',
+        labelHi: 'वीडियो स्टूडियो में एडिट करें',
+        icon: Film,
+        btnClass: 'bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold shadow-xs',
+        action: () => {
+          navigate('/user/video-studio', {
+            state: {
+              projectId: proj.id,
+              mediaId: proj.activeMediaId || proj.media?.[0]?.id,
+            },
+          });
+        },
+      };
+    }
+
+    if (hasScript) {
+      return {
+        stage: 'prompter',
+        step: 2,
+        stepLabel: language === 'en' ? 'Step 2/4: Ready to Record' : 'चरण 2/4: रिकॉर्डिंग के लिए तैयार',
+        labelEn: 'Record in Teleprompter',
+        labelHi: 'टेलीप्रॉम्प्टर में रिकॉर्ड करें',
+        icon: Video,
+        btnClass: 'bg-purple-600 hover:bg-purple-700 text-white shadow-xs',
+        action: () => {
+          navigate('/user/teleprompter', {
+            state: {
+              projectId: proj.id,
+              title: proj.title,
+              scriptText: proj.scriptVersions?.[0]?.hook
+                ? [proj.scriptVersions[0].hook, ...(proj.scriptVersions[0].mainContent || []), proj.scriptVersions[0].closing].filter(Boolean).join('\n\n')
+                : proj.scriptSnippet,
+            },
+          });
+        },
+      };
+    }
+
+    return {
+      stage: 'script',
+      step: 1,
+      stepLabel: language === 'en' ? 'Step 1/4: Write Script' : 'चरण 1/4: स्क्रिप्ट लिखें',
+      labelEn: 'Write Script in Studio',
+      labelHi: 'स्क्रिप्ट स्टूडियो में लिखें',
+      icon: Edit,
+      btnClass: 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs',
+      action: () => {
+        navigate('/user/script-studio', {
+          state: {
+            projectId: proj.id,
+            prefilledTopic: proj.title,
+            industry: proj.industry,
+            category: proj.category,
+          },
+        });
+      },
+    };
   };
 
   return (
@@ -153,7 +318,7 @@ export const ProjectsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Search & Status Filters */}
+        {/* Search, Profile Filter & Status Filters */}
         <div className="mt-5 space-y-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -163,8 +328,8 @@ export const ProjectsPage: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
                 language === 'en'
-                  ? 'Search projects by title or category...'
-                  : 'प्रोजेक्ट का नाम या श्रेणी खोजें...'
+                  ? 'Search projects by title, category, or industry...'
+                  : 'प्रोजेक्ट का नाम, श्रेणी या उद्योग खोजें...'
               }
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
@@ -178,29 +343,50 @@ export const ProjectsPage: React.FC = () => {
             )}
           </div>
 
-          {/* Status Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-            {[
-              { id: 'all', labelEn: `All (${projectsList.length})`, labelHi: `सभी (${projectsList.length})` },
-              { id: 'draft', labelEn: 'Drafts', labelHi: 'ड्राफ्ट' },
-              { id: 'completed', labelEn: 'Ready / Done', labelHi: 'तैयार' },
-              { id: 'archived', labelEn: 'Archived', labelHi: 'आर्काइव' },
-            ].map((tab) => {
-              const isActive = statusFilter === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setStatusFilter(tab.id as any)}
-                  className={`px-3.5 py-1.5 rounded-xl font-semibold shrink-0 transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
-                  }`}
-                >
-                  {language === 'en' ? tab.labelEn : tab.labelHi}
-                </button>
-              );
-            })}
+          {/* Filter Bar: Status Tabs + Business Profile Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+            {/* Status Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+              {[
+                { id: 'all', labelEn: `All (${projectsList.length})`, labelHi: `सभी (${projectsList.length})` },
+                { id: 'draft', labelEn: 'Drafts', labelHi: 'ड्राफ्ट' },
+                { id: 'in_progress', labelEn: 'In Progress', labelHi: 'प्रगति पर' },
+                { id: 'completed', labelEn: 'Ready / Done', labelHi: 'तैयार' },
+                { id: 'archived', labelEn: 'Archived', labelHi: 'आर्काइव' },
+              ].map((tab) => {
+                const isActive = statusFilter === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setStatusFilter(tab.id as any)}
+                    className={`px-3.5 py-1.5 rounded-xl font-semibold shrink-0 transition-all ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {language === 'en' ? tab.labelEn : tab.labelHi}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Profile Selector */}
+            <div className="flex items-center gap-2 self-start sm:self-auto text-xs shrink-0">
+              <span className="text-slate-400 font-semibold">{language === 'en' ? 'Profile:' : 'प्रोफाइल:'}</span>
+              <select
+                value={profileFilter}
+                onChange={(e) => setProfileFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold text-xs focus:bg-white focus:outline-hidden"
+              >
+                <option value="all">{language === 'en' ? 'All Profiles' : 'सभी प्रोफाइल्स'}</option>
+                {businessProfiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -238,20 +424,31 @@ export const ProjectsPage: React.FC = () => {
                 label: 'Draft',
               };
 
-            const versionsCount = proj.scriptVersions?.length || 1;
+            const versionsCount = proj.scriptVersions?.length || (proj.scriptSnippet ? 1 : 0);
+            const mediaCount = proj.media?.length || 0;
+            const exportsCount = proj.exports?.length || 0;
+            const thumbsCount = proj.thumbnails?.length || 0;
+
+            const progress = getProjectProgressStage(proj);
+            const ProgressIcon = progress.icon;
 
             return (
               <div
                 key={proj.id}
                 onClick={() => setSelectedProject(proj)}
-                className="group bg-white rounded-2xl p-5 border border-slate-200/80 hover:border-blue-400 transition-all hover:shadow-md cursor-pointer flex flex-col justify-between space-y-3 relative"
+                className="group bg-white rounded-3xl p-5 border border-slate-200/90 hover:border-blue-400 transition-all hover:shadow-lg cursor-pointer flex flex-col justify-between space-y-4 relative"
               >
                 <div>
                   {/* Top Bar */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${statusConfig.bg}`}>
-                      {statusConfig.label}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full capitalize ${statusConfig.bg}`}>
+                        {statusConfig.label}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        {progress.stepLabel}
+                      </span>
+                    </div>
 
                     <div className="flex items-center gap-1">
                       {proj.isDemo && (
@@ -264,7 +461,8 @@ export const ProjectsPage: React.FC = () => {
                           e.stopPropagation();
                           setActionMenuProjectId(actionMenuProjectId === proj.id ? null : proj.id);
                         }}
-                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                        title="Project options"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
@@ -274,25 +472,64 @@ export const ProjectsPage: React.FC = () => {
                   {/* Context menu popup */}
                   {actionMenuProjectId === proj.id && (
                     <div
-                      className="absolute right-4 top-12 z-20 w-44 bg-white rounded-xl shadow-xl border border-slate-200 py-1 text-xs text-slate-700 animate-in fade-in zoom-in-95 duration-100"
+                      className="absolute right-4 top-12 z-20 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700 animate-in fade-in zoom-in-95 duration-100"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
                         onClick={() => {
                           setActionMenuProjectId(null);
+                          setRenameModalProject(proj);
+                          setRenameTitle(proj.title);
+                          setRenameTitleHi(proj.titleHi || '');
+                        }}
+                        className="w-full text-left px-3.5 py-2 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2 font-semibold"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Rename Project</span>
+                      </button>
+
+                      {/* Quick Status Submenu */}
+                      <div className="px-3.5 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Change Status
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 px-2.5 pb-1">
+                        {(['draft', 'in_progress', 'completed', 'archived'] as ProjectStatus[]).map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => {
+                              updateProjectStatus(proj.id, st);
+                              setActionMenuProjectId(null);
+                              reloadProjects();
+                            }}
+                            className={`px-2 py-1 rounded text-[10px] font-semibold text-left capitalize transition-colors ${
+                              proj.status === st
+                                ? 'bg-blue-600 text-white font-bold'
+                                : 'hover:bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {st.replace('_', ' ')}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="my-1 border-t border-slate-100" />
+
+                      <button
+                        onClick={() => {
+                          setActionMenuProjectId(null);
                           handleEditInStudio(proj);
                         }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-1.5 hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
                       >
-                        <Edit className="w-3.5 h-3.5" />
-                        <span>Edit in Studio</span>
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Script Studio</span>
                       </button>
                       <button
                         onClick={() => {
                           setActionMenuProjectId(null);
                           navigate('/user/teleprompter', { state: { projectId: proj.id } });
                         }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-1.5 hover:bg-purple-50 hover:text-purple-700 flex items-center gap-2"
                       >
                         <Video className="w-3.5 h-3.5" />
                         <span>Teleprompter</span>
@@ -302,21 +539,21 @@ export const ProjectsPage: React.FC = () => {
                           setActionMenuProjectId(null);
                           navigate('/user/video-studio', { state: { projectId: proj.id } });
                         }}
-                        className="w-full text-left px-3 py-1.5 hover:bg-amber-50 hover:text-amber-800 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-1.5 hover:bg-amber-50 hover:text-amber-800 flex items-center gap-2"
                       >
                         <Film className="w-3.5 h-3.5" />
                         <span>Video Studio</span>
                       </button>
                       <button
                         onClick={() => handleDuplicate(proj.id)}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <Copy className="w-3.5 h-3.5" />
                         <span>Duplicate</span>
                       </button>
                       <button
                         onClick={() => handleToggleArchive(proj)}
-                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <Archive className="w-3.5 h-3.5" />
                         <span>{proj.status === 'archived' ? 'Unarchive' : 'Archive'}</span>
@@ -327,7 +564,7 @@ export const ProjectsPage: React.FC = () => {
                           setActionMenuProjectId(null);
                           setProjectToDelete(proj);
                         }}
-                        className="w-full text-left px-3 py-1.5 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        className="w-full text-left px-3.5 py-1.5 text-red-600 hover:bg-red-50 flex items-center gap-2 font-semibold"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>Delete Project</span>
@@ -346,22 +583,60 @@ export const ProjectsPage: React.FC = () => {
                       "{proj.scriptSnippet}"
                     </p>
                   )}
+
+                  {/* Artifacts Summary Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2 border-t border-slate-100">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-semibold">
+                      v{versionsCount} Script
+                    </span>
+                    {mediaCount > 0 && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200/60 flex items-center gap-1">
+                        <Video className="w-2.5 h-2.5" />
+                        <span>{mediaCount} {mediaCount === 1 ? 'Take' : 'Takes'}</span>
+                      </span>
+                    )}
+                    {exportsCount > 0 && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        <span>{exportsCount} Export{exportsCount === 1 ? '' : 's'}</span>
+                      </span>
+                    )}
+                    {thumbsCount > 0 && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/60 flex items-center gap-1">
+                        <ImageIcon className="w-2.5 h-2.5" />
+                        <span>{thumbsCount}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {/* Footer Metadata */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{proj.timeAgo}</span>
+                {/* Bottom Actions: Smart Continue Workflow + Time Metadata */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      progress.action();
+                    }}
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-between transition-all active:scale-98 ${progress.btnClass}`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <ProgressIcon className="w-3.5 h-3.5" />
+                      <span>{language === 'en' ? progress.labelEn : progress.labelHi}</span>
                     </span>
-                    <span>·</span>
-                    <span className="font-medium text-slate-500">{proj.format.toUpperCase()}</span>
-                  </div>
+                    <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                  </button>
 
-                  <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                    v{versionsCount}
-                  </span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 px-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{proj.timeAgo}</span>
+                      </span>
+                      <span>·</span>
+                      <span className="font-medium text-slate-500">{proj.format.toUpperCase()}</span>
+                    </div>
+                    <span className="text-slate-400">{proj.industry}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -390,19 +665,53 @@ export const ProjectsPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Title Header */}
-              <div className="mt-4">
-                <h2 className="text-lg font-bold text-slate-900">
-                  {language === 'hi' && selectedProject.titleHi
-                    ? selectedProject.titleHi
-                    : selectedProject.title}
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Last updated {selectedProject.timeAgo} · {selectedProject.industry}
-                </p>
+              {/* Title Header with Rename & Status Controls */}
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-900 truncate">
+                      {language === 'hi' && selectedProject.titleHi
+                        ? selectedProject.titleHi
+                        : selectedProject.title}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setRenameModalProject(selectedProject);
+                        setRenameTitle(selectedProject.title);
+                        setRenameTitleHi(selectedProject.titleHi || '');
+                      }}
+                      className="p-1 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors shrink-0"
+                      title="Rename project"
+                    >
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Last updated {selectedProject.timeAgo} · {selectedProject.industry} · {selectedProject.category}
+                  </p>
+                </div>
+
+                {/* Status Switcher */}
+                <div className="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+                  <span className="text-[11px] text-slate-400 font-semibold">Status:</span>
+                  <select
+                    value={selectedProject.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as ProjectStatus;
+                      updateProjectStatus(selectedProject.id, newStatus);
+                      reloadProjects();
+                    }}
+                    className="text-xs font-semibold px-2.5 py-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:outline-hidden"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Ready / Done</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Tabs: Script | Visuals | Media | Thumbnails | Captions | Notes */}
+              {/* Tabs: Script | Visuals | Media | Exports | Thumbnails | Captions | Notes */}
               <div className="flex items-center gap-1.5 mt-4 border-b border-slate-100 pb-2 overflow-x-auto text-nowrap">
                 <button
                   onClick={() => setActiveProjectTab('script')}
@@ -412,7 +721,7 @@ export const ProjectsPage: React.FC = () => {
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  Script Text
+                  Script ({selectedProject.scriptVersions?.length || (selectedProject.scriptSnippet ? 1 : 0)})
                 </button>
                 <button
                   onClick={() => setActiveProjectTab('visuals')}
@@ -435,6 +744,16 @@ export const ProjectsPage: React.FC = () => {
                   Media & Takes ({selectedProject.media?.length || 0})
                 </button>
                 <button
+                  onClick={() => setActiveProjectTab('exports')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                    activeProjectTab === 'exports'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  Exports & Videos ({selectedProject.exports?.length || 0})
+                </button>
+                <button
                   onClick={() => setActiveProjectTab('thumbnails')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
                     activeProjectTab === 'thumbnails'
@@ -452,7 +771,7 @@ export const ProjectsPage: React.FC = () => {
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  Captions & Social ({selectedProject.captions ? '1' : '0'})
+                  Captions ({selectedProject.captions ? '1' : '0'})
                 </button>
                 <button
                   onClick={() => setActiveProjectTab('notes')}
@@ -470,25 +789,56 @@ export const ProjectsPage: React.FC = () => {
               <div className="mt-4 max-h-60 overflow-y-auto pr-1">
                 {activeProjectTab === 'script' && (
                   <div className="space-y-3">
-                    {/* Version switcher */}
-                    {selectedProject.scriptVersions && selectedProject.scriptVersions.length > 1 && (
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <span className="text-[11px] text-slate-400 font-semibold">Versions:</span>
-                        {selectedProject.scriptVersions.map((v, i) => (
+                    {/* Version switcher & restore action */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      {selectedProject.scriptVersions && selectedProject.scriptVersions.length > 1 ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-slate-400 font-semibold">Versions:</span>
+                          {selectedProject.scriptVersions.map((v, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setSelectedVersionIndex(i)}
+                              className={`px-2 py-0.5 rounded text-[11px] font-mono ${
+                                selectedVersionIndex === i
+                                  ? 'bg-blue-600 text-white font-bold'
+                                  : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              v{v.version}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 font-semibold">Current Script</span>
+                      )}
+
+                      <div className="flex items-center gap-1.5">
+                        {selectedProject.scriptVersions && selectedProject.scriptVersions.length > 1 && (
                           <button
-                            key={i}
-                            onClick={() => setSelectedVersionIndex(i)}
-                            className={`px-2 py-0.5 rounded text-[11px] font-mono ${
-                              selectedVersionIndex === i
-                                ? 'bg-blue-600 text-white font-bold'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}
+                            onClick={() => {
+                              const targetVer = selectedProject.scriptVersions![selectedVersionIndex];
+                              restoreProjectScriptVersion(selectedProject.id, targetVer.version);
+                              reloadProjects();
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
                           >
-                            v{v.version}
+                            <CheckCircle2 className="w-3 h-3" />
+                            <span>Restore v{selectedProject.scriptVersions[selectedVersionIndex].version}</span>
                           </button>
-                        ))}
+                        )}
+                        <button
+                          onClick={() => {
+                            const proj = selectedProject;
+                            setSelectedProject(null);
+                            handleEditInStudio(proj);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <Edit className="w-3 h-3" />
+                          <span>Edit in Studio</span>
+                        </button>
                       </div>
-                    )}
+                    </div>
 
                     {selectedProject.scriptVersions && selectedProject.scriptVersions[selectedVersionIndex] ? (
                       <div className="space-y-2 text-xs">
@@ -607,6 +957,139 @@ export const ProjectsPage: React.FC = () => {
                           className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors"
                         >
                           Launch Teleprompter & Record
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeProjectTab === 'exports' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700">
+                        Finished Video Exports ({selectedProject.exports?.length || 0})
+                      </span>
+                      <button
+                        onClick={() => {
+                          const proj = selectedProject;
+                          setSelectedProject(null);
+                          navigate('/user/video-studio', { state: { projectId: proj.id } });
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-colors"
+                      >
+                        <Film className="w-3.5 h-3.5" />
+                        <span>New Export in Studio</span>
+                      </button>
+                    </div>
+
+                    {selectedProject.exports && selectedProject.exports.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedProject.exports.map((exp) => (
+                          <div
+                            key={exp.id}
+                            className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 flex flex-col space-y-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-14 h-14 rounded-xl bg-slate-900 flex items-center justify-center text-white shrink-0 overflow-hidden relative">
+                                  <Film className="w-6 h-6 text-slate-400" />
+                                  <span className="absolute bottom-1 right-1 px-1 py-0.2 rounded bg-black/80 text-[8px] font-mono">
+                                    {exp.quality}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-slate-900 text-xs">{exp.title}</h4>
+                                  <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                    <span className="px-1.5 py-0.5 rounded bg-blue-100/70 text-blue-800 font-bold">{exp.aspectRatio}</span>
+                                    <span>·</span>
+                                    <span>{exp.format.toUpperCase()}</span>
+                                    <span>·</span>
+                                    <span>{exp.fileSize}</span>
+                                    <span>·</span>
+                                    <span>{new Date(exp.exportedAt).toLocaleDateString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <a
+                                href={exp.downloadUrl}
+                                download={`${exp.title.replace(/\s+/g, '_')}_${exp.quality}.mp4`}
+                                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Download</span>
+                              </a>
+                            </div>
+
+                            {/* Social Share Intents Bar */}
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                                One-Click Publish & Share
+                              </span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                  onClick={() => handleShareIntent('instagram', exp)}
+                                  className="px-2.5 py-1 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <Instagram className="w-3 h-3 text-pink-600" />
+                                  <span>Instagram</span>
+                                </button>
+                                <button
+                                  onClick={() => handleShareIntent('youtube', exp)}
+                                  className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <Youtube className="w-3 h-3 text-red-600" />
+                                  <span>Shorts</span>
+                                </button>
+                                <button
+                                  onClick={() => handleShareIntent('linkedin', exp)}
+                                  className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <Linkedin className="w-3 h-3 text-blue-600" />
+                                  <span>LinkedIn</span>
+                                </button>
+                                <button
+                                  onClick={() => handleShareIntent('facebook', exp)}
+                                  className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <Facebook className="w-3 h-3 text-indigo-600" />
+                                  <span>Facebook</span>
+                                </button>
+                                <button
+                                  onClick={() => handleShareIntent('whatsapp', exp)}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <Send className="w-3 h-3 text-emerald-600" />
+                                  <span>WhatsApp</span>
+                                </button>
+                                <button
+                                  onClick={() => handleShareIntent('copy', exp)}
+                                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 transition-colors"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy Link</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <Film className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
+                        <p className="text-xs font-semibold text-slate-700">No finalized exports yet</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Trim your recordings, configure vertical 9:16 aspect ratio, and render finished MP4 in Video Studio.
+                        </p>
+                        <button
+                          onClick={() => {
+                            const proj = selectedProject;
+                            setSelectedProject(null);
+                            navigate('/user/video-studio', { state: { projectId: proj.id } });
+                          }}
+                          className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-xs"
+                        >
+                          Open in Video Studio
                         </button>
                       </div>
                     )}
@@ -938,6 +1421,89 @@ export const ProjectsPage: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Rename Project Modal */}
+      {renameModalProject && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700">
+                  <Edit className="w-4 h-4" />
+                </span>
+                <h3 className="text-base font-bold text-slate-900">
+                  {language === 'en' ? 'Rename Project' : 'प्रोजेक्ट का नाम बदलें'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setRenameModalProject(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1">
+                  {language === 'en' ? 'Project Title (English / Primary)' : 'प्रोजेक्ट का शीर्षक'}
+                </label>
+                <input
+                  type="text"
+                  value={renameTitle}
+                  onChange={(e) => setRenameTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs sm:text-sm font-semibold focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter project title..."
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-600 block mb-1">
+                  {language === 'en' ? 'Hindi Title (Optional)' : 'हिंदी शीर्षक (वैकल्पिक)'}
+                </label>
+                <input
+                  type="text"
+                  value={renameTitleHi}
+                  onChange={(e) => setRenameTitleHi(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs sm:text-sm font-semibold focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  placeholder="हिंदी शीर्षक लिखें..."
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setRenameModalProject(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {language === 'en' ? 'Cancel' : 'रद्द करें'}
+              </button>
+              <button
+                onClick={() => {
+                  if (renameTitle.trim()) {
+                    renameProject(renameModalProject.id, renameTitle.trim(), renameTitleHi.trim() || undefined);
+                    setRenameModalProject(null);
+                    reloadProjects();
+                  }
+                }}
+                disabled={!renameTitle.trim()}
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs disabled:opacity-50"
+              >
+                {language === 'en' ? 'Save Changes' : 'सुरक्षित करें'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification for Social Share / Copy Link */}
+      {shareToast && (
+        <div className="fixed bottom-20 right-6 z-50 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{shareToast}</span>
         </div>
       )}
     </div>
