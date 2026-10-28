@@ -518,6 +518,9 @@ export const VideoStudioPage: React.FC = () => {
       };
 
       recorder.onstop = () => {
+        try {
+          canvasStream.getTracks().forEach((track) => track.stop());
+        } catch (_) {}
         const blob = new Blob(chunks, { type: selectedMime });
         const finalUrl = URL.createObjectURL(blob);
         const estSize = `${(blob.size / (1024 * 1024)).toFixed(1)} MB`;

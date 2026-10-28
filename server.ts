@@ -9,7 +9,24 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '5mb' }));
+
+// Input sanitization and length clamping utilities
+function sanitizeString(val: unknown, maxLen = 500, fallback = ''): string {
+  if (typeof val !== 'string') return fallback;
+  return val.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, maxLen);
+}
+
+function clampNumber(val: unknown, min = 1, max = 600, fallback = 45): number {
+  if (typeof val !== 'number' || isNaN(val)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(val)));
+}
+
+const REQUEST_TIMEOUT_MS = 15000;
+
+function createTimeoutPromise(): Promise<{ isTimeout: true }> {
+  return new Promise((resolve) => setTimeout(() => resolve({ isTimeout: true }), REQUEST_TIMEOUT_MS));
+}
 
 // Health and AI status check
 app.get('/api/health', (_req, res) => {
@@ -25,13 +42,6 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/generate-script', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
-    return res.json({
-      isLiveAi: false,
-      message: 'Gemini API key not configured on server. Using client domain templates.',
-    });
-  }
-
   const {
     topic,
     durationSeconds = 45,
@@ -40,17 +50,31 @@ app.post('/api/generate-script', async (req, res) => {
     tone = 'Engaging',
     businessProfile,
     additionalInstructions = '',
-  } = req.body;
+  } = req.body || {};
+
+  const cleanTopic = sanitizeString(topic, 300, 'Engaging Content Creation');
+  const cleanInstructions = sanitizeString(additionalInstructions, 500);
+  const cleanTone = sanitizeString(tone, 80, 'Engaging');
+  const cleanLang = ['hi', 'hinglish', 'en'].includes(language) ? language : 'en';
+  const cleanDuration = clampNumber(durationSeconds, 15, 300, 45);
+  const cleanIndustry = sanitizeString(businessProfile?.name, 100, 'General Creator');
+
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
+    return res.json({
+      isLiveAi: false,
+      message: 'Gemini API key not configured on server. Using client domain templates.',
+    });
+  }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `You are Scripter AI, a viral video scriptwriting engine tailored for content creators.
-Topic: ${topic}
-Video Duration: ${durationSeconds} seconds (${videoType})
-Language: ${language === 'hi' ? 'Hindi (Devanagari script)' : language === 'hinglish' ? 'Hinglish (Hindi written in English alphabet)' : 'English'}
-Tone: ${tone}
-Industry: ${businessProfile?.name || 'General Creator'}
-Additional Instructions: ${additionalInstructions || 'None'}
+Topic: ${cleanTopic}
+Video Duration: ${cleanDuration} seconds (${sanitizeString(videoType, 30, 'short')})
+Language: ${cleanLang === 'hi' ? 'Hindi (Devanagari script)' : cleanLang === 'hinglish' ? 'Hinglish (Hindi written in English alphabet)' : 'English'}
+Tone: ${cleanTone}
+Industry: ${cleanIndustry}
+Additional Instructions: ${cleanInstructions || 'None'}
 
 Generate a structured script with:
 1. Hook (captures attention in 0-5 seconds)
@@ -64,7 +88,7 @@ Format your response as a valid JSON object matching:
   "voiceTips": ["tip 1", "tip 2", "tip 3"]
 }`;
 
-    const response = await ai.models.generateContent({
+    const generatePromise = ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -72,6 +96,16 @@ Format your response as a valid JSON object matching:
       },
     });
 
+    const raceResult = await Promise.race([generatePromise, createTimeoutPromise()]);
+    if ('isTimeout' in raceResult) {
+      console.warn('Gemini generateContent timed out after 15s');
+      return res.json({
+        isLiveAi: false,
+        message: 'AI response timed out. Seamlessly using domain template.',
+      });
+    }
+
+    const response = raceResult;
     const text = response.text?.trim() || '{}';
     const parsed = JSON.parse(text);
 
@@ -87,7 +121,7 @@ Format your response as a valid JSON object matching:
     console.warn('Server Gemini generateContent error:', error?.message);
     return res.status(200).json({
       isLiveAi: false,
-      error: error?.message || 'Server AI generation error',
+      error: 'Server AI generation unavailable. Using domain template.',
     });
   }
 });
@@ -96,13 +130,6 @@ Format your response as a valid JSON object matching:
 app.post('/api/generate-captions', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
-    return res.json({
-      isLiveAi: false,
-      message: 'Gemini API key not configured on server. Using client domain templates.',
-    });
-  }
-
   const {
     topic,
     platform = 'instagram',
@@ -110,17 +137,31 @@ app.post('/api/generate-captions', async (req, res) => {
     businessProfile,
     tone = 'Engaging & Viral',
     scriptSnippet = '',
-  } = req.body;
+  } = req.body || {};
+
+  const cleanTopic = sanitizeString(topic, 300, 'Content Strategy');
+  const cleanSnippet = sanitizeString(scriptSnippet, 1000);
+  const cleanTone = sanitizeString(tone, 80, 'Engaging & Viral');
+  const cleanPlatform = ['instagram', 'youtube', 'facebook', 'linkedin', 'twitter'].includes(platform) ? platform : 'instagram';
+  const cleanLang = ['hi', 'hinglish', 'en'].includes(language) ? language : 'en';
+  const cleanIndustry = sanitizeString(businessProfile?.name, 100, 'Creator');
+
+  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
+    return res.json({
+      isLiveAi: false,
+      message: 'Gemini API key not configured on server. Using client domain templates.',
+    });
+  }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `You are a social media copywriter specialized in viral short-form video captions.
-Topic: ${topic}
-Platform: ${platform}
-Language: ${language === 'hi' ? 'Hindi (Devanagari script)' : language === 'hinglish' ? 'Hinglish' : 'English'}
-Industry: ${businessProfile?.name || 'Creator'}
-Tone: ${tone}
-Script Context: ${scriptSnippet || 'None'}
+Topic: ${cleanTopic}
+Platform: ${cleanPlatform}
+Language: ${cleanLang === 'hi' ? 'Hindi (Devanagari script)' : cleanLang === 'hinglish' ? 'Hinglish' : 'English'}
+Industry: ${cleanIndustry}
+Tone: ${cleanTone}
+Script Context: ${cleanSnippet || 'None'}
 
 Generate a platform-optimized social media post with:
 1. "caption": full formatted caption text with emojis and clean line breaks
@@ -136,7 +177,7 @@ Respond ONLY with valid JSON matching:
   "shortDescription": "string"
 }`;
 
-    const response = await ai.models.generateContent({
+    const generatePromise = ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -144,6 +185,16 @@ Respond ONLY with valid JSON matching:
       },
     });
 
+    const raceResult = await Promise.race([generatePromise, createTimeoutPromise()]);
+    if ('isTimeout' in raceResult) {
+      console.warn('Gemini generate-captions timed out after 15s');
+      return res.json({
+        isLiveAi: false,
+        message: 'AI captions response timed out. Seamlessly using domain template.',
+      });
+    }
+
+    const response = raceResult;
     const text = response.text?.trim() || '{}';
     const parsed = JSON.parse(text);
 
@@ -159,7 +210,7 @@ Respond ONLY with valid JSON matching:
     console.warn('Server Gemini generate-captions error:', error?.message);
     return res.status(200).json({
       isLiveAi: false,
-      error: error?.message || 'Server AI generation error',
+      error: 'Server AI caption generation unavailable. Using domain template.',
     });
   }
 });
@@ -168,6 +219,17 @@ Respond ONLY with valid JSON matching:
 app.post('/api/generate-research', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 
+  const {
+    topic,
+    industry = 'General',
+    language = 'hi',
+    businessProfile,
+  } = req.body || {};
+
+  const cleanTopic = sanitizeString(topic, 300, 'Trending Topics');
+  const cleanIndustry = sanitizeString(industry || businessProfile?.name, 100, 'General');
+  const cleanLang = language === 'hi' ? 'hi' : 'en';
+
   if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
     return res.json({
       isLiveAi: false,
@@ -175,19 +237,12 @@ app.post('/api/generate-research', async (req, res) => {
     });
   }
 
-  const {
-    topic,
-    industry = 'General',
-    language = 'hi',
-    businessProfile,
-  } = req.body;
-
   try {
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `You are Scripter AI Research Intelligence, an expert fact-checker, researcher, and trend analyst for short-form video creators.
-Topic: ${topic}
-Industry: ${industry} (${businessProfile?.name || 'Creator'})
-Language: ${language === 'hi' ? 'Hindi (Devanagari script)' : 'English'}
+Topic: ${cleanTopic}
+Industry: ${cleanIndustry}
+Language: ${cleanLang === 'hi' ? 'Hindi (Devanagari script)' : 'English'}
 
 Provide an objective, structured research brief in valid JSON:
 {
@@ -208,7 +263,7 @@ Provide an objective, structured research brief in valid JSON:
   ]
 }`;
 
-    const response = await ai.models.generateContent({
+    const generatePromise = ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -216,6 +271,16 @@ Provide an objective, structured research brief in valid JSON:
       },
     });
 
+    const raceResult = await Promise.race([generatePromise, createTimeoutPromise()]);
+    if ('isTimeout' in raceResult) {
+      console.warn('Gemini generate-research timed out after 15s');
+      return res.json({
+        isLiveAi: false,
+        message: 'Research generation timed out. Using domain research engine.',
+      });
+    }
+
+    const response = raceResult;
     const text = response.text?.trim() || '{}';
     const parsed = JSON.parse(text);
 
@@ -228,7 +293,7 @@ Provide an objective, structured research brief in valid JSON:
     console.warn('Server Gemini generate-research error:', error?.message);
     return res.status(200).json({
       isLiveAi: false,
-      error: error?.message || 'Server research generation error',
+      error: 'Server research generation unavailable. Using domain template.',
     });
   }
 });
@@ -242,9 +307,12 @@ app.post('/api/search-news', async (req, res) => {
     industry = 'General',
     language = 'en',
     query = '',
-  } = req.body;
+  } = req.body || {};
 
-  const searchQuery = query || topic || 'Latest digital creator and technology trends';
+  const cleanQuery = sanitizeString(query || topic, 300, 'Latest digital creator and technology trends');
+  const cleanIndustry = sanitizeString(industry, 100, 'General');
+  const cleanLang = ['hi', 'hinglish', 'en'].includes(language) ? language : 'en';
+  const searchQuery = cleanQuery;
 
   if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
     return res.json({
@@ -252,7 +320,7 @@ app.post('/api/search-news', async (req, res) => {
       message: 'Gemini API key not configured. Using domain news intelligence.',
       searchQuery,
       headline: `Latest Industry Insights: ${searchQuery}`,
-      summary: `Current trending developments in ${industry} show strong audience interest in practical how-tos, breaking updates, and cost-benefit breakdowns.`,
+      summary: `Current trending developments in ${cleanIndustry} show strong audience interest in practical how-tos, breaking updates, and cost-benefit breakdowns.`,
       keyDevelopments: [
         `High engagement observed for rapid 30-60s explainers addressing ${searchQuery}.`,
         'Audience retention peaks when hook mentions tangible outcomes in the first 3 seconds.',
@@ -266,7 +334,7 @@ app.post('/api/search-news', async (req, res) => {
       ],
       recommendedHooks: [
         `Stop scrolling: did you hear what just happened with ${searchQuery}?`,
-        `If you work in ${industry}, you need to know this immediately.`,
+        `If you work in ${cleanIndustry}, you need to know this immediately.`,
         `Here is the 30-second breakdown that nobody else is talking about.`,
       ],
       sources: [
@@ -281,8 +349,8 @@ app.post('/api/search-news', async (req, res) => {
 
     const prompt = `You are a real-time investigative researcher and viral video strategist.
 Query / Topic: "${searchQuery}"
-Industry: ${industry}
-Language: ${language === 'hi' ? 'Hindi (Devanagari script)' : language === 'hinglish' ? 'Hinglish (Hindi words in English alphabet)' : 'English'}
+Industry: ${cleanIndustry}
+Language: ${cleanLang === 'hi' ? 'Hindi (Devanagari script)' : cleanLang === 'hinglish' ? 'Hinglish (Hindi words in English alphabet)' : 'English'}
 
 Conduct a real-time web search using the Google Search tool to find current news, recent announcements, statistics, and public sentiment on this subject.
 Provide your response structured clearly with:
@@ -291,7 +359,7 @@ Provide your response structured clearly with:
 - 4 High-impact content angles for YouTube Shorts / Reels creators
 - 3 Viral video opening hooks`;
 
-    const response = await ai.models.generateContent({
+    const generatePromise = ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -299,6 +367,28 @@ Provide your response structured clearly with:
       },
     });
 
+    const raceResult = await Promise.race([generatePromise, createTimeoutPromise()]);
+    if ('isTimeout' in raceResult) {
+      console.warn('Gemini search-news timed out after 15s');
+      return res.json({
+        isLiveAi: false,
+        message: 'News search timed out. Using domain news intelligence.',
+        searchQuery,
+        headline: `Current Updates on ${searchQuery}`,
+        summary: `Explore trending perspectives on ${searchQuery} to craft high-retention video hooks.`,
+        keyDevelopments: [
+          'Audiences respond strongly to verified figures and fast fact-checking.',
+          'Video hooks citing a recent event retain 42% more viewers beyond 5 seconds.',
+        ],
+        creatorAngles: ['Breaking Insight', 'Contrarian Take', 'Practical Guide'],
+        recommendedHooks: [`Wait, did you hear about ${searchQuery}?`],
+        sources: [
+          { title: 'Google News Search', url: `https://news.google.com/search?q=${encodeURIComponent(searchQuery)}` },
+        ],
+      });
+    }
+
+    const response = raceResult;
     const text = response.text?.trim() || '';
 
     // Extract grounding metadata chunks and search queries
@@ -327,9 +417,9 @@ Provide your response structured clearly with:
     });
   } catch (error: any) {
     console.warn('Server Google Search grounding error:', error?.message);
-    return res.json({
+    return res.status(200).json({
       isLiveAi: false,
-      error: error?.message || 'Search grounding error',
+      error: 'Server news grounding unavailable. Using domain template.',
       searchQuery,
       headline: `Current Updates on ${searchQuery}`,
       summary: `Explore trending perspectives on ${searchQuery} to craft high-retention video hooks.`,

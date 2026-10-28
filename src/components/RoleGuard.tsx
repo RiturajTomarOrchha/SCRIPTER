@@ -78,8 +78,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ requiredRole, children }) 
     );
   }
 
-  // Active role check (effective role from Auth or Dev Mode switcher)
-  const effectiveRole = isDevMode ? role : userProfile?.role || role;
+  // Active role check (effective role strictly governed by verified Auth profile in production, or Dev Mode switcher)
+  const effectiveRole = isDevMode ? role : (userProfile?.role || 'user');
 
   // Master Admin has unrestricted access to all control room areas
   if (effectiveRole === 'master-admin') {

@@ -73,7 +73,18 @@ const RoleContext = createContext<RoleContextType | undefined>(undefined);
 export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const [role, setRoleState] = useState<UserRole>('user');
-  const [isDevMode, setIsDevMode] = useState<boolean>(true);
+  const [isDevMode, setIsDevModeState] = useState<boolean>(() => {
+    return import.meta.env.DEV || localStorage.getItem('scripter_dev_mode') === 'true';
+  });
+
+  const setIsDevMode = (active: boolean) => {
+    setIsDevModeState(active);
+    try {
+      localStorage.setItem('scripter_dev_mode', String(active));
+    } catch (e) {
+      // ignore
+    }
+  };
 
   // Persistent profiles state
   const [businessProfiles, setBusinessProfiles] = useState<BusinessProfile[]>(() => {
