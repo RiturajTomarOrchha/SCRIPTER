@@ -34,7 +34,7 @@ import {
 
 export const ThumbnailStudioPage: React.FC = () => {
   const { language } = useLanguage();
-  const { activeBusinessProfile } = useRole();
+  const { activeBusinessProfile, deductCredits, creditsInfo } = useRole();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -291,6 +291,12 @@ export const ThumbnailStudioPage: React.FC = () => {
 
   // Generate AI Social Captions (Feature E)
   const handleGenerateCaptions = async () => {
+    if (creditsInfo.totalAvailable < 5) {
+      setToastMessage(language === 'en' ? 'Insufficient AI Credits (5 required). Please top-up.' : 'अपर्याप्त क्रेडिट्स (5 आवश्यक)। कृपया टॉप-अप करें।');
+      setTimeout(() => setToastMessage(null), 4000);
+      return;
+    }
+
     setIsGeneratingCaptions(true);
     try {
       const result = await generateSocialCaptions({
@@ -306,6 +312,9 @@ export const ThumbnailStudioPage: React.FC = () => {
       setGeneratedCta(result.callToAction);
       setIsGeneratingCaptions(false);
       setActiveTab('captions');
+      deductCredits(5, 'caption_generation', `AI Captions: "${headline || 'Social Post'}"`, {
+        businessProfileName: activeBusinessProfile.name,
+      });
       setToastMessage(result.providerNote);
       setTimeout(() => setToastMessage(null), 4000);
     } catch (e) {

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useRole } from '../../context/RoleContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { generateScriptWithAi, GeneratedScriptResult, isGeminiConfigured } from '../../services/aiService';
-import { saveProject } from '../../services/storage';
+import { saveProject, addNotification } from '../../services/storage';
 import { ScriptScene, ScriptVersion } from '../../types';
 import {
   FileText,
@@ -27,13 +27,17 @@ import {
   Briefcase,
   Eye,
   Save,
+  Zap,
+  ShoppingBag,
+  X
 } from 'lucide-react';
 
 export const ScriptStudioPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { activeBusinessProfile, useCredits, creditsUsed, creditsTotal } = useRole();
+  const { activeBusinessProfile, useCredits, deductCredits, creditsInfo, creditsUsed, creditsTotal } = useRole();
   const { language } = useLanguage();
+  const [isInsufficientCreditModalOpen, setIsInsufficientCreditModalOpen] = useState(false);
 
   // Location state parameters (passed from Ideas page if clicked)
   const navState = (location.state as {
@@ -94,6 +98,12 @@ export const ScriptStudioPage: React.FC = () => {
   const handleGenerate = async () => {
     if (!topic.trim()) return;
 
+    // Check credits before executing
+    if (creditsInfo.totalAvailable < 10) {
+      setIsInsufficientCreditModalOpen(true);
+      return;
+    }
+
     setStudioStage('generating');
     setGeneratingProgress(15);
 
@@ -130,6 +140,19 @@ export const ScriptStudioPage: React.FC = () => {
         setScenes(result.scenes.map((s) => ({ ...s, selected: true })));
         setStudioStage('result');
         useCredits(10);
+        deductCredits(10, 'script_generation', `AI Script: "${topic}"`, {
+          businessProfileName: activeBusinessProfile.name,
+        });
+        addNotification({
+          type: 'script_ready',
+          title: language === 'en' ? 'Script Generated Successfully' : 'स्क्रिप्ट तैयार हो गई',
+          titleHi: 'स्क्रिप्ट तैयार हो गई',
+          message: language === 'en' ? `Your YouTube/Reel script for "${topic}" is ready for recording.` : `"${topic}" के लिए आपकी स्क्रिप्ट तैयार है।`,
+          messageHi: `"${topic}" के लिए आपकी स्क्रिप्ट तैयार है।`,
+          actionUrl: '/user/script-studio',
+          actionLabel: language === 'en' ? 'View Script →' : 'स्क्रिप्ट देखें →',
+          actionLabelHi: 'स्क्रिप्ट देखें →'
+        });
       }, 400);
     } catch (err) {
       clearInterval(interval);
@@ -880,6 +903,60 @@ export const ScriptStudioPage: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Insufficient Credits Modal */}
+      {isInsufficientCreditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative text-center">
+            <button
+              onClick={() => setIsInsufficientCreditModalOpen(false)}
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3">
+              <Zap className="w-7 h-7 fill-amber-500 text-amber-600" />
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900">
+              {language === 'en' ? 'Insufficient AI Credits' : 'क्रेडिट समाप्त हो गए हैं'}
+            </h3>
+            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+              {language === 'en'
+                ? `Generating a full YouTube/Reel script requires 10 AI credits. You currently have ${creditsInfo.totalAvailable} credits remaining.`
+                : `स्क्रिप्ट जेनरेशन के लिए 10 क्रेडिट आवश्यक हैं। आपके पास केवल ${creditsInfo.totalAvailable} क्रेडिट शेष हैं।`}
+            </p>
+
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 mt-4 text-xs flex justify-between">
+              <span className="text-slate-500">Operation Cost:</span>
+              <span className="font-bold text-slate-800">10 Credits</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setIsInsufficientCreditModalOpen(false);
+                  navigate('/user/credits');
+                }}
+                className="py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>{language === 'en' ? 'Buy Top-up' : 'क्रेडिट खरीदें'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsInsufficientCreditModalOpen(false);
+                  navigate('/user/subscription');
+                }}
+                className="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+              >
+                {language === 'en' ? 'Upgrade Plan' : 'प्लान अपग्रेड'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,41 @@
-import { BusinessProfile, ContentIdea, Project, BrandKit, ContentTemplate, GraphicThumbnail, SocialCaptionSet, SocialExportPreset } from '../types';
-import { DEMO_BUSINESS_PROFILES, DEMO_CONTENT_IDEAS, DEMO_PROJECTS, DEMO_BRAND_KITS, DEMO_TEMPLATES, SOCIAL_EXPORT_PRESETS } from '../data/mockData';
+import {
+  BusinessProfile,
+  ContentIdea,
+  Project,
+  BrandKit,
+  ContentTemplate,
+  GraphicThumbnail,
+  SocialCaptionSet,
+  SocialExportPreset,
+  AppNotification,
+  CreditLedgerEntry,
+  CreditBalanceInfo,
+  CreditOperationType,
+  UserSubscription,
+  SubscriptionPlan,
+  PaymentTransaction,
+  InvoiceItem,
+  UserProfile,
+  UserPreferences,
+  PlanTier,
+} from '../types';
+import {
+  DEMO_BUSINESS_PROFILES,
+  DEMO_CONTENT_IDEAS,
+  DEMO_PROJECTS,
+  DEMO_BRAND_KITS,
+  DEMO_TEMPLATES,
+  SOCIAL_EXPORT_PRESETS,
+  DEMO_NOTIFICATIONS,
+  DEMO_SUBSCRIPTION_PLANS,
+  DEMO_TOPUP_PACKAGES,
+  DEMO_CREDIT_LEDGER,
+  DEMO_PAYMENT_TRANSACTIONS,
+  DEMO_INVOICES,
+  DEFAULT_USER_PREFERENCES,
+  INITIAL_USER_SUBSCRIPTION,
+  INITIAL_USER_PROFILE,
+} from '../data/mockData';
 
 const STORAGE_KEYS = {
   PROJECTS: 'scripter_projects_v2',
@@ -10,6 +46,15 @@ const STORAGE_KEYS = {
   BRAND_KITS: 'scripter_brand_kits_v1',
   TEMPLATES: 'scripter_templates_v1',
   THUMBNAILS: 'scripter_thumbnails_v1',
+  NOTIFICATIONS: 'scripter_notifications_v1',
+  CREDIT_LEDGER: 'scripter_credit_ledger_v1',
+  USER_SUBSCRIPTION: 'scripter_user_subscription_v1',
+  PURCHASED_CREDITS: 'scripter_purchased_credits_v1',
+  CREDITS_USED: 'scripter_credits_used',
+  PAYMENT_TRANSACTIONS: 'scripter_payment_transactions_v1',
+  INVOICES: 'scripter_invoices_v1',
+  USER_PROFILE: 'scripter_user_profile_v1',
+  USER_PREFERENCES: 'scripter_user_preferences_v1',
 };
 
 // Safe localStorage helper
@@ -530,4 +575,451 @@ export const saveProjectCaptions = (
  */
 export const getExportPresets = (): SocialExportPreset[] => {
   return SOCIAL_EXPORT_PRESETS;
+};
+
+/**
+ * ============================================================================
+ * Phase 5: Notifications Center API
+ * ============================================================================
+ */
+export const getStoredNotifications = (): AppNotification[] => {
+  const stored = getFromStorage<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, []);
+  if (stored.length === 0) {
+    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, DEMO_NOTIFICATIONS);
+    return DEMO_NOTIFICATIONS;
+  }
+  return stored;
+};
+
+export const markNotificationRead = (id: string): AppNotification[] => {
+  const notifs = getStoredNotifications();
+  const updated = notifs.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updated);
+  return updated;
+};
+
+export const markAllNotificationsRead = (): AppNotification[] => {
+  const notifs = getStoredNotifications();
+  const updated = notifs.map((n) => ({ ...n, isRead: true }));
+  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updated);
+  return updated;
+};
+
+export const addNotification = (
+  notif: Omit<AppNotification, 'id' | 'createdAt' | 'timeAgo' | 'isRead'>
+): AppNotification => {
+  const notifs = getStoredNotifications();
+  const newNotif: AppNotification = {
+    ...notif,
+    id: `notif_${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    timeAgo: 'Just now',
+    isRead: false,
+  };
+  const updated = [newNotif, ...notifs];
+  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updated);
+  return newNotif;
+};
+
+export const deleteNotification = (id: string): AppNotification[] => {
+  const notifs = getStoredNotifications();
+  const updated = notifs.filter((n) => n.id !== id);
+  saveToStorage(STORAGE_KEYS.NOTIFICATIONS, updated);
+  return updated;
+};
+
+/**
+ * ============================================================================
+ * Phase 5: AI Credits & Auditable Ledger API
+ * ============================================================================
+ */
+export const getCreditBalanceInfo = (): CreditBalanceInfo => {
+  const user = getUserProfile();
+  const sub = getUserSubscription();
+
+  const planAllowances: Record<PlanTier, number> = {
+    free: 100,
+    pro: 1000,
+    business: 2500,
+  };
+
+  const allowance = planAllowances[sub.planId] || 1000;
+  const purchased = getFromStorage<number>(STORAGE_KEYS.PURCHASED_CREDITS, user.purchasedCredits || 200);
+  const used = getFromStorage<number>(STORAGE_KEYS.CREDITS_USED, user.creditsUsed || 850);
+  const total = allowance + purchased;
+  const remaining = Math.max(0, total - used);
+  const remainingMonthly = Math.max(0, allowance - used);
+  const recentLedger = getCreditLedger();
+
+  return {
+    monthlyAllowance: allowance,
+    purchasedCredits: purchased,
+    totalAvailable: remaining,
+    creditsUsed: used,
+    remainingCredits: remaining,
+    monthlyUsed: used,
+    remainingMonthly: remainingMonthly,
+    resetDate: '1 Jan 2025',
+    resetDaysLeft: 12,
+    daysUntilReset: 12,
+    recentLedger,
+  };
+};
+
+export const getCreditLedger = (): CreditLedgerEntry[] => {
+  const stored = getFromStorage<CreditLedgerEntry[]>(STORAGE_KEYS.CREDIT_LEDGER, []);
+  if (stored.length === 0) {
+    saveToStorage(STORAGE_KEYS.CREDIT_LEDGER, DEMO_CREDIT_LEDGER);
+    return DEMO_CREDIT_LEDGER;
+  }
+  return stored;
+};
+
+export const recordCreditUsage = (
+  amount: number, // positive number representing cost (e.g. 10)
+  operationType: CreditOperationType,
+  description: string,
+  projectId?: string | { businessProfileName?: string },
+  projectTitle?: string
+): { success: boolean; remaining: number; error?: string } => {
+  const balance = getCreditBalanceInfo();
+
+  if (balance.remainingCredits < amount) {
+    return {
+      success: false,
+      remaining: balance.remainingCredits,
+      error: `Insufficient AI credits. This operation requires ${amount} credits, but you only have ${balance.remainingCredits} credits remaining.`,
+    };
+  }
+
+  const newUsed = balance.creditsUsed + amount;
+  saveToStorage(STORAGE_KEYS.CREDITS_USED, newUsed);
+
+  const newRemaining = balance.totalAvailable - amount;
+
+  const resolvedProjectId = typeof projectId === 'string' ? projectId : undefined;
+  const resolvedProfileName = typeof projectId === 'object' ? projectId?.businessProfileName : undefined;
+
+  const ledger = getCreditLedger();
+  const newEntry: CreditLedgerEntry = {
+    id: `led_${Date.now()}`,
+    operationType,
+    description,
+    amount: -amount,
+    balanceAfter: newRemaining,
+    timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    timeAgo: 'Just now',
+    projectId: resolvedProjectId,
+    projectTitle,
+    businessProfileName: resolvedProfileName,
+  };
+
+  saveToStorage(STORAGE_KEYS.CREDIT_LEDGER, [newEntry, ...ledger]);
+
+  // If remaining credits drop below 200, dispatch a low-balance notification
+  if (newRemaining <= 200 && balance.remainingCredits > 200) {
+    addNotification({
+      type: 'credits',
+      title: 'Low AI Credits Alert',
+      titleHi: 'कम AI क्रेडिट अलर्ट',
+      message: `You have only ${newRemaining} AI credits left in your monthly balance. Top-up credits or upgrade to maintain uninterrupted generation.`,
+      messageHi: `आपके पास केवल ${newRemaining} AI क्रेडिट बचे हैं।`,
+      actionUrl: '/user/credits',
+      actionLabel: 'Top-Up Credits →',
+      actionLabelHi: 'क्रेडिट खरीदें →',
+      isImportant: true,
+    });
+  }
+
+  return {
+    success: true,
+    remaining: newRemaining,
+  };
+};
+
+export const addPurchasedCredits = (credits: number, priceInr: number, orderId: string): CreditBalanceInfo => {
+  const balance = getCreditBalanceInfo();
+  const nextPurchased = balance.purchasedCredits + credits;
+  saveToStorage(STORAGE_KEYS.PURCHASED_CREDITS, nextPurchased);
+
+  const ledger = getCreditLedger();
+  const newEntry: CreditLedgerEntry = {
+    id: `led_${Date.now()}`,
+    operationType: 'topup_purchase',
+    description: `Purchased Top-Up Pack (+${credits} Credits)`,
+    descriptionHi: `क्रेडिट पैक खरीदा (+${credits} क्रेडिट)`,
+    amount: credits,
+    balanceAfter: balance.remainingCredits + credits,
+    timestamp: new Date().toISOString(),
+    timeAgo: 'Just now',
+  };
+  saveToStorage(STORAGE_KEYS.CREDIT_LEDGER, [newEntry, ...ledger]);
+
+  addNotification({
+    type: 'billing',
+    title: 'Credits Added Successfully',
+    titleHi: 'क्रेडिट सफलतापूर्वक जोड़े गए',
+    message: `${credits} AI credits have been added to your account balance for Order #${orderId}.`,
+    messageHi: `${credits} AI क्रेडिट आपके खाते में जोड़ दिए गए हैं।`,
+    actionUrl: '/user/credits',
+    actionLabel: 'View Balance →',
+    actionLabelHi: 'बैलेंस देखें →',
+  });
+
+  return getCreditBalanceInfo();
+};
+
+/**
+ * ============================================================================
+ * Phase 5: Subscription Plans API
+ * ============================================================================
+ */
+export const getSubscriptionPlans = (): SubscriptionPlan[] => {
+  return DEMO_SUBSCRIPTION_PLANS;
+};
+
+export const getUserSubscription = (): UserSubscription => {
+  return getFromStorage<UserSubscription>(STORAGE_KEYS.USER_SUBSCRIPTION, INITIAL_USER_SUBSCRIPTION);
+};
+
+export const updateUserSubscription = (
+  planIdOrData: PlanTier | Partial<UserSubscription>,
+  billingCycle: 'monthly' | 'yearly' = 'monthly'
+): UserSubscription => {
+  const current = getUserSubscription();
+
+  if (typeof planIdOrData === 'object') {
+    const updated: UserSubscription = {
+      ...current,
+      ...planIdOrData,
+      renewalDate: planIdOrData.renewalDate || current.renewalDate || current.nextRenewalDate,
+      daysUntilRenewal: planIdOrData.daysUntilRenewal ?? current.daysUntilRenewal ?? 12,
+      amount: planIdOrData.amount ?? planIdOrData.amountInr ?? current.amount ?? current.amountInr,
+      amountInr: planIdOrData.amountInr ?? planIdOrData.amount ?? current.amountInr,
+    };
+    saveToStorage(STORAGE_KEYS.USER_SUBSCRIPTION, updated);
+    return updated;
+  }
+
+  const planId = planIdOrData;
+  const plans = getSubscriptionPlans();
+  const plan = plans.find((p) => p.id === planId) || plans[1];
+  const price = billingCycle === 'yearly' ? plan.priceYearlyInr : plan.priceMonthlyInr;
+
+  const now = new Date();
+  const renewal = new Date(now.getTime() + (billingCycle === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000);
+  const renewalStr = renewal.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  const updated: UserSubscription = {
+    planId,
+    planName: plan.name,
+    billingCycle,
+    status: 'active',
+    currentPeriodStart: now.toISOString(),
+    currentPeriodEnd: renewal.toISOString(),
+    nextRenewalDate: renewalStr,
+    renewalDate: renewalStr,
+    daysUntilRenewal: 30,
+    amountInr: price,
+    amount: price,
+    cancelAtPeriodEnd: false,
+  };
+
+  saveToStorage(STORAGE_KEYS.USER_SUBSCRIPTION, updated);
+
+  // Update User Profile plan
+  const user = getUserProfile();
+  saveUserProfile({
+    ...user,
+    currentPlan: (planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Business') as any,
+    monthlyAllowance: plan.monthlyCredits,
+  });
+
+  addNotification({
+    type: 'billing',
+    title: `Subscribed to ${plan.name}`,
+    titleHi: `${plan.nameHi} प्लान सक्रिय हुआ`,
+    message: `Your account is now upgraded to ${plan.name}. Enjoy ${plan.monthlyCredits} monthly AI credits and priority processing.`,
+    messageHi: `आपका खाता अब ${plan.nameHi} में अपग्रेड हो गया है।`,
+    actionUrl: '/user/subscription',
+    actionLabel: 'View Benefits →',
+    actionLabelHi: 'लाभ देखें →',
+    isImportant: true,
+  });
+
+  return updated;
+};
+
+export const cancelUserSubscription = (): UserSubscription => {
+  const current = getUserSubscription();
+  const updated: UserSubscription = {
+    ...current,
+    cancelAtPeriodEnd: true,
+  };
+  saveToStorage(STORAGE_KEYS.USER_SUBSCRIPTION, updated);
+
+  addNotification({
+    type: 'billing',
+    title: 'Subscription Cancellation Scheduled',
+    titleHi: 'सब्सक्रिप्शन रद्द करने का अनुरोध दर्ज',
+    message: `Your ${current.planName} benefits will remain active until ${current.nextRenewalDate}. No further renewal charges will occur.`,
+    messageHi: `आपके प्लान के लाभ ${current.nextRenewalDate} तक सक्रिय रहेंगे।`,
+    actionUrl: '/user/subscription',
+    actionLabel: 'Manage Plan →',
+    actionLabelHi: 'प्रबंधित करें →',
+  });
+
+  return updated;
+};
+
+/**
+ * ============================================================================
+ * Phase 5: Payments & Invoices API
+ * ============================================================================
+ */
+export const getPaymentTransactions = (): PaymentTransaction[] => {
+  const stored = getFromStorage<PaymentTransaction[]>(STORAGE_KEYS.PAYMENT_TRANSACTIONS, []);
+  if (stored.length === 0) {
+    saveToStorage(STORAGE_KEYS.PAYMENT_TRANSACTIONS, DEMO_PAYMENT_TRANSACTIONS);
+    return DEMO_PAYMENT_TRANSACTIONS;
+  }
+  return stored;
+};
+
+export const getInvoices = (): InvoiceItem[] => {
+  const stored = getFromStorage<InvoiceItem[]>(STORAGE_KEYS.INVOICES, []);
+  if (stored.length === 0) {
+    saveToStorage(STORAGE_KEYS.INVOICES, DEMO_INVOICES);
+    return DEMO_INVOICES;
+  }
+  return stored;
+};
+
+export const createPaymentOrder = (
+  itemType: 'plan' | 'topup',
+  itemId: string,
+  basePriceInr: number,
+  couponCode?: string
+): {
+  orderId: string;
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+  couponApplied: boolean;
+  isTestMode: boolean;
+} => {
+  let discount = 0;
+  if (couponCode && (couponCode.toUpperCase() === 'LAUNCH20' || couponCode.toUpperCase() === 'SCRIPTER20')) {
+    discount = Math.round(basePriceInr * 0.2);
+  }
+
+  const discountedBase = Math.max(0, basePriceInr - discount);
+  // 18% GST calculation
+  const tax = Math.round(discountedBase * 0.18);
+  const total = discountedBase + tax;
+  const orderId = `ORDER_SCR_${Date.now()}`;
+
+  return {
+    orderId,
+    subtotal: basePriceInr,
+    discount,
+    tax,
+    total,
+    couponApplied: discount > 0,
+    isTestMode: true, // Transparent test environment indicator
+  };
+};
+
+export const verifyAndProcessPayment = (
+  order: { orderId: string; total: number; itemType: 'plan' | 'topup'; itemId: string; itemName: string },
+  paymentMethod: 'UPI' | 'Card' | 'NetBanking' | 'Wallet'
+): { success: boolean; transaction: PaymentTransaction; invoice: InvoiceItem } => {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const invoiceNumber = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${order.orderId.slice(-4)}`;
+
+  const tax = Math.round((order.total / 1.18) * 0.18);
+  const base = order.total - tax;
+
+  const transaction: PaymentTransaction = {
+    id: `tx_${Date.now()}`,
+    orderId: order.orderId,
+    invoiceNumber,
+    description: order.itemName,
+    amountInr: base,
+    amount: order.total,
+    taxInr: tax,
+    totalPaidInr: order.total,
+    date: dateStr,
+    status: 'successful',
+    paymentMethod,
+    planOrPackName: order.itemName,
+    receiptUrl: '#',
+  };
+
+  const invoice: InvoiceItem = {
+    id: `inv_${Date.now()}`,
+    invoiceNumber,
+    date: dateStr,
+    amountInr: order.total,
+    amount: order.total,
+    planName: order.itemName,
+    description: order.itemName,
+    status: 'paid',
+    period: `${dateStr} - Renewal/Top-up`,
+    downloadUrl: '#',
+  };
+
+  // Persist transaction & invoice
+  const txs = getPaymentTransactions();
+  saveToStorage(STORAGE_KEYS.PAYMENT_TRANSACTIONS, [transaction, ...txs]);
+
+  const invoices = getInvoices();
+  saveToStorage(STORAGE_KEYS.INVOICES, [invoice, ...invoices]);
+
+  // If top-up, credit the purchased balance
+  if (order.itemType === 'topup') {
+    const packs = DEMO_TOPUP_PACKAGES;
+    const pack = packs.find((p) => p.id === order.itemId);
+    const creditsToAdd = pack ? pack.credits + (pack.bonusCredits || 0) : 500;
+    addPurchasedCredits(creditsToAdd, order.total, order.orderId);
+  } else if (order.itemType === 'plan') {
+    updateUserSubscription(order.itemId as PlanTier, 'monthly');
+  }
+
+  return { success: true, transaction, invoice };
+};
+
+/**
+ * ============================================================================
+ * Phase 5: Account Profile & Preferences API
+ * ============================================================================
+ */
+export const getUserProfile = (): UserProfile => {
+  return getFromStorage<UserProfile>(STORAGE_KEYS.USER_PROFILE, INITIAL_USER_PROFILE);
+};
+
+export const saveUserProfile = (profileData: Partial<UserProfile>): UserProfile => {
+  const current = getUserProfile();
+  const updated: UserProfile = {
+    ...current,
+    ...profileData,
+  };
+  saveToStorage(STORAGE_KEYS.USER_PROFILE, updated);
+  return updated;
+};
+
+export const getUserPreferences = (): UserPreferences => {
+  return getFromStorage<UserPreferences>(STORAGE_KEYS.USER_PREFERENCES, DEFAULT_USER_PREFERENCES);
+};
+
+export const saveUserPreferences = (prefs: Partial<UserPreferences>): UserPreferences => {
+  const current = getUserPreferences();
+  const updated: UserPreferences = {
+    ...current,
+    ...prefs,
+  };
+  saveToStorage(STORAGE_KEYS.USER_PREFERENCES, updated);
+  return updated;
 };

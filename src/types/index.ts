@@ -236,12 +236,189 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  bio?: string;
   avatarUrl?: string;
   role: UserRole;
   currentPlan: 'Free' | 'Pro' | 'Business' | 'Enterprise';
   creditsTotal: number;
   creditsUsed: number;
+  monthlyAllowance: number;
+  purchasedCredits: number;
   activeBusinessProfileId: string;
+  createdAt?: string;
+}
+
+export type NotificationType =
+  | 'system'
+  | 'credits'
+  | 'low_credits'
+  | 'project'
+  | 'script_ready'
+  | 'export_ready'
+  | 'billing'
+  | 'payment'
+  | 'security'
+  | 'feature'
+  | 'template'
+  | 'announcement';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  titleHi?: string;
+  message: string;
+  messageHi?: string;
+  createdAt: string;
+  timeAgo: string;
+  timestamp?: string;
+  isRead: boolean;
+  isImportant?: boolean;
+  actionUrl?: string;
+  actionLabel?: string;
+  actionLabelHi?: string;
+  metadata?: Record<string, any>;
+}
+
+export type CreditOperationType =
+  | 'script_generation'
+  | 'caption_generation'
+  | 'thumbnail_generation'
+  | 'topic_research'
+  | 'video_ai_suggestions'
+  | 'topup_purchase'
+  | 'monthly_grant'
+  | 'plan_allowance'
+  | 'refund';
+
+export interface CreditLedgerEntry {
+  id: string;
+  operationType: CreditOperationType;
+  description: string;
+  descriptionHi?: string;
+  amount: number;
+  balanceAfter: number;
+  timestamp: string;
+  timeAgo?: string;
+  projectId?: string;
+  projectTitle?: string;
+  businessProfileName?: string;
+}
+
+export interface CreditTopupPackage {
+  id: string;
+  name: string;
+  nameHi?: string;
+  credits: number;
+  priceInr: number;
+  price: number;
+  perCreditCost: string;
+  isPopular?: boolean;
+  bonusCredits?: number;
+  badge?: string;
+  description?: string;
+  descriptionHi?: string;
+  label?: string;
+}
+
+export interface CreditBalanceInfo {
+  monthlyAllowance: number;
+  purchasedCredits: number;
+  totalAvailable: number;
+  creditsUsed: number;
+  remainingCredits: number;
+  monthlyUsed: number;
+  remainingMonthly: number;
+  resetDate: string;
+  resetDaysLeft: number;
+  daysUntilReset: number;
+  recentLedger: CreditLedgerEntry[];
+}
+
+export type PlanTier = 'free' | 'pro' | 'business';
+
+export interface SubscriptionPlan {
+  id: PlanTier;
+  tier: PlanTier;
+  name: string;
+  nameHi: string;
+  tagline: string;
+  taglineHi: string;
+  description: string;
+  descriptionHi?: string;
+  priceMonthlyInr: number;
+  priceYearlyInr: number;
+  priceMonthly: number;
+  priceYearly: number;
+  monthlyCredits: number;
+  creditsPerMonth: number;
+  businessProfilesLimit: number;
+  businessProfilesAllowed: number;
+  features: string[];
+  featuresHi: string[];
+  isPopular?: boolean;
+  badge?: string;
+  buttonLabel: string;
+}
+
+export interface UserSubscription {
+  planId: PlanTier;
+  planName: string;
+  billingCycle: 'monthly' | 'yearly';
+  status: 'active' | 'past_due' | 'cancelled' | 'trialing';
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  nextRenewalDate: string;
+  renewalDate: string;
+  daysUntilRenewal?: number;
+  amountInr: number;
+  amount: number;
+  cancelAtPeriodEnd: boolean;
+}
+
+export type PaymentStatus = 'successful' | 'failed' | 'pending' | 'refunded';
+
+export interface PaymentTransaction {
+  id: string;
+  orderId: string;
+  invoiceNumber: string;
+  description: string;
+  amountInr: number;
+  amount: number;
+  taxInr: number;
+  totalPaidInr: number;
+  date: string;
+  status: PaymentStatus;
+  paymentMethod: 'UPI' | 'Card' | 'NetBanking' | 'Wallet';
+  planOrPackName: string;
+  receiptUrl?: string;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  amountInr: number;
+  amount: number;
+  planName: string;
+  description: string;
+  status: 'paid' | 'unpaid' | 'void';
+  period: string;
+  pdfDownloadUrl?: string;
+  downloadUrl?: string;
+}
+
+export interface UserPreferences {
+  language: 'en' | 'hi';
+  theme: 'light' | 'dark' | 'system';
+  defaultVideoFormat: '9:16' | '16:9' | '1:1';
+  defaultExportResolution: '1080p' | '720p';
+  autoSaveDrafts: boolean;
+  emailNotifications: boolean;
+  inAppNotifications: boolean;
+  creditThresholdAlerts: boolean;
+  promotionalUpdates: boolean;
 }
 
 export interface PlatformMetrics {

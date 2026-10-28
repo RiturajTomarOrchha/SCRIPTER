@@ -10,7 +10,17 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarToggle = false }) => {
-  const { role, setRole, isDevMode, activeBusinessProfile, creditsTotal, creditsUsed } = useRole();
+  const {
+    role,
+    setRole,
+    isDevMode,
+    activeBusinessProfile,
+    creditsTotal,
+    creditsUsed,
+    unreadNotificationsCount,
+    userProfile,
+    subscription,
+  } = useRole();
   const { language, toggleLanguage, t } = useLanguage();
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -152,7 +162,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+            {unreadNotificationsCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-xs">
+                {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+              </span>
+            )}
           </Link>
 
           {/* User Profile Avatar */}
@@ -174,11 +188,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                 onClick={() => setShowProfileMenu(false)}
               >
                 <div className="px-3.5 py-2 border-b border-slate-100">
-                  <p className="text-xs font-semibold text-slate-900">Rituraj Tomar</p>
-                  <p className="text-[11px] text-slate-500 truncate">riturajtomarorchha@gmail.com</p>
+                  <p className="text-xs font-semibold text-slate-900">{userProfile?.name || 'Rituraj Tomar'}</p>
+                  <p className="text-[11px] text-slate-500 truncate">{userProfile?.email || 'riturajtomarorchha@gmail.com'}</p>
                   <div className="mt-1 flex items-center gap-1.5">
                     <span className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-blue-50 text-blue-700">
-                      Pro Plan
+                      {subscription?.planName || 'Pro Plan'}
                     </span>
                     <span className="text-[10px] text-slate-400">· {activeBusinessProfile.name}</span>
                   </div>
@@ -189,6 +203,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                   className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                 >
                   {t('navProfile')} & Account
+                </Link>
+                <Link
+                  to="/user/subscription"
+                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  {t('navPlansCredits')}
+                </Link>
+                <Link
+                  to="/user/billing"
+                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  {language === 'en' ? 'Payments & Invoices' : 'भुगतान और बिलिंग'}
+                </Link>
+                <Link
+                  to="/user/credits"
+                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                >
+                  {language === 'en' ? 'Usage & AI Credits' : 'क्रेडिट उपयोग'}
                 </Link>
                 <Link
                   to="/user/business-profiles"
@@ -213,12 +245,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, showSidebarTogg
                   className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                 >
                   {language === 'en' ? 'Thumbnail & Graphics' : 'थंबनेल और ग्राफिक्स'}
-                </Link>
-                <Link
-                  to="/user/subscription"
-                  className="block px-3.5 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                >
-                  {t('navPlansCredits')}
                 </Link>
                 <Link
                   to="/user/settings"

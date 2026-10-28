@@ -11,6 +11,7 @@ import {
   deleteProjectMedia,
   addProjectExport,
   getExportPresets,
+  addNotification,
 } from '../../services/storage';
 import {
   Play,
@@ -345,6 +346,17 @@ export const VideoStudioPage: React.FC = () => {
             aspectRatio,
             fileSize: activeMedia?.fileSize || '24.8 MB',
             downloadUrl: finalUrl,
+          });
+
+          addNotification({
+            type: 'export_ready',
+            title: language === 'en' ? 'Video Export Complete' : 'वीडियो एक्सपोर्ट पूर्ण',
+            titleHi: 'वीडियो एक्सपोर्ट पूर्ण',
+            message: language === 'en' ? `Your video "${exportTitle}" (${exportQuality}) is ready for download and sharing.` : `आपका वीडियो "${exportTitle}" डाउनलोड के लिए तैयार है।`,
+            messageHi: `आपका वीडियो "${exportTitle}" डाउनलोड के लिए तैयार है।`,
+            actionUrl: '/user/video-studio',
+            actionLabel: language === 'en' ? 'View in Studio →' : 'स्टूडियो में देखें →',
+            actionLabelHi: 'स्टूडियो में देखें →',
           });
 
           setProjectsList(getProjects());

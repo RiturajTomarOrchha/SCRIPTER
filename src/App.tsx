@@ -15,6 +15,12 @@ import { VideoStudioPage } from './pages/user/VideoStudioPage';
 import { TemplatesPage } from './pages/user/TemplatesPage';
 import { BrandKitPage } from './pages/user/BrandKitPage';
 import { ThumbnailStudioPage } from './pages/user/ThumbnailStudioPage';
+import { NotificationsPage } from './pages/user/NotificationsPage';
+import { CreditsUsagePage } from './pages/user/CreditsUsagePage';
+import { SubscriptionPlansPage } from './pages/user/SubscriptionPlansPage';
+import { BillingPaymentsPage } from './pages/user/BillingPaymentsPage';
+import { AccountSettingsPage } from './pages/user/AccountSettingsPage';
+import { HelpSupportPage } from './pages/user/HelpSupportPage';
 import { AdminHome } from './pages/admin/AdminHome';
 import { MasterAdminHome } from './pages/master-admin/MasterAdminHome';
 import { ComingSoonPage } from './pages/shared/ComingSoonPage';
@@ -76,7 +82,8 @@ export default function App() {
               <Route path="/user/script-studio" element={<ScriptStudioPage />} />
               <Route path="/user/projects" element={<ProjectsPage />} />
               <Route path="/user/business-profiles" element={<BusinessProfilesPage />} />
-              <Route path="/user/profile" element={<ComingSoonPage featureName="User Profile & Settings" category="Account Management" />} />
+              <Route path="/user/profile" element={<AccountSettingsPage />} />
+              <Route path="/user/settings" element={<AccountSettingsPage />} />
               <Route path="/user/teleprompter" element={<TeleprompterPage defaultMode="prompter" />} />
               <Route path="/user/video-recording" element={<TeleprompterPage defaultMode="record" />} />
               <Route path="/user/video-studio" element={<VideoStudioPage />} />
@@ -85,11 +92,13 @@ export default function App() {
               <Route path="/user/templates" element={<TemplatesPage />} />
               <Route path="/user/brand-kit" element={<BrandKitPage />} />
               <Route path="/user/thumbnail-studio" element={<ThumbnailStudioPage />} />
-              <Route path="/user/notifications" element={<ComingSoonPage featureName="Notifications & Alerts" category="Activity" />} />
-              <Route path="/user/credits" element={<ComingSoonPage featureName="AI Credits & Usage" category="Billing & Usage" />} />
-              <Route path="/user/subscription" element={<ComingSoonPage featureName="Subscription & Plans" category="Billing" />} />
-              <Route path="/user/settings" element={<ComingSoonPage featureName="Account Settings" category="Preferences" />} />
-              <Route path="/user/help" element={<ComingSoonPage featureName="Help & Support" category="Customer Support" />} />
+              <Route path="/user/notifications" element={<NotificationsPage />} />
+              <Route path="/user/credits" element={<CreditsUsagePage />} />
+              <Route path="/user/subscription" element={<SubscriptionPlansPage />} />
+              <Route path="/user/plans" element={<SubscriptionPlansPage />} />
+              <Route path="/user/billing" element={<BillingPaymentsPage />} />
+              <Route path="/user/payments" element={<BillingPaymentsPage />} />
+              <Route path="/user/help" element={<HelpSupportPage />} />
 
               {/* Admin Routes */}
               <Route path="/admin/dashboard" element={<AdminHome />} />
