@@ -1,4 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
 import { BusinessProfile } from '../types';
 
 export interface ScriptGenerationParams {
@@ -27,26 +26,17 @@ export interface GeneratedScriptResult {
   providerNote: string;
 }
 
-const getApiKey = (): string | undefined => {
-  return (
-    import.meta.env.VITE_GEMINI_API_KEY ||
-    (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY)
-  );
-};
-
 export const isGeminiConfigured = (): boolean => {
-  const key = getApiKey();
-  return Boolean(key && key !== 'MY_GEMINI_API_KEY' && key !== 'YOUR_KEY_HERE');
+  return true;
 };
 
 /**
  * High-quality domain fallback template generator
  * Ensures zero broken user experience when no live API key is present
  */
-const generateFallbackScript = (params: ScriptGenerationParams): GeneratedScriptResult => {
-  const { topic, language, tone, businessProfile } = params;
+export const generateFallbackScript = (params: ScriptGenerationParams): GeneratedScriptResult => {
+  const { topic, language, businessProfile } = params;
   const isHindi = language === 'hi' || language === 'hinglish';
-  const industry = businessProfile?.name || 'Healthcare & Wellness';
 
   let hook = '';
   let mainContent: string[] = [];
@@ -116,73 +106,48 @@ const generateFallbackScript = (params: ScriptGenerationParams): GeneratedScript
     scenes,
     voiceTips,
     isLiveAi: false,
-    providerNote: 'Generated via Scripter Domain Content Engine (Demo Mode). Add VITE_GEMINI_API_KEY for live Gemini 2.5 inference.',
+    providerNote: 'Generated via Scripter Domain Content Engine (Demo Mode). Add GEMINI_API_KEY for live Gemini 2.5 inference.',
   };
 };
 
 /**
  * Main Script Generation Service
+ * Invokes server-side /api/generate-script proxy with graceful client fallback
  */
 export const generateScriptWithAi = async (
   params: ScriptGenerationParams
 ): Promise<GeneratedScriptResult> => {
-  const apiKey = getApiKey();
-
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
-    // Return high quality structured fallback
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(generateFallbackScript(params));
-      }, 1500); // realistic pleasant animation timing
-    });
-  }
-
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const prompt = `You are Scripter AI, a viral video scriptwriting engine tailored for content creators.
-Topic: ${params.topic}
-Video Duration: ${params.durationSeconds} seconds (${params.videoType})
-Language: ${params.language === 'hi' ? 'Hindi (Devanagari script)' : params.language === 'hinglish' ? 'Hinglish (Hindi written in English alphabet)' : 'English'}
-Tone: ${params.tone}
-Industry: ${params.businessProfile?.name || 'General Creator'}
-Additional Instructions: ${params.additionalInstructions || 'None'}
-
-Generate a structured script with:
-1. Hook (captures attention in 0-5 seconds)
-2. Main Content (bullet points with timestamps)
-3. Closing (call to action, save & share)
-Format your response as a valid JSON object matching:
-{
-  "hook": "string",
-  "mainContent": ["point 1", "point 2", "point 3"],
-  "closing": "string",
-  "voiceTips": ["tip 1", "tip 2", "tip 3"]
-}`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      },
+    const res = await fetch('/api/generate-script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
     });
 
-    const text = response.text?.trim() || '';
-    const parsed = JSON.parse(text);
-
-    return {
-      hook: parsed.hook,
-      mainContent: parsed.mainContent || [],
-      closing: parsed.closing,
-      scenes: generateFallbackScript(params).scenes,
-      voiceTips: parsed.voiceTips || generateFallbackScript(params).voiceTips,
-      isLiveAi: true,
-      providerNote: 'Generated live with Gemini 2.5 Flash',
-    };
+    if (res.ok) {
+      const data = await res.json();
+      if (data.isLiveAi && data.hook) {
+        return {
+          hook: data.hook,
+          mainContent: data.mainContent || [],
+          closing: data.closing,
+          scenes: generateFallbackScript(params).scenes,
+          voiceTips: data.voiceTips && data.voiceTips.length > 0 ? data.voiceTips : generateFallbackScript(params).voiceTips,
+          isLiveAi: true,
+          providerNote: 'Generated live with Gemini 2.5 Flash',
+        };
+      }
+    }
   } catch (error) {
-    console.warn('Gemini API call failed, gracefully falling back to domain template:', error);
-    return generateFallbackScript(params);
+    console.warn('Server Gemini API call failed, gracefully falling back to domain template:', error);
   }
+
+  // Realistic pleasant transition with domain template
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(generateFallbackScript(params));
+    }, 1200);
+  });
 };
 
 /**
@@ -206,10 +171,9 @@ export interface GeneratedCaptionResult {
   providerNote: string;
 }
 
-const generateFallbackCaptions = (params: CaptionGenerationParams): GeneratedCaptionResult => {
-  const { topic, platform, language, businessProfile } = params;
+export const generateFallbackCaptions = (params: CaptionGenerationParams): GeneratedCaptionResult => {
+  const { topic, platform, language } = params;
   const isHindi = language === 'hi' || language === 'hinglish';
-  const brand = businessProfile?.name || 'Scripter Creator';
 
   let caption = '';
   let hashtags: string[] = [];
@@ -263,59 +227,31 @@ const generateFallbackCaptions = (params: CaptionGenerationParams): GeneratedCap
 export const generateSocialCaptions = async (
   params: CaptionGenerationParams
 ): Promise<GeneratedCaptionResult> => {
-  const apiKey = getApiKey();
-
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey === 'YOUR_KEY_HERE') {
-    return generateFallbackCaptions(params);
-  }
-
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const prompt = `You are a social media copywriter specialized in viral short-form video captions.
-Topic: ${params.topic}
-Platform: ${params.platform}
-Language: ${params.language === 'hi' ? 'Hindi (Devanagari script)' : params.language === 'hinglish' ? 'Hinglish' : 'English'}
-Industry: ${params.businessProfile?.name || 'Creator'}
-Tone: ${params.tone || 'Engaging & Viral'}
-Script Context: ${params.scriptSnippet || 'None'}
-
-Generate a platform-optimized social media post with:
-1. "caption": full formatted caption text with emojis and clean line breaks
-2. "hashtags": array of 10-15 relevant hashtags
-3. "callToAction": compelling 1-line CTA
-4. "shortDescription": concise 1-sentence SEO summary
-
-Respond ONLY with valid JSON matching:
-{
-  "caption": "string",
-  "hashtags": ["#tag1", "#tag2"],
-  "callToAction": "string",
-  "shortDescription": "string"
-}`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      },
+    const res = await fetch('/api/generate-captions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
     });
 
-    const text = response.text?.trim() || '';
-    const parsed = JSON.parse(text);
-
-    return {
-      caption: parsed.caption,
-      hashtags: parsed.hashtags || [],
-      callToAction: parsed.callToAction || '',
-      shortDescription: parsed.shortDescription || '',
-      isLiveAi: true,
-      providerNote: 'Generated live with Gemini 2.5 Flash',
-    };
+    if (res.ok) {
+      const data = await res.json();
+      if (data.isLiveAi && data.caption) {
+        return {
+          caption: data.caption,
+          hashtags: data.hashtags || [],
+          callToAction: data.callToAction || '',
+          shortDescription: data.shortDescription || '',
+          isLiveAi: true,
+          providerNote: 'Generated live with Gemini 2.5 Flash on server',
+        };
+      }
+    }
   } catch (error) {
-    console.warn('Gemini caption generation failed, using domain fallback:', error);
-    return generateFallbackCaptions(params);
+    console.warn('Server Gemini caption generation error, using domain fallback:', error);
   }
+
+  return generateFallbackCaptions(params);
 };
 
 export interface TransformScriptParams {
@@ -339,10 +275,9 @@ export interface TransformScriptResult {
 export const transformScriptWithAi = async (
   params: TransformScriptParams
 ): Promise<TransformScriptResult> => {
-  const { action, currentHook, currentMain, currentClosing, topic, language, tone, customInstruction } = params;
+  const { action, currentHook, currentMain, currentClosing, topic, language, customInstruction } = params;
   const isHindi = language === 'hi' || language === 'hinglish';
 
-  // Domain-aware high-fidelity transform rules
   if (action === 'rewrite') {
     return {
       hook: isHindi
@@ -413,7 +348,6 @@ export const transformScriptWithAi = async (
     };
   }
 
-  // Custom instruction
   return {
     hook: currentHook,
     mainContent: currentMain,
@@ -423,5 +357,3 @@ export const transformScriptWithAi = async (
     actionNote: customInstruction ? `Applied: ${customInstruction}` : 'Custom edit applied.',
   };
 };
-
-
