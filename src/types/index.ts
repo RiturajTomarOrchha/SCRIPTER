@@ -246,6 +246,10 @@ export interface UserProfile {
   monthlyAllowance: number;
   purchasedCredits: number;
   activeBusinessProfileId: string;
+  legalEntityName?: string;
+  billingAddress?: string;
+  gstin?: string;
+  stateOfSupply?: string;
   createdAt?: string;
 }
 
@@ -377,7 +381,7 @@ export interface UserSubscription {
   cancelAtPeriodEnd: boolean;
 }
 
-export type PaymentStatus = 'successful' | 'failed' | 'pending' | 'refunded';
+export type PaymentStatus = 'successful' | 'failed' | 'pending' | 'refunded' | 'cancelled';
 
 export interface PaymentTransaction {
   id: string;
