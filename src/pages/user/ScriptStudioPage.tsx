@@ -59,7 +59,7 @@ export const ScriptStudioPage: React.FC = () => {
   const { activeBusinessProfile, useCredits, deductCredits, creditsInfo } = useRole();
   const { language } = useLanguage();
 
-  // Navigation state parameters (passed from Ideas, Research or Projects)
+  // Navigation state parameters (passed from Ideas, Research, Projects, or Teleprompter)
   const navState = (location.state as {
     prefilledTopic?: string;
     ideaId?: string;
@@ -69,6 +69,8 @@ export const ScriptStudioPage: React.FC = () => {
     projectId?: string;
     researchContext?: TopicResearchContext;
     initialHook?: string;
+    scriptText?: string;
+    version?: number;
   }) || {};
 
   // Form & Settings State
@@ -109,21 +111,45 @@ export const ScriptStudioPage: React.FC = () => {
   const [platform, setPlatform] = useState<string>('Instagram Reels');
 
   // Script Content State (Structured Sections: Hook, Body, CTA)
+  // Gracefully initialize from navState.scriptText if returned from Teleprompter
+  const parseNavScript = () => {
+    if (!navState.scriptText) return null;
+    const parts = navState.scriptText.split('\n\n').map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 3) {
+      return {
+        hook: parts[0],
+        body: parts.slice(1, -1).join('\n\n'),
+        closing: parts[parts.length - 1],
+      };
+    }
+    if (parts.length === 2) {
+      return { hook: parts[0], body: parts[1], closing: '' };
+    }
+    if (parts.length === 1) {
+      return { hook: '', body: parts[0], closing: '' };
+    }
+    return null;
+  };
+  const parsedNav = parseNavScript();
+
   const [hook, setHook] = useState<string>(
-    navState.initialHook ||
+    parsedNav?.hook ||
+      navState.initialHook ||
       (language === 'hi'
         ? 'क्या आपका भी बिजली का बिल हर महीने बढ़ता जा रहा है?'
         : 'Are you frustrated with surging electricity bills every single month?')
   );
   const [mainBody, setMainBody] = useState<string>(
-    language === 'hi'
-      ? 'तो इसके लिए एक बढ़िया समाधान है - सोलर पैनल। सोलर पैनल सूरज की रोशनी से बिजली बनाता है, जिससे आप अपने घर या ऑफिस की ज़रूरत का बड़ा हिस्सा खुद ही पूरा कर सकते हैं। इसकी लागत पहले जैसी नहीं रही, क्योंकि सरकार की सब्सिडी और कई योजनाओं से यह अब अधिक किफायती हो गया है।'
-      : 'Solar panels provide an immediate, eco-friendly solution that cuts electricity expenses by 80-90% while earning government subsidies under PM Surya Ghar Yojana.'
+    parsedNav?.body ||
+      (language === 'hi'
+        ? 'तो इसके लिए एक बढ़िया समाधान है - सोलर पैनल। सोलर पैनल सूरज की रोशनी से बिजली बनाता है, जिससे आप अपने घर या ऑफिस की ज़रूरत का बड़ा हिस्सा खुद ही पूरा कर सकते हैं। इसकी लागत पहले जैसी नहीं रही, क्योंकि सरकार की सब्सिडी और कई योजनाओं से यह अब अधिक किफायती हो गया है।'
+        : 'Solar panels provide an immediate, eco-friendly solution that cuts electricity expenses by 80-90% while earning government subsidies under PM Surya Ghar Yojana.')
   );
   const [closingCta, setClosingCta] = useState<string>(
-    language === 'hi'
-      ? 'अगर आप भी बिजली बिल में लंबे समय तक बचत करना चाहते हैं, तो आज ही सोलर पैनल के विकल्पों के बारे में जानकारी लें और अपने घर के लिए सही सिस्टम चुनें। ऐसा ही और उपयोगी कंटेंट पाने के लिए हमारे चैनल को फॉलो करें!'
-      : 'If you are considering rooftop solar, check the link below to calculate your estimated savings today. Follow for daily energy-saving tips!'
+    parsedNav?.closing ||
+      (language === 'hi'
+        ? 'अगर आप भी बिजली बिल में लंबे समय तक बचत करना चाहते हैं, तो आज ही सोलर पैनल के विकल्पों के बारे में जानकारी लें और अपने घर के लिए सही सिस्टम चुनें। ऐसा ही और उपयोगी कंटेंट पाने के लिए हमारे चैनल को फॉलो करें!'
+        : 'If you are considering rooftop solar, check the link below to calculate your estimated savings today. Follow for daily energy-saving tips!')
   );
 
   // Active View Mode ('script' | 'edit' | 'research')
@@ -317,7 +343,7 @@ export const ScriptStudioPage: React.FC = () => {
     setTimeout(() => setCopiedToast(false), 2000);
   };
 
-  // Open in Teleprompter (Prompt 6 direct handoff)
+  // Open in Teleprompter (Prompt 6 & 8 direct handoff)
   const handleOpenTeleprompter = () => {
     const proj = handleSaveProject();
     navigate('/user/teleprompter', {
@@ -325,6 +351,7 @@ export const ScriptStudioPage: React.FC = () => {
         projectId: proj.id,
         scriptText: fullScriptText,
         title: topic,
+        version: versions[0]?.version || 1,
       },
     });
   };
