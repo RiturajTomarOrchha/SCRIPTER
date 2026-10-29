@@ -30,6 +30,69 @@
           "description": "Creator bio or channel tagline",
           "maxLength": 500
         },
+        "phone": {
+          "type": "string",
+          "description": "User mobile number with country code",
+          "maxLength": 32
+        },
+        "creatorType": {
+          "type": "string",
+          "description": "Creator classification or persona (e.g. Solo Creator, Business Owner)",
+          "maxLength": 64
+        },
+        "industry": {
+          "type": "string",
+          "description": "Primary industry domain (e.g. Healthcare & Wellness)",
+          "maxLength": 64
+        },
+        "category": {
+          "type": "string",
+          "description": "Specific content subcategory or niche",
+          "maxLength": 64
+        },
+        "organizationName": {
+          "type": "string",
+          "description": "Creator channel, business, or organization name",
+          "maxLength": 128
+        },
+        "contentGoals": {
+          "type": "string",
+          "description": "Primary goal for video content creation",
+          "maxLength": 256
+        },
+        "targetAudience": {
+          "type": "string",
+          "description": "Target viewer demographic or customer profile",
+          "maxLength": 128
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "description": "Preferred scripting and content language",
+          "maxLength": 32
+        },
+        "preferredTone": {
+          "type": "string",
+          "description": "Preferred delivery and voice tone",
+          "maxLength": 64
+        },
+        "location": {
+          "type": "string",
+          "description": "City, state, or country location",
+          "maxLength": 128
+        },
+        "website": {
+          "type": "string",
+          "description": "Official creator or business website URL",
+          "maxLength": 256
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether the creator profile onboarding flow has been finished"
+        },
+        "onboardingStep": {
+          "type": "integer",
+          "description": "Last completed or active onboarding section step number"
+        },
         "socialLinks": {
           "type": "object",
           "description": "Linked creator social accounts (youtube, instagram, twitter, linkedin, website)"
@@ -76,6 +139,99 @@
         }
       },
       "required": ["uid", "email", "role"]
+    },
+    "ScriptSession": {
+      "title": "ScriptSession",
+      "description": "Real-time collaborative script document in Script Studio.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Script session document ID",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "description": "Title / topic of the script",
+          "maxLength": 256
+        },
+        "hook": {
+          "type": "string",
+          "description": "Opening hook content (0-5s)",
+          "maxLength": 2000
+        },
+        "mainBody": {
+          "type": "string",
+          "description": "Core script body points (5-45s)",
+          "maxLength": 10000
+        },
+        "closingCta": {
+          "type": "string",
+          "description": "Conclusion and call to action (45-60s)",
+          "maxLength": 2000
+        },
+        "screenplayText": {
+          "type": "string",
+          "description": "Full formatted screenplay text with syntax tokens",
+          "maxLength": 20000
+        },
+        "lastUpdatedBy": {
+          "type": "string",
+          "description": "UID of the user who made the last edit",
+          "maxLength": 128
+        },
+        "lastUpdatedByName": {
+          "type": "string",
+          "description": "Display name of the last editor",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["title", "lastUpdatedBy"]
+    },
+    "PresenceRecord": {
+      "title": "PresenceRecord",
+      "description": "Active collaborator presence heartbeat in Script Studio.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Collaborator user UID",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Collaborator display name",
+          "maxLength": 128
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Collaborator avatar URL",
+          "maxLength": 1024
+        },
+        "activeSection": {
+          "type": "string",
+          "description": "Section currently being edited (hook, mainBody, closingCta, screenplay)",
+          "maxLength": 64
+        },
+        "color": {
+          "type": "string",
+          "description": "Collaborator indicator badge color",
+          "maxLength": 32
+        },
+        "lastSeen": {
+          "type": "string",
+          "description": "ISO timestamp of last heartbeat"
+        }
+      },
+      "required": ["userId", "displayName", "activeSection"]
     }
   },
   "firestore": {
@@ -86,6 +242,14 @@
     "/admins/{adminId}": {
       "schema": "AdminRecord",
       "description": "Trusted registry of admin users used to enforce RBAC."
+    },
+    "/scripts/{scriptId}": {
+      "schema": "ScriptSession",
+      "description": "Collaborative scripts synchronized in real-time."
+    },
+    "/scripts/{scriptId}/presence/{presenceUserId}": {
+      "schema": "PresenceRecord",
+      "description": "Real-time presence tracking of active script collaborators."
     }
   }
 }

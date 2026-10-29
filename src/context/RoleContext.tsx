@@ -70,15 +70,31 @@ interface RoleContextType {
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
+import { useAuth } from './AuthContext';
+
 export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
-  const [role, setRoleState] = useState<UserRole>('user');
-  const [isDevMode, setIsDevModeState] = useState<boolean>(() => {
+  const { userProfile: authProfile, isAuthorizedAdminOrDev } = useAuth();
+  const [role, setRoleState] = useState<UserRole>(() => authProfile?.role || 'user');
+  const [rawDevMode, setRawDevModeState] = useState<boolean>(() => {
     return import.meta.env.DEV || localStorage.getItem('scripter_dev_mode') === 'true';
   });
 
+  // Security Hardening: isDevMode is strictly false unless the user is an authorized admin/developer
+  const isDevMode = rawDevMode && isAuthorizedAdminOrDev;
+
+  useEffect(() => {
+    if (authProfile?.role) {
+      setRoleState(authProfile.role);
+    }
+  }, [authProfile?.role]);
+
   const setIsDevMode = (active: boolean) => {
-    setIsDevModeState(active);
+    if (!isAuthorizedAdminOrDev) {
+      console.warn('Unauthorized attempt to enable Test Mode blocked.');
+      return;
+    }
+    setRawDevModeState(active);
     try {
       localStorage.setItem('scripter_dev_mode', String(active));
     } catch (e) {
@@ -153,6 +169,13 @@ export const RoleProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const setRole = (newRole: UserRole) => {
+    // Security Gate: ordinary users can never elevate to admin or master-admin
+    if (newRole !== 'user' && !isAuthorizedAdminOrDev) {
+      console.warn('Unauthorized attempt to elevate role blocked.');
+      setRoleState('user');
+      navigate('/user/home');
+      return;
+    }
     setRoleState(newRole);
     if (newRole === 'user') {
       navigate('/user/home');

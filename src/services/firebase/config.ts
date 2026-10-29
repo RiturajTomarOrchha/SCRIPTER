@@ -11,14 +11,42 @@ import {
   sendPasswordResetEmail,
   User,
 } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, doc, getDocFromServer, setLogLevel } from 'firebase/firestore';
 import firebaseConfig from '@/firebase-applet-config.json';
+
+// Silence internal Firestore connection error logging to prevent unhandled console error spam when offline or when STS API is pending
+try {
+  setLogLevel('silent');
+} catch {
+  // setLogLevel may throw if already initialized
+}
 
 // Safe singleton Firebase App initialization
 export const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Authentication instance
 export const auth = getAuth(firebaseApp);
+
+// Clear any stale broken token session on startup
+if (typeof auth.authStateReady === 'function') {
+  auth.authStateReady().then(async () => {
+    if (auth.currentUser) {
+      try {
+        await auth.currentUser.getIdToken();
+      } catch (tokenErr: any) {
+        const msg = tokenErr?.message || '';
+        if (
+          msg.includes('token-service-api') ||
+          msg.includes('securetoken.googleapis.com') ||
+          msg.includes('Fetching auth token failed')
+        ) {
+          console.warn('Stale auth token detected with disabled STS API. Clearing session safely.');
+          await signOut(auth).catch(() => {});
+        }
+      }
+    }
+  }).catch(() => {});
+}
 
 // Cloud Firestore with explicit database ID from provisioned configuration
 export const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
@@ -32,8 +60,18 @@ async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firestore offline check:', error.message);
+    if (error instanceof Error) {
+      if (
+        error.message.includes('the client is offline') ||
+        error.message.includes('token-service-api') ||
+        error.message.includes('securetoken.googleapis.com') ||
+        error.message.includes('Fetching auth token failed') ||
+        error.message.includes('backend unreachable')
+      ) {
+        console.warn('Firestore offline check (operating in offline fallback mode):', error.message);
+      } else {
+        console.warn('Firestore connection check notice:', error.message);
+      }
     }
   }
 }

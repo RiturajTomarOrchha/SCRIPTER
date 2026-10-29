@@ -75,7 +75,13 @@ export const UserHome: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                   {displayName}
                 </h1>
-                <span className="text-lg">👑</span>
+                {authProfile?.role === 'master-admin' ? (
+                  <span className="text-lg" title="Master Admin">👑</span>
+                ) : (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/20 uppercase">
+                    Creator
+                  </span>
+                )}
               </div>
               {/* Profile Pill Trigger */}
               <button

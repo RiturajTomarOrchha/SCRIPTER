@@ -60,7 +60,7 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
-  const { role, setRole } = useRole();
+  const { role, setRole, isDevMode } = useRole();
   const { language } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
 
@@ -124,48 +124,52 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
-        {/* Mobile-only Test Mode Switcher in Admin Sidebar */}
+        {/* Mobile-only Test Mode Switcher & Theme Row in Admin Sidebar */}
         <div className="lg:hidden p-3 border-b border-slate-800/80 bg-slate-900/60">
-          <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mb-1.5 px-1">
-            Test Mode Switcher
-          </p>
-          <div className="grid grid-cols-3 gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => {
-                setRole('user');
-                onClose();
-              }}
-              className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
-                role === 'user' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              User
-            </button>
-            <button
-              onClick={() => {
-                setRole('admin');
-                onClose();
-              }}
-              className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
-                role === 'admin' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Admin
-            </button>
-            <button
-              onClick={() => {
-                setRole('master-admin');
-                onClose();
-              }}
-              className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
-                role === 'master-admin' ? 'bg-amber-500 text-white font-bold' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Master
-            </button>
-          </div>
+          {isDevMode && (
+            <>
+              <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-400 mb-1.5 px-1">
+                Test Mode Switcher
+              </p>
+              <div className="grid grid-cols-3 gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800 mb-2">
+                <button
+                  onClick={() => {
+                    setRole('user');
+                    onClose();
+                  }}
+                  className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
+                    role === 'user' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  User
+                </button>
+                <button
+                  onClick={() => {
+                    setRole('admin');
+                    onClose();
+                  }}
+                  className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
+                    role === 'admin' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Admin
+                </button>
+                <button
+                  onClick={() => {
+                    setRole('master-admin');
+                    onClose();
+                  }}
+                  className={`px-1.5 py-1 rounded-lg text-[10px] font-semibold text-center transition-all ${
+                    role === 'master-admin' ? 'bg-amber-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Master
+                </button>
+              </div>
+            </>
+          )}
 
-          <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <span className="text-[10px] text-slate-400">Night Mode / नाइट मोड</span>
             <button
               onClick={toggleTheme}

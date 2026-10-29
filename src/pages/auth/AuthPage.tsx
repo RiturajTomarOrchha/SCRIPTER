@@ -23,6 +23,7 @@ export const AuthPage: React.FC = () => {
   const navigate = useNavigate();
   const {
     user,
+    userProfile,
     isAuthenticated,
     loading,
     signInWithGoogle,
@@ -42,8 +43,11 @@ export const AuthPage: React.FC = () => {
   const redirectPath = (location.state as { from?: string })?.from || '/user/home';
   const isRegister = location.pathname === '/register';
 
-  // If already authenticated and NOT in preview mode, redirect to User Home
+  // If already authenticated and NOT in preview mode, redirect to appropriate destination
   if (isAuthenticated && !loading && !isPreview) {
+    if (userProfile && userProfile.onboardingCompleted === false) {
+      return <Navigate to="/onboarding" replace />;
+    }
     return <Navigate to={redirectPath} replace />;
   }
 
@@ -56,7 +60,8 @@ export const AuthPage: React.FC = () => {
     setIsGoogleSubmitting(true);
     try {
       await signInWithGoogle();
-      navigate(redirectPath, { replace: true });
+      // Direct through /onboarding which resolves immediately to dashboard if already complete, or opens creator registration if new
+      navigate('/onboarding', { replace: true });
     } catch (err: any) {
       if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
         setGoogleError(

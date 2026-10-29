@@ -12,7 +12,7 @@ interface RoleGuardProps {
 
 export const RoleGuard: React.FC<RoleGuardProps> = ({ requiredRole, children }) => {
   const { role, isDevMode } = useRole();
-  const { isAuthenticated, loading: authLoading, signInWithGoogle, userProfile } = useAuth();
+  const { isAuthenticated, loading: authLoading, signInWithGoogle, userProfile, isAuthorizedAdminOrDev } = useAuth();
   const { language } = useLanguage();
   const navigate = useNavigate();
 
@@ -26,8 +26,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ requiredRole, children }) 
     );
   }
 
-  // If not authenticated and not explicitly in Dev Mode bypass, prompt login
-  if (!isAuthenticated && !isDevMode) {
+  // If not authenticated and not explicitly in authorized Dev Mode bypass, prompt login
+  if (!isAuthenticated && !(isDevMode && isAuthorizedAdminOrDev)) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/90 shadow-xl text-center space-y-5 animate-in fade-in">
@@ -78,8 +78,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ requiredRole, children }) 
     );
   }
 
-  // Active role check (effective role strictly governed by verified Auth profile in production, or Dev Mode switcher)
-  const effectiveRole = isDevMode ? role : (userProfile?.role || 'user');
+  // Active role check (effective role strictly governed by verified Auth profile, or authorized Dev Mode)
+  const effectiveRole = (isDevMode && isAuthorizedAdminOrDev) ? role : (userProfile?.role || 'user');
 
   // Master Admin has unrestricted access to all control room areas
   if (effectiveRole === 'master-admin') {

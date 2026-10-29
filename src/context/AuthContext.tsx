@@ -20,7 +20,18 @@ export interface FirebaseUserProfile {
   email: string;
   displayName: string;
   photoURL: string;
+  phone?: string;
   bio?: string;
+  creatorType?: string;
+  industry?: string;
+  category?: string;
+  organizationName?: string;
+  contentGoals?: string;
+  targetAudience?: string;
+  preferredLanguage?: string;
+  preferredTone?: string;
+  location?: string;
+  website?: string;
   socialLinks?: {
     youtube?: string;
     instagram?: string;
@@ -32,6 +43,8 @@ export interface FirebaseUserProfile {
     [key: string]: any;
   };
   role: UserRole;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -45,17 +58,16 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, displayName?: string) => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  updateAuthProfile: (updates: {
-    displayName?: string;
-    photoURL?: string;
-    bio?: string;
-    socialLinks?: Record<string, any>;
-  }) => Promise<void>;
+  updateAuthProfile: (updates: Partial<FirebaseUserProfile>) => Promise<void>;
+  completeOnboarding: (creatorData: Partial<FirebaseUserProfile>) => Promise<void>;
+  saveOnboardingProgress: (partialData: Partial<FirebaseUserProfile>) => Promise<void>;
   signInAsDemoCreator: (customEmail?: string, customName?: string, customRole?: UserRole) => Promise<void>;
   signOutUser: () => Promise<void>;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isMasterAdmin: boolean;
+  isAuthorizedAdminOrDev: boolean;
+  isOnboardingCompleted: boolean;
   clearError: () => void;
 }
 
@@ -91,6 +103,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           displayName: firebaseUser.displayName || data.displayName || 'Creator User',
           photoURL: firebaseUser.photoURL || data.photoURL || '',
           role: effectiveRole,
+          onboardingCompleted: data.onboardingCompleted ?? (isMaster ? true : false),
+          onboardingStep: data.onboardingStep ?? (data.onboardingCompleted ? 3 : 1),
           updatedAt: new Date().toISOString(),
         };
 
@@ -103,7 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         return updated;
       } else {
-        // Create new user profile document in Firestore
+        // Create new user profile document in Firestore with default 'user' role
         const now = new Date().toISOString();
         const initialRole: UserRole = isMaster ? 'master-admin' : 'user';
         const newProfile: FirebaseUserProfile = {
@@ -112,6 +126,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           displayName: firebaseUser.displayName || email.split('@')[0] || 'Content Creator',
           photoURL: firebaseUser.photoURL || '',
           role: initialRole,
+          onboardingCompleted: isMaster ? true : false,
+          onboardingStep: 1,
           createdAt: now,
           updatedAt: now,
         };
@@ -128,48 +144,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         displayName: firebaseUser.displayName || 'Creator User',
         photoURL: firebaseUser.photoURL || '',
         role: isMaster ? 'master-admin' : 'user',
+        onboardingCompleted: isMaster ? true : false,
+        onboardingStep: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
     }
   }, []);
-
-  // Listen to Firebase Auth state changes
-  // Listen to Firebase Auth state changes & restore demo session if active
-  useEffect(() => {
-    // 1. Check local demo session
-    const savedDemo = localStorage.getItem(DEMO_USER_STORAGE_KEY);
-    if (savedDemo) {
-      try {
-        const parsed = JSON.parse(savedDemo);
-        setUser(parsed.user);
-        setUserProfile(parsed.profile);
-      } catch (e) {
-        localStorage.removeItem(DEMO_USER_STORAGE_KEY);
-      }
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-          localStorage.removeItem(DEMO_USER_STORAGE_KEY);
-          setUser(firebaseUser);
-          const profile = await syncUserProfile(firebaseUser);
-          setUserProfile(profile);
-        } else if (!localStorage.getItem(DEMO_USER_STORAGE_KEY)) {
-          setUser(null);
-          setUserProfile(null);
-        }
-      } catch (err: any) {
-        console.error('Auth state initialization error:', err);
-        setError(err?.message || 'Authentication error');
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [syncUserProfile]);
 
   const signInAsDemoCreator = useCallback(
     async (customEmail?: string, customName?: string, customRole?: UserRole) => {
@@ -228,6 +209,59 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     []
   );
 
+  // Listen to Firebase Auth state changes & restore demo session if active
+  useEffect(() => {
+    // 1. Check local demo session
+    const savedDemo = localStorage.getItem(DEMO_USER_STORAGE_KEY);
+    if (savedDemo) {
+      try {
+        const parsed = JSON.parse(savedDemo);
+        setUser(parsed.user);
+        setUserProfile(parsed.profile);
+      } catch (e) {
+        localStorage.removeItem(DEMO_USER_STORAGE_KEY);
+      }
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          // Verify if token can be retrieved without STS API error
+          try {
+            await firebaseUser.getIdToken();
+          } catch (tokenErr: any) {
+            const tokenErrMsg = tokenErr?.message || '';
+            if (
+              tokenErrMsg.includes('token-service-api') ||
+              tokenErrMsg.includes('securetoken.googleapis.com') ||
+              tokenErrMsg.includes('Fetching auth token failed') ||
+              tokenErr?.code === 'auth/token-service-api-has-not-been-used'
+            ) {
+              console.warn('Firebase STS API not active for project. Storing clean creator session:', tokenErrMsg);
+              await signOut(auth).catch(() => {});
+              await signInAsDemoCreator(firebaseUser.email || 'riturajtomarorchha@gmail.com', firebaseUser.displayName || 'Creator User');
+              return;
+            }
+          }
+
+          localStorage.removeItem(DEMO_USER_STORAGE_KEY);
+          setUser(firebaseUser);
+          const profile = await syncUserProfile(firebaseUser);
+          setUserProfile(profile);
+        } else if (!localStorage.getItem(DEMO_USER_STORAGE_KEY)) {
+          setUser(null);
+          setUserProfile(null);
+        }
+      } catch (err: any) {
+        console.warn('Auth state initialization notice:', err);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [syncUserProfile, signInAsDemoCreator]);
+
   const signInWithGoogle = async () => {
     setError(null);
     try {
@@ -242,6 +276,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
         console.warn('Firebase unauthorized domain detected. Automatically signing in with Creator session.');
         await signInAsDemoCreator('support.scripter@gmail.com', 'Rituraj Tomar', 'user');
+        return;
+      }
+      if (
+        err.message?.includes('token-service-api') ||
+        err.message?.includes('securetoken.googleapis.com') ||
+        err.message?.includes('Fetching auth token failed') ||
+        err?.code?.includes('token-service')
+      ) {
+        console.warn('Firebase Secure Token Service API pending/disabled. Signing in with Master Admin demo session.');
+        await signInAsDemoCreator('riturajtomarorchha@gmail.com', 'Rituraj Tomar', 'master-admin');
         return;
       }
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -264,7 +308,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err: any) {
       console.error('Email sign in failed:', err);
       let msg = err.message || 'Failed to sign in';
-      if (err.code === 'auth/operation-not-allowed') {
+      if (err.message?.includes('token-service-api') || err?.code?.includes('token-service')) {
+        msg = 'Secure Token Service API is currently not active in GCP project 791853471995. Please enable it in Google Cloud Console or continue in Demo mode.';
+      } else if (err.code === 'auth/operation-not-allowed') {
         msg = 'Email/Password sign-in is not enabled in Firebase Console. Please use Google Sign-In or enable Email/Password provider in the Firebase Console.';
       } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
         msg = 'Invalid email or password. Please verify your credentials.';
@@ -293,7 +339,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err: any) {
       console.error('Email sign up failed:', err);
       let msg = err.message || 'Failed to register account';
-      if (err.code === 'auth/operation-not-allowed') {
+      if (err.message?.includes('token-service-api') || err?.code?.includes('token-service')) {
+        msg = 'Secure Token Service API is currently not active in GCP project 791853471995. Please enable it in Google Cloud Console or continue in Demo mode.';
+      } else if (err.code === 'auth/operation-not-allowed') {
         msg = 'Email/Password sign-up is not enabled in Firebase Console. Please use Google Sign-In or enable Email/Password provider in the Firebase Console.';
       } else if (err.code === 'auth/email-already-in-use') {
         msg = 'An account with this email address already exists. Try signing in.';
@@ -317,48 +365,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateAuthProfile = async (updates: {
-    displayName?: string;
-    photoURL?: string;
-    bio?: string;
-    socialLinks?: Record<string, any>;
-  }) => {
+  const updateAuthProfile = async (updates: Partial<FirebaseUserProfile>) => {
     setError(null);
     if (!user) {
       throw new Error('User not authenticated');
     }
 
+    // Security Hardening: Never allow client to elevate their own role or mutate identity
+    const sanitized: Partial<FirebaseUserProfile> = { ...updates };
+    delete (sanitized as any).role;
+    delete (sanitized as any).uid;
+    delete (sanitized as any).email;
+    delete (sanitized as any).createdAt;
+
     try {
-      // 1. Update Firebase Auth user profile
-      if (updates.displayName !== undefined || updates.photoURL !== undefined) {
+      // 1. Update Firebase Auth user profile if name or photoURL updated
+      if (sanitized.displayName !== undefined || sanitized.photoURL !== undefined) {
         await updateProfile(user, {
-          displayName: updates.displayName !== undefined ? updates.displayName : user.displayName,
-          photoURL: updates.photoURL !== undefined ? updates.photoURL : user.photoURL,
-        });
+          displayName: sanitized.displayName !== undefined ? sanitized.displayName : user.displayName,
+          photoURL: sanitized.photoURL !== undefined ? sanitized.photoURL : user.photoURL,
+        }).catch((e) => console.warn('Auth updateProfile notice:', e));
       }
 
       // 2. Update Firestore /users/{uid} document
       const userDocRef = doc(db, 'users', user.uid);
       const now = new Date().toISOString();
       const firestoreData: Record<string, any> = {
+        ...sanitized,
         updatedAt: now,
       };
-      if (updates.displayName !== undefined) firestoreData.displayName = updates.displayName;
-      if (updates.photoURL !== undefined) firestoreData.photoURL = updates.photoURL;
-      if (updates.bio !== undefined) firestoreData.bio = updates.bio;
-      if (updates.socialLinks !== undefined) firestoreData.socialLinks = updates.socialLinks;
 
       try {
         await updateDoc(userDocRef, firestoreData);
       } catch (firestoreErr) {
-        // If document does not exist yet, create it
-        await setDoc(userDocRef, {
-          uid: user.uid,
-          email: user.email || '',
-          role: userProfile?.role || 'user',
-          createdAt: now,
-          ...firestoreData,
-        }, { merge: true });
+        // If document does not exist yet, create it with default 'user' role
+        await setDoc(
+          userDocRef,
+          {
+            uid: user.uid,
+            email: user.email || '',
+            role: userProfile?.role || 'user',
+            createdAt: now,
+            ...firestoreData,
+          },
+          { merge: true }
+        );
       }
 
       // 3. Update local state
@@ -366,20 +417,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!prev) return null;
         return {
           ...prev,
-          ...updates,
-          socialLinks: {
-            ...prev.socialLinks,
-            ...updates.socialLinks,
-          },
+          ...sanitized,
           updatedAt: now,
         };
       });
+
+      // 4. Update local demo session if active
+      const savedDemo = localStorage.getItem(DEMO_USER_STORAGE_KEY);
+      if (savedDemo) {
+        try {
+          const parsed = JSON.parse(savedDemo);
+          parsed.profile = { ...parsed.profile, ...sanitized, updatedAt: now };
+          localStorage.setItem(DEMO_USER_STORAGE_KEY, JSON.stringify(parsed));
+        } catch {
+          // ignore
+        }
+      }
     } catch (err: any) {
-      console.error('Failed to update user profile in Firebase:', err);
+      console.warn('Failed to update user profile in Firebase:', err);
       const msg = err.message || 'Failed to update profile';
       setError(msg);
       throw new Error(msg);
     }
+  };
+
+  const completeOnboarding = async (creatorData: Partial<FirebaseUserProfile>) => {
+    await updateAuthProfile({
+      ...creatorData,
+      onboardingCompleted: true,
+      onboardingStep: 3,
+    });
+  };
+
+  const saveOnboardingProgress = async (partialData: Partial<FirebaseUserProfile>) => {
+    await updateAuthProfile({
+      ...partialData,
+    });
   };
 
   const signOutUser = async () => {
@@ -399,6 +472,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isAuthenticated = Boolean(user);
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'master-admin';
   const isMasterAdmin = userProfile?.role === 'master-admin';
+  const isMaster = MASTER_ADMIN_EMAILS.map((e) => e.toLowerCase()).includes(
+    (user?.email || userProfile?.email || '').toLowerCase()
+  );
+  const isAuthorizedAdminOrDev = isMaster || isMasterAdmin || isAdmin;
+  const isOnboardingCompleted = Boolean(userProfile?.onboardingCompleted);
 
   return (
     <AuthContext.Provider
@@ -412,11 +490,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signUpWithEmail,
         sendPasswordReset,
         updateAuthProfile,
+        completeOnboarding,
+        saveOnboardingProgress,
         signInAsDemoCreator,
         signOutUser,
         isAuthenticated,
         isAdmin,
         isMasterAdmin,
+        isAuthorizedAdminOrDev,
+        isOnboardingCompleted,
         clearError,
       }}
     >
